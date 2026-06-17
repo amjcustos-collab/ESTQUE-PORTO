@@ -186,6 +186,45 @@ header {
 .form-row .campo-group { min-width: 160px; }
 .form-aviso { font-size: 12px; color: var(--texto-suave); background: var(--cinza-claro); padding: 10px 12px; border-radius: 8px; }
 
+/* SAÍDA COM RECEITA */
+.rec-sugestoes-lista { position: absolute; top: 4px; left: 0; right: 0; background: white; border: 1.5px solid var(--azul-claro); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); max-height: 220px; overflow-y: auto; z-index: 50; }
+.rec-sugestao-item { padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--cinza-claro); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.rec-sugestao-item:last-child { border-bottom: none; }
+.rec-sugestao-item:hover { background: var(--azul-fundo); }
+.rec-sugestao-nome { font-size: 14px; font-weight: 600; }
+.rec-sugestao-info { font-size: 11px; color: var(--texto-suave); }
+.rec-sugestao-estoque { font-size: 12px; font-weight: 700; color: var(--verde); white-space: nowrap; }
+.rec-item-card { background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rec-item-nome { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
+.rec-item-nome .rec-item-pa { display:block; font-size: 11px; color: var(--texto-suave); font-weight: 400; }
+.rec-item-qtd-input { width: 90px; padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 14px; outline: none; }
+.rec-item-qtd-input.erro { border-color: var(--vermelho); background: var(--vermelho-fundo); }
+.rec-item-unidade { font-size: 12px; color: var(--texto-suave); min-width: 28px; }
+.rec-item-disponivel { font-size: 11px; color: var(--texto-suave); white-space: nowrap; }
+.rec-item-remover { background: var(--vermelho-fundo); color: var(--vermelho); border: 1px solid #f0bcbc; border-radius: 7px; width: 32px; height: 32px; cursor: pointer; font-size: 14px; }
+.rec-item-remover:hover { background: #fadbdb; }
+.rec-resumo-total { font-size: 12px; color: var(--texto-suave); text-align: right; margin-top: 4px; }
+
+/* FILTROS DO HISTÓRICO */
+.hist-filtros { display: flex; gap: 8px; flex-wrap: wrap; padding: 12px 20px; border-bottom: 1px solid var(--borda); background: var(--cinza-claro); align-items: center; }
+.hist-filtro-busca { flex: 1; min-width: 180px; padding: 8px 12px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 13px; outline: none; }
+.hist-filtro-select { padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 13px; outline: none; background: white; cursor: pointer; }
+.hist-filtro-data { padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 13px; outline: none; background: white; }
+.hist-filtro-limpar { background: white; color: var(--texto-suave); border: 1.5px solid var(--borda); border-radius: 7px; padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.hist-filtro-limpar:hover { background: var(--cinza-claro); }
+.mov-receita { border-left: 3px solid #7a3fa8; }
+.mov-icon.receita { background: #f1e6f8; color: #7a3fa8; }
+.mov-qtd.receita { color: #7a3fa8; font-size: 12px; }
+.mov-receita-toggle { background: none; border: none; color: #7a3fa8; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 4px; }
+.mov-receita-itens { display: none; margin-top: 8px; padding: 8px 10px; background: #f8f4fb; border-radius: 7px; border: 1px solid #e6d9f0; }
+.mov-receita-itens.aberto { display: block; }
+.mov-receita-item-linha { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; border-bottom: 1px solid #ede0f5; }
+.mov-receita-item-linha:last-child { border-bottom: none; }
+@media (max-width: 600px) {
+  .hist-filtros { flex-direction: column; align-items: stretch; }
+  .hist-filtro-data { width: 100%; }
+}
+
 /* TOAST */
 .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a2530; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 300; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
 .toast.show { transform: translateX(-50%) translateY(0); }
@@ -241,6 +280,7 @@ header {
   <div class="header-right">
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
+    <button class="btn-header" style="background:#7a3fa8;border-color:#7a3fa8" onclick="window.AppEstoque.abrirReceita()">🧾 <span>Saída com Receita</span></button>
     <button class="btn-header verde" onclick="window.AppEstoque.exportarCSV()">📊 <span>Excel</span></button>
     <button class="btn-header destaque" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
@@ -279,6 +319,20 @@ header {
     <div class="modal-header">
       <h2>📋 Histórico de Movimentações</h2>
       <button class="btn-fechar" onclick="window.AppEstoque.fecharHistorico()">×</button>
+    </div>
+    <div class="hist-filtros">
+      <input type="text" class="hist-filtro-busca" id="histBusca" placeholder="🔍 Buscar por produto, receita ou responsável..." oninput="window.AppEstoque.filtrarHistorico()">
+      <select class="hist-filtro-select" id="histTipo" onchange="window.AppEstoque.filtrarHistorico()">
+        <option value="">Todos os tipos</option>
+        <option value="entrada">Entradas</option>
+        <option value="saida">Retiradas</option>
+        <option value="receita">Saídas com receita</option>
+        <option value="edicao">Edições</option>
+        <option value="exclusao">Exclusões</option>
+      </select>
+      <input type="date" class="hist-filtro-data" id="histDataDe" onchange="window.AppEstoque.filtrarHistorico()" title="De">
+      <input type="date" class="hist-filtro-data" id="histDataAte" onchange="window.AppEstoque.filtrarHistorico()" title="Até">
+      <button class="hist-filtro-limpar" onclick="window.AppEstoque.limparFiltrosHistorico()">Limpar filtros</button>
     </div>
     <div class="modal-body" id="listaHistorico"></div>
     <div class="modal-footer">
@@ -326,6 +380,45 @@ header {
         <div class="painel-acoes" style="justify-content:flex-end">
           <button class="btn-cancelar" onclick="window.AppEstoque.fecharNovoProduto()">Cancelar</button>
           <button class="btn-confirmar-editar" onclick="window.AppEstoque.confirmarNovoProduto()">✓ Adicionar Produto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SAÍDA COM RECEITA -->
+<div class="overlay" id="overlayReceita" onclick="if(event.target===this)window.AppEstoque.fecharReceita()">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(90deg, #4a2570, #7a3fa8)">
+      <h2>🧾 Saída com Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharReceita()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-aviso" style="margin-bottom:14px">Use esta opção quando uma receita do agrônomo pedir vários produtos de uma vez. Tudo fica registrado como <strong>um único movimento</strong> no histórico, em vez de uma linha por produto.</div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="campo-group"><label>Nº / Identificação da receita</label><input type="text" id="rec-numero" placeholder="Ex: Receita 045 - Dr. Carlos"></div>
+          <div class="campo-group"><label>Responsável pela retirada</label><input type="text" id="rec-resp" placeholder="Nome de quem está retirando"></div>
+        </div>
+        <div class="campo-group"><label>Observação (opcional)</label><input type="text" id="rec-obs" placeholder="Ex: Aplicação talhão 5 - lavoura de soja"></div>
+
+        <div style="border-top:1.5px solid var(--borda);padding-top:14px;margin-top:6px">
+          <label style="font-size:12px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.5px">Adicionar produto à receita</label>
+          <div class="form-row" style="margin-top:8px">
+            <div class="campo-group" style="flex:2;min-width:220px">
+              <input type="text" id="rec-busca-produto" placeholder="🔍 Buscar produto para adicionar..." oninput="window.AppEstoque.buscarProdutoReceita()" autocomplete="off">
+              <div id="rec-sugestoes" style="position:relative"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="rec-itens-vazio" class="vazio" style="padding:24px">Nenhum produto adicionado ainda. Busque acima e clique para adicionar.</div>
+        <div id="rec-lista-itens" style="display:flex;flex-direction:column;gap:8px"></div>
+
+        <div class="painel-acoes" style="justify-content:flex-end;margin-top:10px;border-top:1.5px solid var(--borda);padding-top:14px">
+          <button class="btn-cancelar" onclick="window.AppEstoque.fecharReceita()">Cancelar</button>
+          <button class="btn-confirmar-saida" id="btn-confirmar-receita" onclick="window.AppEstoque.confirmarReceita()">✓ Confirmar Saída da Receita</button>
         </div>
       </div>
     </div>
@@ -1137,18 +1230,260 @@ async function confirmarNovoProduto() {
 }
 
 // =====================================================================
+// SAÍDA COM RECEITA — baixa de vários produtos de uma vez, registrada
+// como um único movimento no histórico (em vez de uma linha por produto).
+// =====================================================================
+let receitaItens = []; // [{ produtoId, nome, pa, unidade, estoqueDisponivel, qtd }]
+
+function abrirReceita() {
+  receitaItens = [];
+  document.getElementById('rec-numero').value = '';
+  document.getElementById('rec-resp').value = '';
+  document.getElementById('rec-obs').value = '';
+  document.getElementById('rec-busca-produto').value = '';
+  document.getElementById('rec-sugestoes').innerHTML = '';
+  renderItensReceita();
+  document.getElementById('overlayReceita').classList.add('aberto');
+  setTimeout(() => document.getElementById('rec-numero').focus(), 80);
+}
+
+function fecharReceita() {
+  document.getElementById('overlayReceita').classList.remove('aberto');
+  receitaItens = [];
+}
+
+function buscarProdutoReceita() {
+  const termo = document.getElementById('rec-busca-produto').value.trim().toLowerCase();
+  const caixa = document.getElementById('rec-sugestoes');
+  if (!termo) { caixa.innerHTML = ''; return; }
+
+  const jaAdicionados = new Set(receitaItens.map(i => String(i.produtoId)));
+  const candidatos = produtos.filter(p =>
+    !jaAdicionados.has(String(p.id)) &&
+    (p.nome.toLowerCase().includes(termo) || p.pa.toLowerCase().includes(termo))
+  ).slice(0, 8);
+
+  if (candidatos.length === 0) {
+    caixa.innerHTML = `<div class="rec-sugestoes-lista"><div class="rec-sugestao-item" style="cursor:default;color:var(--texto-suave)">Nenhum produto encontrado</div></div>`;
+    return;
+  }
+
+  caixa.innerHTML = `<div class="rec-sugestoes-lista">${candidatos.map(p => `
+    <div class="rec-sugestao-item" onclick="window.AppEstoque.adicionarItemReceita('${p.id}')">
+      <div>
+        <div class="rec-sugestao-nome">${p.nome}</div>
+        <div class="rec-sugestao-info">${p.pa}</div>
+      </div>
+      <div class="rec-sugestao-estoque">${fmt(p.estoque)} ${p.unidade}</div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function adicionarItemReceita(produtoId) {
+  const p = produtos.find(x => String(x.id) === String(produtoId));
+  if (!p) return;
+  if (p.estoque <= 0) { mostrarToast(`"${p.nome}" está com estoque zerado.`, 'erro'); return; }
+
+  receitaItens.push({ produtoId: p.id, nome: p.nome, pa: p.pa, unidade: p.unidade, estoqueDisponivel: p.estoque, qtd: '' });
+
+  document.getElementById('rec-busca-produto').value = '';
+  document.getElementById('rec-sugestoes').innerHTML = '';
+  renderItensReceita();
+  setTimeout(() => {
+    const idx = receitaItens.length - 1;
+    const input = document.getElementById(`rec-qtd-${idx}`);
+    if (input) input.focus();
+  }, 60);
+}
+
+function removerItemReceita(idx) {
+  receitaItens.splice(idx, 1);
+  renderItensReceita();
+}
+
+function atualizarQtdReceita(idx, valor) {
+  receitaItens[idx].qtd = valor;
+  const item = receitaItens[idx];
+  const input = document.getElementById(`rec-qtd-${idx}`);
+  const qtdNum = parseFloat(valor);
+  if (input) {
+    if (qtdNum > item.estoqueDisponivel) input.classList.add('erro');
+    else input.classList.remove('erro');
+  }
+}
+
+function renderItensReceita() {
+  const vazio = document.getElementById('rec-itens-vazio');
+  const lista = document.getElementById('rec-lista-itens');
+
+  if (receitaItens.length === 0) {
+    vazio.style.display = 'block';
+    lista.innerHTML = '';
+    return;
+  }
+  vazio.style.display = 'none';
+
+  lista.innerHTML = receitaItens.map((item, idx) => `
+    <div class="rec-item-card">
+      <div class="rec-item-nome">${item.nome}<span class="rec-item-pa">${item.pa}</span></div>
+      <input type="number" class="rec-item-qtd-input" id="rec-qtd-${idx}" min="0.1" step="0.5" placeholder="Qtd" value="${item.qtd}" oninput="window.AppEstoque.atualizarQtdReceita(${idx}, this.value)">
+      <span class="rec-item-unidade">${item.unidade}</span>
+      <span class="rec-item-disponivel">disp.: ${fmt(item.estoqueDisponivel)} ${item.unidade}</span>
+      <button class="rec-item-remover" onclick="window.AppEstoque.removerItemReceita(${idx})" title="Remover">✕</button>
+    </div>
+  `).join('') + `<div class="rec-resumo-total">${receitaItens.length} produto${receitaItens.length!==1?'s':''} na receita</div>`;
+}
+
+async function confirmarReceita() {
+  const numero = document.getElementById('rec-numero').value.trim();
+  const resp = document.getElementById('rec-resp').value.trim();
+  const obs = document.getElementById('rec-obs').value.trim();
+
+  if (!numero) { mostrarToast('Informe a identificação da receita.', 'erro'); return; }
+  if (!resp) { mostrarToast('Informe o responsável pela retirada.', 'erro'); return; }
+  if (receitaItens.length === 0) { mostrarToast('Adicione ao menos um produto à receita.', 'erro'); return; }
+
+  // Validação de quantidades antes de gravar qualquer coisa
+  for (const item of receitaItens) {
+    const qtd = parseFloat(item.qtd);
+    if (!qtd || qtd <= 0) { mostrarToast(`Informe a quantidade de "${item.nome}".`, 'erro'); return; }
+    if (qtd > item.estoqueDisponivel) { mostrarToast(`Quantidade de "${item.nome}" maior que o estoque disponível!`, 'erro'); return; }
+  }
+
+  const btn = document.getElementById('btn-confirmar-receita');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    const s = getSessao();
+    const itensFinais = [];
+
+    // Atualiza o estoque de cada produto da receita
+    for (const item of receitaItens) {
+      const p = produtos.find(x => String(x.id) === String(item.produtoId));
+      if (!p) continue;
+      const qtd = parseFloat(item.qtd);
+      const novoEstoque = Math.round((p.estoque - qtd) * 100) / 100;
+      await Persistencia.salvarProduto({ ...p, estoque: novoEstoque });
+      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos: novoEstoque });
+    }
+
+    // Um único registro de histórico, com a lista de itens dentro
+    await Persistencia.registrarHistorico({
+      tipo: 'receita',
+      numeroReceita: numero,
+      resp, obs,
+      itens: itensFinais,
+      totalItens: itensFinais.length,
+      data: new Date().toISOString(),
+      usuario: s ? s.email : '—'
+    });
+
+    fecharReceita();
+    mostrarToast(`✓ Saída da receita "${numero}" registrada (${itensFinais.length} produtos)!`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao registrar a receita. Tente novamente.', 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmar Saída da Receita';
+  }
+}
+
+// =====================================================================
 // HISTÓRICO
 // =====================================================================
-function abrirHistorico() { renderHistorico(); document.getElementById('overlayHistorico').classList.add('aberto'); }
+function abrirHistorico() {
+  const histBusca = document.getElementById('histBusca');
+  const histTipo = document.getElementById('histTipo');
+  const histDataDe = document.getElementById('histDataDe');
+  const histDataAte = document.getElementById('histDataAte');
+  if (histBusca) histBusca.value = '';
+  if (histTipo) histTipo.value = '';
+  if (histDataDe) histDataDe.value = '';
+  if (histDataAte) histDataAte.value = '';
+  renderHistorico();
+  document.getElementById('overlayHistorico').classList.add('aberto');
+}
 function fecharHistorico() { document.getElementById('overlayHistorico').classList.remove('aberto'); }
+function obterHistoricoFiltrado() {
+  const busca = (document.getElementById('histBusca')?.value || '').trim().toLowerCase();
+  const tipoF = document.getElementById('histTipo')?.value || '';
+  const dataDe = document.getElementById('histDataDe')?.value || '';
+  const dataAte = document.getElementById('histDataAte')?.value || '';
+
+  return historico.filter(m => {
+    if (tipoF && m.tipo !== tipoF) return false;
+
+    if (busca) {
+      const campos = [
+        m.produto || '', m.resp || '', m.usuario || '', m.obs || '', m.numeroReceita || ''
+      ];
+      if (m.tipo === 'receita' && Array.isArray(m.itens)) {
+        m.itens.forEach(it => campos.push(it.produto || ''));
+      }
+      const encontrado = campos.some(c => c.toLowerCase().includes(busca));
+      if (!encontrado) return false;
+    }
+
+    if (dataDe || dataAte) {
+      const dataMov = new Date(m.data);
+      const dataMovStr = dataMov.toISOString().slice(0, 10);
+      if (dataDe && dataMovStr < dataDe) return false;
+      if (dataAte && dataMovStr > dataAte) return false;
+    }
+
+    return true;
+  });
+}
+
+function filtrarHistorico() { renderHistorico(); }
+
+function limparFiltrosHistorico() {
+  document.getElementById('histBusca').value = '';
+  document.getElementById('histTipo').value = '';
+  document.getElementById('histDataDe').value = '';
+  document.getElementById('histDataAte').value = '';
+  renderHistorico();
+}
+
+function toggleItensReceita(idMovimento) {
+  const el = document.getElementById(`receita-itens-${idMovimento}`);
+  if (el) el.classList.toggle('aberto');
+}
+
 function renderHistorico() {
   const lista = document.getElementById('listaHistorico');
   const total = document.getElementById('totalMov');
+  const filtrado = obterHistoricoFiltrado();
+
   if (historico.length === 0) { lista.innerHTML = '<div class="vazio">Nenhuma movimentação registrada ainda.</div>'; total.textContent = ''; return; }
-  total.textContent = `${historico.length} movimentaç${historico.length===1?'ão':'ões'}`;
-  lista.innerHTML = historico.map(m => {
+  if (filtrado.length === 0) { lista.innerHTML = '<div class="vazio">Nenhuma movimentação encontrada com esses filtros.</div>'; total.textContent = `0 de ${historico.length} movimentações`; return; }
+
+  total.textContent = filtrado.length === historico.length
+    ? `${historico.length} movimentaç${historico.length===1?'ão':'ões'}`
+    : `${filtrado.length} de ${historico.length} movimentações`;
+
+  lista.innerHTML = filtrado.map(m => {
     const data = new Date(m.data);
     const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+    if (m.tipo === 'receita') {
+      const itens = Array.isArray(m.itens) ? m.itens : [];
+      return `<div class="mov-item mov-receita">
+        <div class="mov-icon receita">🧾</div>
+        <div class="mov-detalhe">
+          <div class="mov-produto">Receita ${m.numeroReceita || ''} <span style="font-weight:400;font-size:11px;color:#999">${m.totalItens || itens.length} produto${(m.totalItens||itens.length)!==1?'s':''}</span></div>
+          <div class="mov-info">${m.resp || '—'}${m.usuario ? ' ('+m.usuario+')' : ''} · ${dataStr}${m.obs?' · '+m.obs:''}</div>
+          <button class="mov-receita-toggle" onclick="window.AppEstoque.toggleItensReceita('${m.id}')">Ver itens da receita</button>
+          <div class="mov-receita-itens" id="receita-itens-${m.id}">
+            ${itens.map(it => `<div class="mov-receita-item-linha"><span>${it.produto}</span><span>−${fmt(it.qtd)} ${it.unidade}</span></div>`).join('')}
+          </div>
+        </div>
+        <div class="mov-qtd receita">${m.totalItens || itens.length} itens</div>
+      </div>`;
+    }
+
     let icon = '−', label = 'saida';
     if (m.tipo === 'entrada') { icon = '+'; label = 'entrada'; }
     else if (m.tipo === 'edicao') { icon = '✎'; label = 'edicao'; }
@@ -1189,7 +1524,18 @@ function exportarCSV() {
   filtrados.forEach(p => linhas.push([p.classe, p.nome, p.pa, p.unidade, p.estoque]));
   linhas.push([]); linhas.push(['--- HISTÓRICO ---']);
   linhas.push(['Data','Tipo','Produto','Responsável','Usuário','Quantidade','Unidade','Estoque Após','Observação']);
-  historico.forEach(m => { const d = new Date(m.data).toLocaleString('pt-BR'); const tiposLabel = {saida:'Retirada',entrada:'Entrada',edicao:'Edição',exclusao:'Exclusão'}; linhas.push([d, tiposLabel[m.tipo]||m.tipo, m.produto, m.resp, m.usuario||'', m.qtd, m.unidade||'', m.estoqueApos, m.obs||'']); });
+  const tiposLabel = {saida:'Retirada',entrada:'Entrada',edicao:'Edição',exclusao:'Exclusão',receita:'Saída com Receita'};
+  historico.forEach(m => {
+    const d = new Date(m.data).toLocaleString('pt-BR');
+    if (m.tipo === 'receita' && Array.isArray(m.itens)) {
+      const obsReceita = `Receita ${m.numeroReceita || ''}${m.obs ? ' — ' + m.obs : ''}`;
+      m.itens.forEach(it => {
+        linhas.push([d, tiposLabel.receita, it.produto, m.resp, m.usuario||'', it.qtd, it.unidade||'', it.estoqueApos, obsReceita]);
+      });
+    } else {
+      linhas.push([d, tiposLabel[m.tipo]||m.tipo, m.produto, m.resp, m.usuario||'', m.qtd, m.unidade||'', m.estoqueApos, m.obs||'']);
+    }
+  });
   const csv = linhas.map(l => l.map(v => `"${v}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
@@ -1277,6 +1623,12 @@ function gerarPDF() {
       <div class="secao">
         <div class="secao-titulo">${classe} <span style="float:right;font-weight:400">${itens.length} ite${itens.length!==1?'ns':'m'}</span></div>
         <table>
+          <colgroup>
+            <col style="width:38%">
+            <col style="width:38%">
+            <col style="width:10%">
+            <col style="width:14%">
+          </colgroup>
           <thead><tr><th>Produto</th><th>Princípio Ativo</th><th style="text-align:center">Un.</th><th style="text-align:center">Estoque</th></tr></thead>
           <tbody>${linhas}</tbody>
         </table>
@@ -1318,10 +1670,10 @@ function gerarPDF() {
     .resumo-label { font-size: 11px; color: #5a6472; margin-top: 4px; }
     .secao { margin-bottom: 20px; page-break-inside: avoid; }
     .secao-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #1a4080; padding: 6px 10px; background: #e8eef7; border-left: 4px solid #1a4080; margin-bottom: 0; }
-    table { width: 100%; border-collapse: collapse; }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     thead tr { background: #f4f6f8; }
-    th { padding: 7px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #5a6472; border-bottom: 1px solid #d0d8e0; }
-    td { padding: 6px 10px; border-bottom: 1px solid #e8eef7; font-size: 12px; }
+    th { padding: 7px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #5a6472; border-bottom: 1px solid #d0d8e0; overflow-wrap: break-word; }
+    td { padding: 6px 10px; border-bottom: 1px solid #e8eef7; font-size: 12px; overflow-wrap: break-word; word-break: break-word; }
     tr:last-child td { border-bottom: none; }
     .rodape { margin-top: 30px; border-top: 1px solid #d0d8e0; padding-top: 10px; font-size: 10px; color: #9aa5b0; text-align: center; }
     .legenda { display: flex; gap: 16px; margin-bottom: 20px; font-size: 11px; align-items: center; }
@@ -1382,6 +1734,9 @@ window.AppEstoque = {
   confirmarMovimento, confirmarEdicao, excluirProduto,
   abrirNovoProduto, fecharNovoProduto, confirmarNovoProduto,
   abrirHistorico, fecharHistorico, limparHistorico,
+  filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
+  abrirReceita, fecharReceita, buscarProdutoReceita, adicionarItemReceita,
+  removerItemReceita, atualizarQtdReceita, confirmarReceita,
   exportarCSV, abrirModalPDF, fecharModalPDF, gerarPDF, filtrar
 };
 </script>
