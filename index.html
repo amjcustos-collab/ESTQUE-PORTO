@@ -248,8 +248,8 @@ header {
 </header>
 
 <div class="filtros">
-  <input class="busca" type="text" placeholder="🔍 Buscar produto ou princípio ativo..." oninput="filtrar()" id="busca">
-  <select class="filtro-classe" onchange="filtrar()" id="filtroClasse">
+  <input class="busca" type="text" placeholder="🔍 Buscar produto ou princípio ativo..." oninput="window.AppEstoque.filtrar()" id="busca">
+  <select class="filtro-classe" onchange="window.AppEstoque.filtrar()" id="filtroClasse">
     <option value="">Todas as classes</option>
     <option value="ADJUVANTE">Adjuvante</option>
     <option value="BIOLÓGICO">Biológico</option>
@@ -261,7 +261,7 @@ header {
     <option value="MOLUSCICIDA">Moluscicida</option>
     <option value="OLEO">Óleo</option>
   </select>
-  <select class="filtro-status" onchange="filtrar()" id="filtroStatus">
+  <select class="filtro-status" onchange="window.AppEstoque.filtrar()" id="filtroStatus">
     <option value="">Todos os status</option>
     <option value="normal">Estoque normal</option>
     <option value="baixo">Estoque baixo (≤10)</option>
@@ -1228,6 +1228,16 @@ function fecharModalPDF() { document.getElementById('overlayPDF').classList.remo
 // GERAR PDF
 // =====================================================================
 function gerarPDF() {
+  // Abre a janela ANTES de qualquer outro processamento — navegadores (especialmente
+  // em tablets/celulares) só permitem window.open() como resposta DIRETA e IMEDIATA
+  // a um clique. Se deixarmos para o final, depois de montar o HTML, o navegador
+  // entende que não foi mais uma ação direta do clique e bloqueia o popup.
+  const win = window.open('', '_blank');
+  if (!win) {
+    mostrarToast('⚠️ O navegador bloqueou a janela do PDF. Permita pop-ups para este site e tente novamente.', 'erro');
+    return;
+  }
+
   const escopo = document.querySelector('input[name="escopoPDF"]:checked').value;
   const produtosPDF = escopo === 'filtro' ? obterFiltrados() : produtos;
 
@@ -1345,7 +1355,6 @@ function gerarPDF() {
   <div class="rodape">AMJ Agropecuária · Fazenda Porto · Controle de Estoque · Documento gerado automaticamente em ${data}</div>
   </body></html>`;
 
-  const win = window.open('', '_blank');
   win.document.write(pdfHTML);
   win.document.close();
   fecharModalPDF();
