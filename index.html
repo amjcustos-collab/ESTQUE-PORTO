@@ -96,6 +96,10 @@ header {
 .btn-novo-produto:hover { background: #d8e3f3; }
 .btn-receita-filtros { background: #f1e6f8; color: #7a3fa8; border: 1.5px solid #c9a3e0; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn-receita-filtros:hover { background: #e6d4f0; }
+.btn-compra-filtros { background: #e0f5f2; color: #0a8a7a; border: 1.5px solid #8fd4c8; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn-compra-filtros:hover { background: #ccecE6; }
+.btn-cadastrar-na-hora { background: #e0f5f2; color: #0a8a7a; border: 1.5px dashed #5fbfaa; border-radius: 8px; padding: 10px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; align-self: flex-start; margin-top: 2px; }
+.btn-cadastrar-na-hora:hover { background: #ccecE6; }
 
 /* GESTÃO DE USUÁRIOS */
 .user-card { background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -106,6 +110,17 @@ header {
 .user-nivel-select { padding: 8px 12px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 13px; outline: none; background: white; cursor: pointer; }
 .user-nivel-select:disabled { opacity: 0.5; cursor: not-allowed; }
 .user-tag-voce { font-size: 10px; background: #1a6b7a; color: white; padding: 2px 7px; border-radius: 5px; font-weight: 700; text-transform: uppercase; }
+.btn-engrenagem { background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 7px; width: 38px; height: 38px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+.btn-engrenagem:hover { background: #e6e9ec; }
+
+/* PERMISSÕES GRANULARES */
+.perm-item { display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+.perm-item:hover { background: #e9edf0; }
+.perm-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; flex-shrink: 0; accent-color: #1a6b7a; }
+.perm-icone { font-size: 16px; flex-shrink: 0; }
+.perm-label { font-size: 14px; font-weight: 500; }
+.perm-item-desabilitado { opacity: 0.55; cursor: not-allowed; }
+.perm-item-desabilitado input { cursor: not-allowed; }
 
 /* LISTA */
 .lista { padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
@@ -175,13 +190,19 @@ header {
 .btn-fechar { background: rgba(255,255,255,0.15); border: none; color: white; font-size: 20px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .modal-body { padding: 20px; max-height: 68vh; overflow-y: auto; }
 .vazio { text-align: center; color: var(--texto-suave); padding: 40px; font-size: 15px; }
-.mov-item { padding: 12px 0; border-bottom: 1px solid var(--cinza-claro); display: flex; gap: 12px; align-items: flex-start; }
+.mov-item { padding: 12px 14px; border-bottom: 1px solid var(--cinza-claro); display: flex; gap: 12px; align-items: flex-start; border-left: 4px solid transparent; border-radius: 6px; margin-bottom: 6px; }
+.mov-item.mov-saida { border-left-color: var(--vermelho); background: #fff9f9; }
+.mov-item.mov-entrada { border-left-color: var(--verde); background: #f8fcf8; }
+.mov-item.mov-edicao { border-left-color: var(--azul); background: #f7faff; }
+.mov-item.mov-exclusao { border-left-color: #999; background: #fafafa; }
+.mov-item.mov-compra { border-left-color: #0a8a7a; background: #f3fbfa; }
 .mov-item:last-child { border-bottom: none; }
 .mov-icon { width: 36px; height: 36px; border-radius: 50%; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 700; }
 .mov-icon.saida { background: var(--vermelho-fundo); color: var(--vermelho); }
 .mov-icon.entrada { background: var(--verde-fundo); color: var(--verde); }
 .mov-icon.edicao { background: var(--azul-fundo); color: var(--azul); }
 .mov-icon.exclusao { background: #f0f0f0; color: #666; }
+.mov-icon.compra { background: #e0f5f2; color: #0a8a7a; }
 .mov-detalhe { flex: 1; }
 .mov-produto { font-size: 14px; font-weight: 600; }
 .mov-info { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
@@ -207,11 +228,16 @@ header {
 .rec-sugestao-nome { font-size: 14px; font-weight: 600; }
 .rec-sugestao-info { font-size: 11px; color: var(--texto-suave); }
 .rec-sugestao-estoque { font-size: 12px; font-weight: 700; color: var(--verde); white-space: nowrap; }
-.rec-item-card { background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rec-item-card { background: var(--cinza-claro); border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.rec-item-linha-principal { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .rec-item-nome { flex: 1; min-width: 160px; font-size: 14px; font-weight: 600; }
 .rec-item-nome .rec-item-pa { display:block; font-size: 11px; color: var(--texto-suave); font-weight: 400; }
 .rec-item-qtd-input { width: 90px; padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 14px; outline: none; }
 .rec-item-qtd-input.erro { border-color: var(--vermelho); background: var(--vermelho-fundo); }
+.rec-preview { font-size: 12px; color: var(--verde); min-height: 16px; padding-left: 2px; }
+.rec-preview.rec-preview-erro { color: var(--vermelho); }
+.btn-adicionar-mais { background: var(--azul-fundo); color: var(--azul); border: 1.5px dashed var(--azul-claro); border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 6px; }
+.btn-adicionar-mais:hover { background: #d8e3f3; }
 .rec-item-unidade { font-size: 12px; color: var(--texto-suave); min-width: 28px; }
 .rec-item-disponivel { font-size: 11px; color: var(--texto-suave); white-space: nowrap; }
 .rec-item-remover { background: var(--vermelho-fundo); color: var(--vermelho); border: 1px solid #f0bcbc; border-radius: 7px; width: 32px; height: 32px; cursor: pointer; font-size: 14px; }
@@ -225,7 +251,7 @@ header {
 .hist-filtro-data { padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 7px; font-size: 13px; outline: none; background: white; }
 .hist-filtro-limpar { background: white; color: var(--texto-suave); border: 1.5px solid var(--borda); border-radius: 7px; padding: 8px 12px; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .hist-filtro-limpar:hover { background: var(--cinza-claro); }
-.mov-receita { border-left: 3px solid #7a3fa8; }
+.mov-receita { border-left-color: #7a3fa8 !important; background: #faf6fd !important; }
 .mov-icon.receita { background: #f1e6f8; color: #7a3fa8; }
 .mov-qtd.receita { color: #7a3fa8; font-size: 12px; }
 .mov-receita-toggle { background: none; border: none; color: #7a3fa8; font-size: 12px; cursor: pointer; text-decoration: underline; padding: 0; margin-top: 4px; }
@@ -313,9 +339,9 @@ header {
   <div class="header-right">
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
-    <button class="btn-header" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
-    <button class="btn-header verde" onclick="window.AppEstoque.exportarCSV()">📊 <span>Excel</span></button>
-    <button class="btn-header destaque" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
+    <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
+    <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.exportarCSV()">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
 </header>
@@ -340,8 +366,9 @@ header {
     <option value="baixo">Estoque baixo (≤10)</option>
     <option value="zerado">Zerado</option>
   </select>
-  <button class="btn-novo-produto somente-admin" onclick="window.AppEstoque.abrirNovoProduto()">+ Novo Produto</button>
-  <button class="btn-receita-filtros" onclick="window.AppEstoque.abrirReceita()">🧾 Baixa com Receita</button>
+  <button class="btn-novo-produto" id="btnNovoProdutoFiltro" style="display:none" onclick="window.AppEstoque.abrirNovoProduto()">+ Novo Produto</button>
+  <button class="btn-receita-filtros" id="btnReceitaFiltro" style="display:none" onclick="window.AppEstoque.abrirReceita()">🧾 Baixa com Receita</button>
+  <button class="btn-compra-filtros" id="btnCompraFiltro" style="display:none" onclick="window.AppEstoque.abrirCompra()">📦 Entrada de Compras</button>
   <div class="contador" id="contador"></div>
 </div>
 
@@ -361,6 +388,7 @@ header {
         <option value="entrada">Entradas</option>
         <option value="saida">Retiradas</option>
         <option value="receita">Baixas com receita</option>
+        <option value="compra">Entradas por NF</option>
         <option value="edicao">Edições</option>
         <option value="exclusao">Exclusões</option>
       </select>
@@ -459,6 +487,93 @@ header {
   </div>
 </div>
 
+<!-- MODAL ENTRADA DE COMPRAS (NF) -->
+<div class="overlay" id="overlayCompra" onclick="if(event.target===this)window.AppEstoque.fecharCompra()">
+  <div class="modal">
+    <div class="modal-header" style="background:linear-gradient(90deg, #0a5a4f, #0a8a7a)">
+      <h2>📦 Entrada de Compras (Nota Fiscal)</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharCompra()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-aviso" style="margin-bottom:14px">Use esta opção quando chegar uma Nota Fiscal com vários produtos de uma vez. Tudo fica registrado como <strong>um único movimento</strong> no histórico. Não é necessário informar valores.</div>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="campo-group"><label>Número da Nota Fiscal</label><input type="text" id="compra-numero" placeholder="Ex: NF 12345"></div>
+          <div class="campo-group"><label>Fornecedor</label><input type="text" id="compra-fornecedor" placeholder="Ex: Distribuidora ABC"></div>
+        </div>
+        <div class="form-row">
+          <div class="campo-group"><label>Responsável pelo lançamento</label><input type="text" id="compra-resp" placeholder="Nome de quem está registrando"></div>
+          <div class="campo-group"><label>Observação (opcional)</label><input type="text" id="compra-obs" placeholder="Ex: Compra trimestral"></div>
+        </div>
+
+        <div style="border-top:1.5px solid var(--borda);padding-top:14px;margin-top:6px">
+          <label style="font-size:12px;font-weight:600;color:var(--texto-suave);text-transform:uppercase;letter-spacing:0.5px">Adicionar produto à nota fiscal</label>
+          <div class="form-row" style="margin-top:8px;align-items:flex-start">
+            <div class="campo-group" style="flex:2;min-width:220px">
+              <input type="text" id="compra-busca-produto" placeholder="🔍 Buscar produto para adicionar..." oninput="window.AppEstoque.buscarProdutoCompra()" autocomplete="off">
+              <div id="compra-sugestoes" style="position:relative"></div>
+            </div>
+            <button type="button" class="btn-cadastrar-na-hora" onclick="window.AppEstoque.abrirCadastroInlineCompra()">🆕 Produto não está na lista? Cadastrar agora</button>
+          </div>
+        </div>
+
+        <div id="compra-itens-vazio" class="vazio" style="padding:24px">Nenhum produto adicionado ainda. Busque acima e clique para adicionar.</div>
+        <div id="compra-lista-itens" style="display:flex;flex-direction:column;gap:8px"></div>
+
+        <div class="painel-acoes" style="justify-content:flex-end;margin-top:10px;border-top:1.5px solid var(--borda);padding-top:14px">
+          <button class="btn-cancelar" onclick="window.AppEstoque.fecharCompra()">Cancelar</button>
+          <button class="btn-confirmar-entrada" id="btn-confirmar-compra" onclick="window.AppEstoque.confirmarCompra()">✓ Confirmar Entrada da Nota Fiscal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUB-MODAL: CADASTRAR PRODUTO NA HORA (dentro do fluxo de Entrada de Compras) -->
+<div class="overlay" id="overlayCadastroInlineCompra" style="z-index:260" onclick="if(event.target===this)window.AppEstoque.fecharCadastroInlineCompra()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg, #0a5a4f, #0a8a7a)">
+      <h2>🆕 Cadastrar Produto</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharCadastroInlineCompra()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-aviso" style="margin-bottom:14px">Este produto será cadastrado no sistema e adicionado automaticamente à nota fiscal que você está lançando — sem perder o que já foi preenchido.</div>
+      <div class="form-grid">
+        <div class="campo-group"><label>Nome do produto</label><input type="text" id="cic-nome" placeholder="Ex: Glifosato 720 WG (KG)"></div>
+        <div class="campo-group"><label>Princípio ativo</label><input type="text" id="cic-pa" placeholder="Ex: GLIFOSATO"></div>
+        <div class="form-row">
+          <div class="campo-group">
+            <label>Classe</label>
+            <select id="cic-classe">
+              <option value="ADJUVANTE">Adjuvante</option>
+              <option value="BIOLÓGICO">Biológico</option>
+              <option value="FOLIAR">Foliar</option>
+              <option value="FUNGICIDA">Fungicida</option>
+              <option value="HERBICIDA">Herbicida</option>
+              <option value="INSETICIDA">Inseticida</option>
+              <option value="MEIO DE CULTURA">Meio de Cultura</option>
+              <option value="MOLUSCICIDA">Moluscicida</option>
+              <option value="OLEO">Óleo</option>
+            </select>
+          </div>
+          <div class="campo-group" style="max-width:130px">
+            <label>Unidade</label>
+            <select id="cic-unidade">
+              <option value="L">Litro (L)</option>
+              <option value="KG">Quilo (KG)</option>
+            </select>
+          </div>
+        </div>
+        <div class="painel-acoes" style="justify-content:flex-end">
+          <button class="btn-cancelar" onclick="window.AppEstoque.fecharCadastroInlineCompra()">Cancelar</button>
+          <button class="btn-confirmar-entrada" id="btn-confirmar-cadastro-inline" onclick="window.AppEstoque.confirmarCadastroInlineCompra()">✓ Cadastrar e Adicionar à NF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL GESTÃO DE USUÁRIOS -->
 <div class="overlay" id="overlayUsuarios" onclick="if(event.target===this)window.AppEstoque.fecharUsuarios()">
   <div class="modal">
@@ -467,8 +582,26 @@ header {
       <button class="btn-fechar" onclick="window.AppEstoque.fecharUsuarios()">×</button>
     </div>
     <div class="modal-body">
-      <div class="form-aviso" style="margin-bottom:14px">Para criar uma conta nova, cadastre o e-mail e senha no <strong>Firebase Console → Authentication → Add user</strong>. Na primeira vez que essa pessoa fizer login aqui, ela aparecerá nesta lista para você definir o nível de acesso.</div>
+      <div class="form-aviso" style="margin-bottom:14px">Para criar uma conta nova, cadastre o e-mail e senha no <strong>Firebase Console → Authentication → Add user</strong>. Na primeira vez que essa pessoa fizer login aqui, ela aparecerá nesta lista para você definir o nível de acesso e as permissões.</div>
       <div id="usuarios-lista">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERMISSÕES GRANULARES (sub-modal, abre por cima da gestão de usuários) -->
+<div class="overlay" id="overlayPermissoes" onclick="if(event.target===this)window.AppEstoque.fecharPermissoes()" style="z-index:250">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg, #0d3a42, #1a6b7a)">
+      <h2>⚙️ Permissões — <span id="perm-usuario-email"></span></h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharPermissoes()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="perm-aviso-admin" class="form-aviso" style="margin-bottom:14px;display:none">Este usuário é Administrador e tem acesso total a todas as funções automaticamente — as permissões abaixo não se aplicam a ele.</div>
+      <div id="perm-lista" class="form-grid"></div>
+      <div class="painel-acoes" style="justify-content:flex-end;margin-top:16px;border-top:1.5px solid var(--borda);padding-top:14px">
+        <button class="btn-cancelar" onclick="window.AppEstoque.fecharPermissoes()">Cancelar</button>
+        <button class="btn-confirmar-editar" id="btn-salvar-permissoes" onclick="window.AppEstoque.salvarPermissoes()">✓ Salvar Permissões</button>
+      </div>
     </div>
   </div>
 </div>
@@ -591,6 +724,9 @@ const Persistencia = {
   async atualizarNivelUsuario(uid, nivel, label) {
     await setDoc(doc(db, 'usuarios', uid), { nivel, label }, { merge: true });
   },
+  async atualizarPermissoesUsuario(uid, permissoes) {
+    await setDoc(doc(db, 'usuarios', uid), { permissoes }, { merge: true });
+  },
 
   // ---- CONFIGURAÇÕES (ex.: contador de próximo id, nome da fazenda) ----
   async obterConfiguracao(chave) {
@@ -623,9 +759,37 @@ const Persistencia = {
 // que cada conta loga — depois disso, o nível fica salvo no Firestore
 // na coleção "usuarios" e pode ser ajustado lá manualmente se precisar)
 // =====================================================================
+
+// Lista de permissões granulares disponíveis no sistema. Cada uma é uma
+// chave booleana dentro de usuario.permissoes. O admin (nivel === 'admin')
+// sempre tem TODAS, independente do que estiver salvo — não é editável.
+const PERMISSOES_DISPONIVEIS = [
+  { chave: 'darEntrada',     label: 'Dar entrada de produto',           icone: '➕' },
+  { chave: 'darBaixa',       label: 'Dar baixa de produto',             icone: '➖' },
+  { chave: 'usarReceita',    label: 'Usar Baixa com Receita',           icone: '🧾' },
+  { chave: 'usarCompra',     label: 'Usar Entrada de Compras (NF)',     icone: '📦' },
+  { chave: 'editarProduto',  label: 'Editar produto',                  icone: '✎' },
+  { chave: 'excluirProduto', label: 'Excluir produto',                 icone: '🗑' },
+  { chave: 'cadastrarProduto', label: 'Cadastrar produto novo',        icone: '🆕' },
+  { chave: 'verRelatorios',  label: 'Ver histórico e relatórios',      icone: '📊' }
+];
+
+// Conjunto padrão de permissões para a função "Operador de Estoque" —
+// usado ao criar o perfil de uma conta nova pela primeira vez.
+const PERMISSOES_PADRAO_ESTOQUE = {
+  darEntrada: true, darBaixa: true, usarReceita: true, usarCompra: true,
+  editarProduto: false, excluirProduto: false, cadastrarProduto: false, verRelatorios: true
+};
+
+function todasPermissoes() {
+  const obj = {};
+  PERMISSOES_DISPONIVEIS.forEach(p => obj[p.chave] = true);
+  return obj;
+}
+
 const PERFIS_PADRAO_POR_EMAIL = {
-  'fazenda@amjagro.com.br': { nivel: 'admin',   label: 'Administrador' },
-  'estoque@amjagro.com.br': { nivel: 'estoque', label: 'Operador de Estoque' }
+  'fazenda@amjagro.com.br': { nivel: 'admin',   label: 'Administrador',       permissoes: todasPermissoes() },
+  'estoque@amjagro.com.br': { nivel: 'estoque', label: 'Operador de Estoque', permissoes: { ...PERMISSOES_PADRAO_ESTOQUE } }
 };
 
 // =====================================================================
@@ -636,7 +800,7 @@ let historico = [];
 let proximoIdLocal = 0; // fallback apenas para uso interno antes do primeiro carregamento
 let painelAberto = null;
 let tipoPainelAberto = null;
-let sessaoAtual = null; // { uid, email, nivel, label }
+let sessaoAtual = null; // { uid, email, nivel, label, permissoes }
 let unsubProdutos = null;
 let unsubHistorico = null;
 
@@ -646,12 +810,44 @@ let unsubHistorico = null;
 function getSessao() { return sessaoAtual; }
 function isAdmin() { return sessaoAtual && sessaoAtual.nivel === 'admin'; }
 
+// Verifica uma permissão granular. Admin sempre passa em qualquer checagem,
+// independente do que estiver salvo no Firestore — isso evita que um admin
+// fique travado fora de uma função por um dado inconsistente.
+function temPermissao(chave) {
+  if (!sessaoAtual) return false;
+  if (sessaoAtual.nivel === 'admin') return true;
+  return !!(sessaoAtual.permissoes && sessaoAtual.permissoes[chave]);
+}
+
+function exigirPermissao(chave, mensagem) {
+  if (temPermissao(chave)) return true;
+  mostrarToast(mensagem || 'Você não tem permissão para esta ação.', 'erro');
+  return false;
+}
+
 function aplicarPermissoesUI() {
   const s = getSessao();
   if (!s) return;
   document.body.classList.toggle('is-admin', s.nivel === 'admin');
   const badge = document.getElementById('badgeUsuario');
   badge.innerHTML = `<span class="ponto"></span><span class="txt">${s.label} (${s.email})</span>`;
+
+  // Botões cuja visibilidade depende de permissão granular (não apenas nível admin/estoque)
+  const btnNovoProduto = document.getElementById('btnNovoProdutoFiltro');
+  if (btnNovoProduto) btnNovoProduto.style.display = temPermissao('cadastrarProduto') ? 'inline-block' : 'none';
+
+  const btnReceita = document.getElementById('btnReceitaFiltro');
+  if (btnReceita) btnReceita.style.display = temPermissao('usarReceita') ? 'inline-block' : 'none';
+
+  const btnCompra = document.getElementById('btnCompraFiltro');
+  if (btnCompra) btnCompra.style.display = temPermissao('usarCompra') ? 'inline-block' : 'none';
+
+  const btnHistorico = document.getElementById('btnHistoricoHeader');
+  if (btnHistorico) btnHistorico.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
+  const btnExcel = document.getElementById('btnExcelHeader');
+  if (btnExcel) btnExcel.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
+  const btnPDF = document.getElementById('btnPDFHeader');
+  if (btnPDF) btnPDF.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
 }
 
 // =====================================================================
@@ -716,12 +912,16 @@ async function iniciarSessaoAutenticada(user) {
     // Primeira vez que essa conta loga: cria o perfil no Firestore
     // com base no mapa de e-mails conhecidos (ou "estoque" por padrão).
     if (!perfil) {
-      const padrao = PERFIS_PADRAO_POR_EMAIL[user.email] || { nivel: 'estoque', label: 'Operador de Estoque' };
-      perfil = { email: user.email, nivel: padrao.nivel, label: padrao.label, criadoEm: new Date().toISOString() };
+      const padrao = PERFIS_PADRAO_POR_EMAIL[user.email] || { nivel: 'estoque', label: 'Operador de Estoque', permissoes: { ...PERMISSOES_PADRAO_ESTOQUE } };
+      perfil = { email: user.email, nivel: padrao.nivel, label: padrao.label, permissoes: padrao.permissoes, criadoEm: new Date().toISOString() };
       await Persistencia.criarPerfilUsuario(user.uid, perfil);
     }
 
-    sessaoAtual = { uid: user.uid, email: user.email, nivel: perfil.nivel, label: perfil.label };
+    // Contas criadas antes deste recurso existir podem não ter "permissoes" salvo —
+    // nesse caso, aplica o padrão de Operador de Estoque para não deixar tudo bloqueado.
+    const permissoes = perfil.nivel === 'admin' ? todasPermissoes() : (perfil.permissoes || { ...PERMISSOES_PADRAO_ESTOQUE });
+
+    sessaoAtual = { uid: user.uid, email: user.email, nivel: perfil.nivel, label: perfil.label, permissoes };
 
     document.getElementById('loginOverlay').classList.add('escondido');
     document.getElementById('loginErro').textContent = '';
@@ -997,7 +1197,10 @@ function renderLista() {
   const lista = document.getElementById('lista');
   lista.innerHTML = '';
   if (filtrados.length === 0) { lista.innerHTML = '<div class="vazio">Nenhum produto encontrado</div>'; return; }
-  const admin = isAdmin();
+  const podeEditar = temPermissao('editarProduto');
+  const podeExcluir = temPermissao('excluirProduto');
+  const podeEntrada = temPermissao('darEntrada');
+  const podeBaixa = temPermissao('darBaixa');
   Object.keys(grupos).sort().forEach(classe => {
     const grupo = document.createElement('div');
     grupo.className = 'classe-grupo';
@@ -1018,10 +1221,10 @@ function renderLista() {
             <div class="estoque-label">em estoque</div>
           </div>
           <div class="btn-acoes">
-            <button class="btn-entrada" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','entrada')" title="Registrar entrada">+ Entrada</button>
-            <button class="btn-baixa" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','saida')" ${p.estoque<=0?'disabled':''}>− Baixa</button>
-            ${admin ? `<button class="btn-editar" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','editar')" title="Editar produto">✎</button>
-            <button class="btn-excluir" onclick="event.stopPropagation();window.AppEstoque.excluirProduto('${p.id}')" title="Excluir produto">🗑</button>` : ''}
+            ${podeEntrada ? `<button class="btn-entrada" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','entrada')" title="Registrar entrada">+ Entrada</button>` : ''}
+            ${podeBaixa ? `<button class="btn-baixa" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','saida')" ${p.estoque<=0?'disabled':''}>− Baixa</button>` : ''}
+            ${podeEditar ? `<button class="btn-editar" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','editar')" title="Editar produto">✎</button>` : ''}
+            ${podeExcluir ? `<button class="btn-excluir" onclick="event.stopPropagation();window.AppEstoque.excluirProduto('${p.id}')" title="Excluir produto">🗑</button>` : ''}
           </div>
         </div>
         <div class="painel-baixa" id="painel-${p.id}">
@@ -1045,7 +1248,7 @@ function renderPainelConteudo(id, tipo) {
   const painel = document.getElementById(`painel-${id}`);
   if (!el || !painel) return;
 
-  if (tipo === 'editar' && !isAdmin()) tipo = 'saida'; // proteção extra
+  if (tipo === 'editar' && !temPermissao('editarProduto')) tipo = 'saida'; // proteção extra
 
   if (tipo === 'saida') {
     painel.className = 'painel-baixa aberto tipo-saida';
@@ -1107,7 +1310,7 @@ function togglePainel(id, tipo) {
 }
 
 function abrirPainel(id, tipo) {
-  if (tipo === 'editar' && !isAdmin()) { mostrarToast('Apenas o administrador pode editar produtos.', 'erro'); return; }
+  if (tipo === 'editar' && !temPermissao('editarProduto')) { mostrarToast('Você não tem permissão para editar produtos.', 'erro'); return; }
   if (painelAberto !== null && painelAberto !== id) { const ant = document.getElementById(`painel-${painelAberto}`); if (ant) ant.classList.remove('aberto'); }
   painelAberto = id; tipoPainelAberto = tipo;
   const painel = document.getElementById(`painel-${id}`);
@@ -1140,6 +1343,10 @@ function travarBotao(id, travado, textoOriginal) {
 // MOVIMENTOS (entrada / saída) — async/await + Firestore
 // =====================================================================
 async function confirmarMovimento(id, tipo) {
+  const permissaoNecessaria = tipo === 'saida' ? 'darBaixa' : 'darEntrada';
+  const mensagemErro = tipo === 'saida' ? 'Você não tem permissão para dar baixa.' : 'Você não tem permissão para dar entrada.';
+  if (!exigirPermissao(permissaoNecessaria, mensagemErro)) return;
+
   const p = produtos.find(x => String(x.id) === String(id));
   if (!p) return;
   const qtd = parseFloat(document.getElementById(`qtd-${id}`).value);
@@ -1177,7 +1384,7 @@ async function confirmarMovimento(id, tipo) {
 }
 
 async function confirmarEdicao(id) {
-  if (!isAdmin()) { mostrarToast('Apenas o administrador pode editar produtos.', 'erro'); return; }
+  if (!exigirPermissao('editarProduto', 'Você não tem permissão para editar produtos.')) return;
   const p = produtos.find(x => String(x.id) === String(id));
   if (!p) return;
   const novoNome = document.getElementById(`ed-nome-${id}`).value.trim();
@@ -1217,7 +1424,7 @@ async function confirmarEdicao(id) {
 }
 
 async function excluirProduto(id) {
-  if (!isAdmin()) { mostrarToast('Apenas o administrador pode excluir produtos.', 'erro'); return; }
+  if (!exigirPermissao('excluirProduto', 'Você não tem permissão para excluir produtos.')) return;
   const p = produtos.find(x => String(x.id) === String(id));
   if (!p) return;
   if (!confirm(`Excluir o produto "${p.nome}" definitivamente? Essa ação não pode ser desfeita.`)) return;
@@ -1241,7 +1448,7 @@ async function excluirProduto(id) {
 // NOVO PRODUTO
 // =====================================================================
 function abrirNovoProduto() {
-  if (!isAdmin()) { mostrarToast('Apenas o administrador pode adicionar produtos.', 'erro'); return; }
+  if (!exigirPermissao('cadastrarProduto', 'Você não tem permissão para cadastrar produtos.')) return;
   document.getElementById('np-nome').value = '';
   document.getElementById('np-pa').value = '';
   document.getElementById('np-unidade').value = 'L';
@@ -1252,7 +1459,7 @@ function abrirNovoProduto() {
 function fecharNovoProduto() { document.getElementById('overlayNovoProduto').classList.remove('aberto'); }
 
 async function confirmarNovoProduto() {
-  if (!isAdmin()) return;
+  if (!temPermissao('cadastrarProduto')) return;
   const nome = document.getElementById('np-nome').value.trim();
   const pa = document.getElementById('np-pa').value.trim();
   const classe = document.getElementById('np-classe').value;
@@ -1291,6 +1498,7 @@ async function confirmarNovoProduto() {
 let receitaItens = []; // [{ produtoId, nome, pa, unidade, estoqueDisponivel, qtd }]
 
 function abrirReceita() {
+  if (!exigirPermissao('usarReceita', 'Você não tem permissão para usar Baixa com Receita.')) return;
   receitaItens = [];
   document.getElementById('rec-numero').value = '';
   document.getElementById('rec-resp').value = '';
@@ -1360,10 +1568,27 @@ function atualizarQtdReceita(idx, valor) {
   receitaItens[idx].qtd = valor;
   const item = receitaItens[idx];
   const input = document.getElementById(`rec-qtd-${idx}`);
+  const previewEl = document.getElementById(`rec-preview-${idx}`);
   const qtdNum = parseFloat(valor);
+
   if (input) {
     if (qtdNum > item.estoqueDisponivel) input.classList.add('erro');
     else input.classList.remove('erro');
+  }
+
+  if (previewEl) {
+    if (!valor || isNaN(qtdNum) || qtdNum <= 0) {
+      previewEl.textContent = '';
+    } else {
+      const estoqueApos = Math.round((item.estoqueDisponivel - qtdNum) * 100) / 100;
+      if (qtdNum > item.estoqueDisponivel) {
+        previewEl.innerHTML = `⚠️ quantidade maior que o disponível`;
+        previewEl.classList.add('rec-preview-erro');
+      } else {
+        previewEl.innerHTML = `Estoque após: <strong>${fmt(estoqueApos)} ${item.unidade}</strong>`;
+        previewEl.classList.remove('rec-preview-erro');
+      }
+    }
   }
 }
 
@@ -1380,13 +1605,29 @@ function renderItensReceita() {
 
   lista.innerHTML = receitaItens.map((item, idx) => `
     <div class="rec-item-card">
-      <div class="rec-item-nome">${item.nome}<span class="rec-item-pa">${item.pa}</span></div>
-      <input type="number" class="rec-item-qtd-input" id="rec-qtd-${idx}" min="0.1" step="0.5" placeholder="Qtd" value="${item.qtd}" oninput="window.AppEstoque.atualizarQtdReceita(${idx}, this.value)">
-      <span class="rec-item-unidade">${item.unidade}</span>
-      <span class="rec-item-disponivel">disp.: ${fmt(item.estoqueDisponivel)} ${item.unidade}</span>
-      <button class="rec-item-remover" onclick="window.AppEstoque.removerItemReceita(${idx})" title="Remover">✕</button>
+      <div class="rec-item-linha-principal">
+        <div class="rec-item-nome">${item.nome}<span class="rec-item-pa">${item.pa}</span></div>
+        <input type="number" class="rec-item-qtd-input" id="rec-qtd-${idx}" min="0.1" step="0.5" placeholder="Qtd" value="${item.qtd}" oninput="window.AppEstoque.atualizarQtdReceita(${idx}, this.value)">
+        <span class="rec-item-unidade">${item.unidade}</span>
+        <span class="rec-item-disponivel">disp.: ${fmt(item.estoqueDisponivel)} ${item.unidade}</span>
+        <button class="rec-item-remover" onclick="window.AppEstoque.removerItemReceita(${idx})" title="Remover">✕</button>
+      </div>
+      <div class="rec-preview" id="rec-preview-${idx}"></div>
     </div>
-  `).join('') + `<div class="rec-resumo-total">${receitaItens.length} produto${receitaItens.length!==1?'s':''} na receita</div>`;
+  `).join('') + `
+    <div class="rec-resumo-total">${receitaItens.length} produto${receitaItens.length!==1?'s':''} na receita</div>
+    <button type="button" class="btn-adicionar-mais" onclick="window.AppEstoque.focarBuscaReceita()">+ Adicionar mais produtos</button>
+  `;
+
+  // Restaura os previews de "estoque após" para itens que já tinham quantidade preenchida
+  receitaItens.forEach((item, idx) => {
+    if (item.qtd) window.AppEstoque.atualizarQtdReceita(idx, item.qtd);
+  });
+}
+
+function focarBuscaReceita() {
+  const campo = document.getElementById('rec-busca-produto');
+  if (campo) { campo.focus(); campo.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
 }
 
 async function confirmarReceita() {
@@ -1446,6 +1687,254 @@ async function confirmarReceita() {
 }
 
 // =====================================================================
+// ENTRADA DE COMPRAS (NF) — entrada de vários produtos de uma vez vindos
+// de uma nota fiscal, registrada como um único movimento no histórico.
+// Inclui cadastro de produto "na hora" sem perder o que já foi preenchido.
+// =====================================================================
+let compraItens = []; // [{ produtoId, nome, pa, unidade, estoqueAtual, qtd }]
+
+function abrirCompra() {
+  if (!exigirPermissao('usarCompra', 'Você não tem permissão para usar Entrada de Compras.')) return;
+  compraItens = [];
+  document.getElementById('compra-numero').value = '';
+  document.getElementById('compra-fornecedor').value = '';
+  document.getElementById('compra-resp').value = '';
+  document.getElementById('compra-obs').value = '';
+  document.getElementById('compra-busca-produto').value = '';
+  document.getElementById('compra-sugestoes').innerHTML = '';
+  renderItensCompra();
+  document.getElementById('overlayCompra').classList.add('aberto');
+  setTimeout(() => document.getElementById('compra-numero').focus(), 80);
+}
+
+function fecharCompra() {
+  document.getElementById('overlayCompra').classList.remove('aberto');
+  compraItens = [];
+}
+
+function buscarProdutoCompra() {
+  const termo = document.getElementById('compra-busca-produto').value.trim().toLowerCase();
+  const caixa = document.getElementById('compra-sugestoes');
+  if (!termo) { caixa.innerHTML = ''; return; }
+
+  const jaAdicionados = new Set(compraItens.map(i => String(i.produtoId)));
+  const candidatos = produtos.filter(p =>
+    !jaAdicionados.has(String(p.id)) &&
+    (p.nome.toLowerCase().includes(termo) || p.pa.toLowerCase().includes(termo))
+  ).slice(0, 8);
+
+  if (candidatos.length === 0) {
+    caixa.innerHTML = `<div class="rec-sugestoes-lista">
+      <div class="rec-sugestao-item" style="cursor:default;color:var(--texto-suave)">Nenhum produto encontrado — use "Cadastrar agora" ao lado</div>
+    </div>`;
+    return;
+  }
+
+  caixa.innerHTML = `<div class="rec-sugestoes-lista">${candidatos.map(p => `
+    <div class="rec-sugestao-item" onclick="window.AppEstoque.adicionarItemCompra('${p.id}')">
+      <div>
+        <div class="rec-sugestao-nome">${p.nome}</div>
+        <div class="rec-sugestao-info">${p.pa}</div>
+      </div>
+      <div class="rec-sugestao-estoque">${fmt(p.estoque)} ${p.unidade}</div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function adicionarItemCompra(produtoId) {
+  const p = produtos.find(x => String(x.id) === String(produtoId));
+  if (!p) return;
+
+  compraItens.push({ produtoId: p.id, nome: p.nome, pa: p.pa, unidade: p.unidade, estoqueAtual: p.estoque, qtd: '' });
+
+  document.getElementById('compra-busca-produto').value = '';
+  document.getElementById('compra-sugestoes').innerHTML = '';
+  renderItensCompra();
+  setTimeout(() => {
+    const idx = compraItens.length - 1;
+    const input = document.getElementById(`compra-qtd-${idx}`);
+    if (input) input.focus();
+  }, 60);
+}
+
+function removerItemCompra(idx) {
+  compraItens.splice(idx, 1);
+  renderItensCompra();
+}
+
+function atualizarQtdCompra(idx, valor) {
+  compraItens[idx].qtd = valor;
+  const item = compraItens[idx];
+  const previewEl = document.getElementById(`compra-preview-${idx}`);
+  const qtdNum = parseFloat(valor);
+
+  if (previewEl) {
+    if (!valor || isNaN(qtdNum) || qtdNum <= 0) {
+      previewEl.textContent = '';
+    } else {
+      const estoqueApos = Math.round((item.estoqueAtual + qtdNum) * 100) / 100;
+      previewEl.innerHTML = `Estoque após: <strong>${fmt(estoqueApos)} ${item.unidade}</strong>`;
+    }
+  }
+}
+
+function renderItensCompra() {
+  const vazio = document.getElementById('compra-itens-vazio');
+  const lista = document.getElementById('compra-lista-itens');
+
+  if (compraItens.length === 0) {
+    vazio.style.display = 'block';
+    lista.innerHTML = '';
+    return;
+  }
+  vazio.style.display = 'none';
+
+  lista.innerHTML = compraItens.map((item, idx) => `
+    <div class="rec-item-card">
+      <div class="rec-item-linha-principal">
+        <div class="rec-item-nome">${item.nome}<span class="rec-item-pa">${item.pa}</span></div>
+        <input type="number" class="rec-item-qtd-input" id="compra-qtd-${idx}" min="0.1" step="0.5" placeholder="Qtd" value="${item.qtd}" oninput="window.AppEstoque.atualizarQtdCompra(${idx}, this.value)">
+        <span class="rec-item-unidade">${item.unidade}</span>
+        <span class="rec-item-disponivel">atual: ${fmt(item.estoqueAtual)} ${item.unidade}</span>
+        <button class="rec-item-remover" onclick="window.AppEstoque.removerItemCompra(${idx})" title="Remover">✕</button>
+      </div>
+      <div class="rec-preview" id="compra-preview-${idx}"></div>
+    </div>
+  `).join('') + `
+    <div class="rec-resumo-total">${compraItens.length} produto${compraItens.length!==1?'s':''} na nota fiscal</div>
+    <button type="button" class="btn-adicionar-mais" onclick="window.AppEstoque.focarBuscaCompra()">+ Adicionar mais produtos</button>
+  `;
+
+  compraItens.forEach((item, idx) => {
+    if (item.qtd) window.AppEstoque.atualizarQtdCompra(idx, item.qtd);
+  });
+}
+
+function focarBuscaCompra() {
+  const campo = document.getElementById('compra-busca-produto');
+  if (campo) { campo.focus(); campo.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+}
+
+async function confirmarCompra() {
+  const numero = document.getElementById('compra-numero').value.trim();
+  const fornecedor = document.getElementById('compra-fornecedor').value.trim();
+  const resp = document.getElementById('compra-resp').value.trim();
+  const obs = document.getElementById('compra-obs').value.trim();
+
+  if (!numero) { mostrarToast('Informe o número da Nota Fiscal.', 'erro'); return; }
+  if (!resp) { mostrarToast('Informe o responsável pelo lançamento.', 'erro'); return; }
+  if (compraItens.length === 0) { mostrarToast('Adicione ao menos um produto à nota fiscal.', 'erro'); return; }
+
+  for (const item of compraItens) {
+    const qtd = parseFloat(item.qtd);
+    if (!qtd || qtd <= 0) { mostrarToast(`Informe a quantidade de "${item.nome}".`, 'erro'); return; }
+  }
+
+  const btn = document.getElementById('btn-confirmar-compra');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    const s = getSessao();
+    const itensFinais = [];
+
+    for (const item of compraItens) {
+      const p = produtos.find(x => String(x.id) === String(item.produtoId));
+      if (!p) continue;
+      const qtd = parseFloat(item.qtd);
+      const novoEstoque = Math.round((p.estoque + qtd) * 100) / 100;
+      await Persistencia.salvarProduto({ ...p, estoque: novoEstoque });
+      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos: novoEstoque });
+    }
+
+    await Persistencia.registrarHistorico({
+      tipo: 'compra',
+      numeroNF: numero,
+      fornecedor,
+      resp, obs,
+      itens: itensFinais,
+      totalItens: itensFinais.length,
+      data: new Date().toISOString(),
+      usuario: s ? s.email : '—'
+    });
+
+    fecharCompra();
+    mostrarToast(`✓ Entrada da NF "${numero}" registrada (${itensFinais.length} produtos)!`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao registrar a entrada de compra. Tente novamente.', 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Confirmar Entrada da Nota Fiscal';
+  }
+}
+
+// ---- CADASTRO INLINE DE PRODUTO (dentro do fluxo de Entrada de Compras) ----
+// Abre por cima do modal de compra SEM fechá-lo, preservando NF, fornecedor,
+// responsável e todos os itens já adicionados. Ao confirmar, o produto novo
+// é criado no Firestore e adicionado automaticamente à lista da NF em edição.
+function abrirCadastroInlineCompra() {
+  if (!exigirPermissao('cadastrarProduto', 'Você não tem permissão para cadastrar produtos.')) return;
+  document.getElementById('cic-nome').value = document.getElementById('compra-busca-produto').value.trim();
+  document.getElementById('cic-pa').value = '';
+  document.getElementById('cic-classe').value = 'HERBICIDA';
+  document.getElementById('cic-unidade').value = 'L';
+  document.getElementById('overlayCadastroInlineCompra').classList.add('aberto');
+  setTimeout(() => document.getElementById('cic-nome').focus(), 80);
+}
+
+function fecharCadastroInlineCompra() {
+  document.getElementById('overlayCadastroInlineCompra').classList.remove('aberto');
+}
+
+async function confirmarCadastroInlineCompra() {
+  const nome = document.getElementById('cic-nome').value.trim();
+  const pa = document.getElementById('cic-pa').value.trim();
+  const classe = document.getElementById('cic-classe').value;
+  const unidade = document.getElementById('cic-unidade').value;
+
+  if (!nome) { mostrarToast('Informe o nome do produto.', 'erro'); return; }
+
+  const btn = document.getElementById('btn-confirmar-cadastro-inline');
+  btn.disabled = true;
+  btn.textContent = 'Cadastrando...';
+
+  try {
+    // Produto começa com estoque 0 — a quantidade real vem da própria NF que
+    // está sendo lançada, e será somada no momento de confirmar a compra.
+    const novo = { classe, nome, unidade, pa: pa || classe, estoque: 0 };
+    const novoId = await Persistencia.criarProduto(novo);
+
+    const s = getSessao();
+    await Persistencia.registrarHistorico({
+      tipo: 'entrada', produtoId: novoId, produto: novo.nome, classe: novo.classe,
+      qtd: 0, unidade: novo.unidade, resp: s ? s.label : '—',
+      obs: 'Produto cadastrado durante lançamento de Entrada de Compras (NF)',
+      estoqueApos: 0, data: new Date().toISOString(), usuario: s ? s.email : '—'
+    });
+
+    // Adiciona imediatamente à lista de itens da NF em edição, sem fechar o modal de compra
+    compraItens.push({ produtoId: novoId, nome: novo.nome, pa: novo.pa, unidade: novo.unidade, estoqueAtual: 0, qtd: '' });
+    renderItensCompra();
+
+    fecharCadastroInlineCompra();
+    mostrarToast(`✓ Produto "${novo.nome}" cadastrado e adicionado à NF!`, 'sucesso');
+
+    setTimeout(() => {
+      const idx = compraItens.length - 1;
+      const input = document.getElementById(`compra-qtd-${idx}`);
+      if (input) input.focus();
+    }, 100);
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao cadastrar produto.', 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Cadastrar e Adicionar à NF';
+  }
+}
+
+// =====================================================================
 // GESTÃO DE USUÁRIOS (somente admin) — visualizar e alterar permissões
 // de quem já fez login pelo menos uma vez. Para CRIAR contas novas, o
 // admin continua usando o Firebase Console (Authentication → Add user);
@@ -1473,7 +1962,10 @@ function fecharUsuarios() {
   document.getElementById('overlayUsuarios').classList.remove('aberto');
 }
 
+let usuariosCarregados = []; // cache da última lista carregada, usado pelo modal de permissões
+
 function renderUsuarios(lista) {
+  usuariosCarregados = lista || [];
   const cont = document.getElementById('usuarios-lista');
   if (!lista || lista.length === 0) {
     cont.innerHTML = '<div class="vazio">Nenhum usuário fez login ainda.</div>';
@@ -1495,6 +1987,7 @@ function renderUsuarios(lista) {
         <select class="user-nivel-select" id="nivel-${u.uid}" ${ehVoce ? 'disabled title="Você não pode alterar seu próprio nível"' : ''} onchange="window.AppEstoque.confirmarMudancaNivel('${u.uid}', '${(u.email||'').replace(/'/g, "\\'")}')">
           ${opcoes}
         </select>
+        <button class="btn-engrenagem" onclick="window.AppEstoque.abrirPermissoes('${u.uid}')" title="Configurar permissões individuais">⚙️</button>
       </div>`;
   }).join('');
 }
@@ -1524,9 +2017,74 @@ async function confirmarMudancaNivel(uid, email) {
 }
 
 // =====================================================================
+// PERMISSÕES GRANULARES (sub-modal aberto pela engrenagem de cada usuário)
+// =====================================================================
+let permissoesUidEmEdicao = null;
+
+function abrirPermissoes(uid) {
+  const u = usuariosCarregados.find(x => x.uid === uid);
+  if (!u) { mostrarToast('Usuário não encontrado.', 'erro'); return; }
+
+  permissoesUidEmEdicao = uid;
+  document.getElementById('perm-usuario-email').textContent = u.email || uid;
+
+  const ehAdmin = u.nivel === 'admin';
+  document.getElementById('perm-aviso-admin').style.display = ehAdmin ? 'block' : 'none';
+
+  const permissoesAtuais = ehAdmin ? todasPermissoes() : (u.permissoes || { ...PERMISSOES_PADRAO_ESTOQUE });
+
+  const listaEl = document.getElementById('perm-lista');
+  listaEl.innerHTML = PERMISSOES_DISPONIVEIS.map(p => `
+    <label class="perm-item ${ehAdmin ? 'perm-item-desabilitado' : ''}">
+      <input type="checkbox" id="perm-${p.chave}" ${permissoesAtuais[p.chave] ? 'checked' : ''} ${ehAdmin ? 'disabled' : ''}>
+      <span class="perm-icone">${p.icone}</span>
+      <span class="perm-label">${p.label}</span>
+    </label>
+  `).join('');
+
+  document.getElementById('btn-salvar-permissoes').style.display = ehAdmin ? 'none' : 'inline-flex';
+  document.getElementById('overlayPermissoes').classList.add('aberto');
+}
+
+function fecharPermissoes() {
+  document.getElementById('overlayPermissoes').classList.remove('aberto');
+  permissoesUidEmEdicao = null;
+}
+
+async function salvarPermissoes() {
+  if (!permissoesUidEmEdicao) return;
+  const u = usuariosCarregados.find(x => x.uid === permissoesUidEmEdicao);
+  if (!u) return;
+
+  const novasPermissoes = {};
+  PERMISSOES_DISPONIVEIS.forEach(p => {
+    const checkbox = document.getElementById(`perm-${p.chave}`);
+    novasPermissoes[p.chave] = checkbox ? checkbox.checked : false;
+  });
+
+  const btn = document.getElementById('btn-salvar-permissoes');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    await Persistencia.atualizarPermissoesUsuario(permissoesUidEmEdicao, novasPermissoes);
+    mostrarToast(`✓ Permissões de "${u.email}" atualizadas.`, 'sucesso');
+    fecharPermissoes();
+    abrirUsuarios(); // recarrega para refletir os dados mais recentes
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar permissões.', 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✓ Salvar Permissões';
+  }
+}
+
+// =====================================================================
 // HISTÓRICO
 // =====================================================================
 function abrirHistorico() {
+  if (!exigirPermissao('verRelatorios', 'Você não tem permissão para ver o histórico.')) return;
   const histBusca = document.getElementById('histBusca');
   const histTipo = document.getElementById('histTipo');
   const histDataDe = document.getElementById('histDataDe');
@@ -1550,9 +2108,10 @@ function obterHistoricoFiltrado() {
 
     if (busca) {
       const campos = [
-        m.produto || '', m.resp || '', m.usuario || '', m.obs || '', m.numeroReceita || ''
+        m.produto || '', m.resp || '', m.usuario || '', m.obs || '',
+        m.numeroReceita || '', m.numeroNF || '', m.fornecedor || ''
       ];
-      if (m.tipo === 'receita' && Array.isArray(m.itens)) {
+      if ((m.tipo === 'receita' || m.tipo === 'compra') && Array.isArray(m.itens)) {
         m.itens.forEach(it => campos.push(it.produto || ''));
       }
       const encontrado = campos.some(c => c.toLowerCase().includes(busca));
@@ -1617,6 +2176,22 @@ function renderHistorico() {
       </div>`;
     }
 
+    if (m.tipo === 'compra') {
+      const itens = Array.isArray(m.itens) ? m.itens : [];
+      return `<div class="mov-item mov-compra">
+        <div class="mov-icon compra">📦</div>
+        <div class="mov-detalhe">
+          <div class="mov-produto">NF ${m.numeroNF || ''} — ${m.fornecedor || 'Fornecedor não informado'} <span style="font-weight:400;font-size:11px;color:#999">${m.totalItens || itens.length} produto${(m.totalItens||itens.length)!==1?'s':''}</span></div>
+          <div class="mov-info">${m.resp || '—'}${m.usuario ? ' ('+m.usuario+')' : ''} · ${dataStr}${m.obs?' · '+m.obs:''}</div>
+          <button class="mov-receita-toggle" onclick="window.AppEstoque.toggleItensReceita('${m.id}')">Ver itens da nota fiscal</button>
+          <div class="mov-receita-itens" id="receita-itens-${m.id}">
+            ${itens.map(it => `<div class="mov-receita-item-linha"><span>${it.produto}</span><span>+${fmt(it.qtd)} ${it.unidade}</span></div>`).join('')}
+          </div>
+        </div>
+        <div class="mov-qtd" style="color:#0a8a7a">${m.totalItens || itens.length} itens</div>
+      </div>`;
+    }
+
     let icon = '−', label = 'saida';
     if (m.tipo === 'entrada') { icon = '+'; label = 'entrada'; }
     else if (m.tipo === 'edicao') { icon = '✎'; label = 'edicao'; }
@@ -1624,7 +2199,7 @@ function renderHistorico() {
     const sinal = m.tipo === 'saida' ? '−' : (m.tipo === 'entrada' ? '+' : '');
     const un = m.unidade ? ' ' + m.unidade : '';
     const qtdTxt = m.tipo === 'exclusao' ? '' : `${sinal}${fmt(Math.abs(m.qtd))}${un}`;
-    return `<div class="mov-item">
+    return `<div class="mov-item mov-${label}">
       <div class="mov-icon ${label}">${icon}</div>
       <div class="mov-detalhe">
         <div class="mov-produto">${m.produto} <span style="font-weight:400;font-size:11px;color:#999">${m.classe}</span></div>
@@ -1652,6 +2227,7 @@ async function limparHistorico() {
 // EXPORTAR CSV
 // =====================================================================
 function exportarCSV() {
+  if (!exigirPermissao('verRelatorios', 'Você não tem permissão para exportar relatórios.')) return;
   const filtrados = obterFiltrados();
   const linhas = [['Classe','Produto','Princípio Ativo','Unidade','Estoque Atual']];
   filtrados.forEach(p => linhas.push([p.classe, p.nome, p.pa, p.unidade, p.estoque]));
@@ -1682,6 +2258,7 @@ function exportarCSV() {
 // MODAL PDF
 // =====================================================================
 function abrirModalPDF() {
+  if (!exigirPermissao('verRelatorios', 'Você não tem permissão para gerar relatórios.')) return;
   const filtrados = obterFiltrados();
   const busca = document.getElementById('busca').value.trim();
   const classeF = document.getElementById('filtroClasse').value;
@@ -1869,8 +2446,12 @@ window.AppEstoque = {
   abrirHistorico, fecharHistorico, limparHistorico,
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   abrirReceita, fecharReceita, buscarProdutoReceita, adicionarItemReceita,
-  removerItemReceita, atualizarQtdReceita, confirmarReceita,
+  removerItemReceita, atualizarQtdReceita, confirmarReceita, focarBuscaReceita,
   abrirUsuarios, fecharUsuarios, confirmarMudancaNivel,
+  abrirPermissoes, fecharPermissoes, salvarPermissoes,
+  abrirCompra, fecharCompra, buscarProdutoCompra, adicionarItemCompra,
+  removerItemCompra, atualizarQtdCompra, confirmarCompra, focarBuscaCompra,
+  abrirCadastroInlineCompra, fecharCadastroInlineCompra, confirmarCadastroInlineCompra,
   exportarCSV, abrirModalPDF, fecharModalPDF, gerarPDF, filtrar
 };
 </script>
