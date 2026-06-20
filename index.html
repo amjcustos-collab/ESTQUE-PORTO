@@ -162,7 +162,12 @@ header {
 /* LISTA */
 .lista { padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
 .classe-grupo { margin-bottom: 24px; }
-.classe-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul); padding: 0 4px 8px; border-bottom: 2px solid var(--azul-fundo); margin-bottom: 10px; }
+.classe-titulo {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--azul); padding: 4px 10px; border-left: 3px solid var(--azul);
+  background: var(--azul-fundo); border-radius: 0 6px 6px 0;
+  margin-bottom: 10px; display: inline-block;
+}
 
 .produto-card { background: white; border: 1.5px solid var(--borda); border-radius: 10px; margin-bottom: 8px; transition: box-shadow 0.15s; position: relative; }
 .produto-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
@@ -174,9 +179,14 @@ header {
 .produto-pa { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
 .estoque-badge { display: flex; flex-direction: column; align-items: flex-end; min-width: 90px; }
 .estoque-valor { font-size: 20px; font-weight: 700; color: var(--verde); }
-.unidade-tag { font-size: 11px; font-weight: 700; color: white; background: var(--cinza); padding: 2px 6px; border-radius: 5px; vertical-align: middle; letter-spacing: 0.5px; }
-.produto-card.baixo .unidade-tag { background: var(--amarelo); }
-.produto-card.zerado .unidade-tag { background: var(--vermelho); }
+/* Badge de unidade: azul para L (líquido), laranja para KG (sólido) */
+.unidade-tag { font-size: 10px; font-weight: 800; color: white; padding: 2px 6px; border-radius: 5px; vertical-align: middle; letter-spacing: 0.5px; }
+.unidade-tag.unid-L  { background: #1a5fb4; }
+.unidade-tag.unid-KG { background: #c47a00; }
+.unidade-tag.unid-UN { background: #5a6472; }
+.unidade-tag.unid-default { background: var(--cinza); }
+.produto-card.baixo .unidade-tag { filter: brightness(0.9); }
+.produto-card.zerado .unidade-tag { background: var(--vermelho) !important; filter: none; }
 .produto-card.baixo .estoque-valor { color: var(--amarelo); }
 .produto-card.zerado .estoque-valor { color: var(--vermelho); }
 .estoque-label { font-size: 11px; color: var(--texto-suave); }
@@ -524,7 +534,7 @@ header {
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
     <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
-    <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.exportarCSV()">📊 <span>Excel</span></button>
+    <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.abrirExportacaoXLS()">📊 <span>Excel</span></button>
     <button class="btn-header" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.2)" onclick="window.AppEstoque.abrirExportacao()">📤 <span>Histórico</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
@@ -1677,7 +1687,15 @@ function parseQtd(valor) {
   // Substitui vírgula por ponto antes do parseFloat
   return parseFloat(String(valor).replace(',', '.'));
 }
-function fmt(n) { return n % 1 === 0 ? n : n.toFixed(1); }
+// fmt: formata número com separador de milhar pt-BR e até 1 casa decimal
+function fmt(n) {
+  if (n === null || n === undefined || isNaN(n)) return '0';
+  const num = Number(n);
+  // Sem casas decimais desnecessárias, mas mantém 1 se houver
+  const str = num % 1 === 0 ? num.toFixed(0) : num.toFixed(1);
+  // Separador de milhar: 8700 → 8.700
+  return str.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
 function esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -1726,7 +1744,7 @@ function renderLista() {
             <div class="produto-pa">${p.pa}</div>
           </div>
           <div class="estoque-badge">
-            <div class="estoque-valor">${fmt(p.estoque)} <span class="unidade-tag">${p.unidade}</span></div>
+            <div class="estoque-valor">${fmt(p.estoque)} <span class="unidade-tag unid-${p.unidade === 'L' ? 'L' : p.unidade === 'KG' ? 'KG' : p.unidade === 'UN' ? 'UN' : 'default'}">${p.unidade}</span></div>
             <div class="estoque-label">em estoque</div>
           </div>
           <div class="btn-acoes">
@@ -3164,6 +3182,11 @@ let _exportFormato  = 'csv';  // 'csv' | 'xls'
 let _exportPeriodo  = 'todos';
 let _exportTipo     = 'todos';
 
+function abrirExportacaoXLS() {
+  abrirExportacao();         // abre o modal com estado limpo
+  selecionarFormatoExport('xls'); // pré-seleciona XLS
+}
+
 function abrirExportacao() {
   if (!exigirPermissao('verRelatorios', 'Você não tem permissão para exportar relatórios.')) return;
   _exportFormato = 'csv';
@@ -3552,7 +3575,7 @@ window.AppEstoque = {
   abrirCompra, fecharCompra, buscarProdutoCompra, adicionarItemCompra,
   removerItemCompra, atualizarQtdCompra, confirmarCompra, focarBuscaCompra,
   abrirCadastroInlineCompra, fecharCadastroInlineCompra, confirmarCadastroInlineCompra,
-  exportarCSV, abrirExportacao, fecharExportacao, selecionarFormatoExport,
+  exportarCSV, abrirExportacao, abrirExportacaoXLS, fecharExportacao, selecionarFormatoExport,
   selecionarPeriodoExport, selecionarTipoExport, atualizarPreviewExport, confirmarExportacao,
   abrirModalPDF, fecharModalPDF, gerarPDF, filtrar
 };
