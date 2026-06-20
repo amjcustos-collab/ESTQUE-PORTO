@@ -3737,7 +3737,7 @@ function renderIrrigLista() {
     const data     = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
     const dataFmt  = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const voltaClass = m.volta === 'Meia' ? 'meia' : '';
-    const culturaHtml = m.cultura ? `<span class="irrig-pill-cultura">${esc(m.cultura)}</span>` : '';
+    const culturaHtml = m.cultura ? `<span class="irrig-pill-cultura">${esc(labelCultura(m.cultura))}</span>` : '';
     const safraHtml   = m.safra   ? `<span class="irrig-pill-safra">${esc(m.safra)}</span>`   : '';
     const delBtn = isAdmin ? `<button class="irrig-btn-del" onclick="window.AppEstoque.pedirExclusaoIrrig('${m.id}')" title="Excluir lançamento">🗑</button>` : '';
     return `
@@ -3923,6 +3923,27 @@ const CULTURAS_PADRAO = [
 ];
 const SAFRAS_PADRAO = ['25/25', '25/26', '26/26', '26/27'];
 
+// Emojis por cultura — separados do valor gravado no banco para não
+// quebrar lançamentos antigos. O valor salvo é sempre o nome limpo.
+const CULTURAS_EMOJI = {
+  'Soja':        '🌱',
+  'Milho':       '🌽',
+  'Milho Verde': '🫛',
+  'Feijão':      '🫘',
+  'Arroz':       '🍚',
+  'Trigo':       '🌾',
+  'Sorgo':       '🌻',
+  'Amendoim':    '🥜',
+  'Grão-de-Bico':'🟡',
+  'Algodão':     '☁️',
+  'Pasto':       '🌿',
+  'Outro':       '•',
+};
+function labelCultura(c) {
+  const emoji = CULTURAS_EMOJI[c];
+  return emoji ? `${emoji} ${c}` : c;
+}
+
 let irrigConfig = { culturas: CULTURAS_PADRAO, safras: SAFRAS_PADRAO };
 
 async function carregarIrrigConfig() {
@@ -3946,7 +3967,7 @@ function popularSelectsCulturasSafras() {
   const selC = document.getElementById('irrigCultura');
   const selS = document.getElementById('irrigSafra');
   if (selC) selC.innerHTML = '<option value="">Sem cultura</option>' +
-    irrigConfig.culturas.map(c => `<option value="${c}">${c}</option>`).join('');
+    irrigConfig.culturas.map(c => `<option value="${c}">${labelCultura(c)}</option>`).join('');
   if (selS) selS.innerHTML = '<option value="">Sem safra</option>' +
     irrigConfig.safras.map(s => `<option value="${s}">${s}</option>`).join('');
 }
