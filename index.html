@@ -1016,8 +1016,13 @@ header {
             <option value="">Sem cultura</option>
             <option value="Soja">🌱 Soja</option>
             <option value="Milho">🌽 Milho</option>
+            <option value="Milho Verde">🌽 Milho Verde</option>
             <option value="Feijão">🫘 Feijão</option>
+            <option value="Arroz">🍚 Arroz</option>
             <option value="Trigo">🌾 Trigo</option>
+            <option value="Sorgo">🌾 Sorgo</option>
+            <option value="Amendoim">🥜 Amendoim</option>
+            <option value="Grão-de-Bico">🫘 Grão-de-Bico</option>
             <option value="Algodão">Algodão</option>
             <option value="Pasto">🌿 Pasto</option>
             <option value="Outro">Outro</option>
@@ -1027,9 +1032,22 @@ header {
           <label class="label-campo">Safra</label>
           <select id="irrigSafra" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
             <option value="">Sem safra</option>
-            <option value="24/25">24/25</option>
-            <option value="25/26">25/26</option>
-            <option value="26/27">26/27</option>
+            <optgroup label="Safra 2024">
+              <option value="24/24">24/24</option>
+              <option value="24/25">24/25</option>
+            </optgroup>
+            <optgroup label="Safra 2025">
+              <option value="25/25">25/25</option>
+              <option value="25/26">25/26</option>
+            </optgroup>
+            <optgroup label="Safra 2026">
+              <option value="26/26">26/26</option>
+              <option value="26/27">26/27</option>
+            </optgroup>
+            <optgroup label="Safra 2027">
+              <option value="27/27">27/27</option>
+              <option value="27/28">27/28</option>
+            </optgroup>
           </select>
         </div>
       </div>
@@ -1591,6 +1609,19 @@ let proximoIdLocal = 0; // fallback apenas para uso interno antes do primeiro ca
 let painelAberto = null;
 let tipoPainelAberto = null;
 let sessaoAtual = null; // { uid, email, nivel, label, permissoes }
+// Mapa email → label carregado do Firestore uma vez após login.
+// Permite resolver o nome de qualquer usuário em relatórios e exports,
+// inclusive em lançamentos antigos que não têm o campo nomeUsuario.
+let _mapaUsuarios = {}; // { 'email@x.com': 'Nome do Usuário' }
+
+// Resolve o nome de exibição a partir de um lançamento.
+// Prioridade: nomeUsuario (campo novo) → lookup no mapa → email (fallback)
+function nomeDeUsuario(m) {
+  if (m && m.nomeUsuario) return m.nomeUsuario;
+  const email = m && m.usuario;
+  if (email && _mapaUsuarios[email]) return _mapaUsuarios[email];
+  return email || '—';
+}
 let configGlobal = {   // carregada do Firestore em iniciarApp()
   fazenda: 'Fazenda Porto', empresa: 'AMJ Agropecuária',
   centrosCusto: [], talhoes: [], safras: []
@@ -1750,6 +1781,20 @@ async function iniciarSessaoAutenticada(user) {
 
     await migrarLocalStorageSeNecessario();
     await iniciarListenersTempoReal();
+
+    // Carrega mapa email→nome de todos os usuários cadastrados.
+    // Usado para resolver nomes em lançamentos antigos que só têm o email.
+    try {
+      const snapUsuarios = await getDocs(collection(db, 'usuarios'));
+      snapUsuarios.forEach(d => {
+        const u = d.data();
+        if (u.email && u.label) _mapaUsuarios[u.email] = u.label;
+      });
+      // Garante que o próprio admin (que pode não ter doc ainda) também entra
+      if (sessaoAtual && sessaoAtual.email && sessaoAtual.label) {
+        _mapaUsuarios[sessaoAtual.email] = sessaoAtual.label;
+      }
+    } catch (_) { /* offline — mapa fica vazio, fallback para email */ }
 
     // Carrega a configuração global da plataforma (nome da fazenda, etc.)
     try {
@@ -3068,7 +3113,7 @@ function obterHistoricoFiltrado() {
 
     if (busca) {
       const campos = [
-        m.produto || '', m.resp || '', m.nomeUsuario||m.usuario || '', m.obs || '',
+        m.produto || '', m.resp || '', nomeDeUsuario(m), m.obs || '',
         m.numeroReceita || '', m.numeroNF || '', m.fornecedor || ''
       ];
       if ((m.tipo === 'receita' || m.tipo === 'compra') && Array.isArray(m.itens)) {
@@ -3154,7 +3199,7 @@ function renderHistorico() {
         <div class="mov-icon ${iconeCls}">${icone}</div>
         <div class="mov-detalhe">
           <div class="mov-produto">${titulo} <span style="font-weight:400;font-size:11px;color:#999">${qtdProd} produto${qtdProd!==1?'s':''}</span></div>
-          <div class="mov-info">${esc(m.resp || '—')}${m.nomeUsuario||m.usuario ? ' ('+(m.nomeUsuario||m.usuario)+')' : ''} · ${dataStr}${m.obs?' · '+esc(m.obs):''}</div>
+          <div class="mov-info">${esc(m.resp || '—')}${nomeDeUsuario(m) && nomeDeUsuario(m) !== m.usuario ? ' ('+nomeDeUsuario(m)+')' : (m.usuario ? ' ('+m.usuario+')' : '')} · ${dataStr}${m.obs?' · '+esc(m.obs):''}</div>
           <div class="mov-itens-lista">${itensHTML}</div>
           ${acoes}
         </div>
@@ -3173,7 +3218,7 @@ function renderHistorico() {
       <div class="mov-icon ${label}">${icon}</div>
       <div class="mov-detalhe">
         <div class="mov-produto">${esc(m.produto)} <span style="font-weight:400;font-size:11px;color:#999">${esc(m.classe)}</span></div>
-        <div class="mov-info">${esc(m.resp || '—')}${m.nomeUsuario||m.usuario ? ' ('+(m.nomeUsuario||m.usuario)+')' : ''} · ${dataStr}${m.obs?' · '+esc(m.obs):''}</div>
+        <div class="mov-info">${esc(m.resp || '—')}${nomeDeUsuario(m) && nomeDeUsuario(m) !== m.usuario ? ' ('+nomeDeUsuario(m)+')' : (m.usuario ? ' ('+m.usuario+')' : '')} · ${dataStr}${m.obs?' · '+esc(m.obs):''}</div>
         <div class="mov-info">Estoque após: ${fmt(m.estoqueApos)}${un}</div>
         ${acoes}
       </div>
@@ -3221,7 +3266,7 @@ function movimentosDoProduto(produtoId) {
           movId: m.id, dataMs, data: m.data, tipo: m.tipo,
           rotulo: ehReceita ? `Baixa (receita ${m.numeroReceita || '—'})` : `Entrada (NF ${m.numeroNF || '—'})`,
           qtdAssinada: ehReceita ? -Math.abs(it.qtd) : Math.abs(it.qtd),
-          unidade: it.unidade || '', estoqueApos: it.estoqueApos, resp: m.resp, usuario: m.nomeUsuario || m.usuario
+          unidade: it.unidade || '', estoqueApos: it.estoqueApos, resp: m.resp, usuario: nomeDeUsuario(m)
         });
       });
     } else if (String(m.produtoId) === pid) {
@@ -3233,7 +3278,7 @@ function movimentosDoProduto(produtoId) {
       linhas.push({
         movId: m.id, dataMs, data: m.data, tipo: m.tipo,
         rotulo: TIPOS_LABEL[m.tipo] || m.tipo, qtdAssinada,
-        unidade: m.unidade || '', estoqueApos: m.estoqueApos, resp: m.resp, usuario: m.nomeUsuario || m.usuario
+        unidade: m.unidade || '', estoqueApos: m.estoqueApos, resp: m.resp, usuario: nomeDeUsuario(m)
       });
     }
   });
@@ -3317,7 +3362,7 @@ function abrirDetalheLancamento(movId) {
     <div class="det-campo"><div class="det-rotulo">Tipo</div><div class="det-valor">${esc(TIPOS_LABEL[m.tipo] || m.tipo)}</div></div>
     <div class="det-campo"><div class="det-rotulo">Data</div><div class="det-valor">${dataStr}</div></div>
     <div class="det-campo"><div class="det-rotulo">Responsável</div><div class="det-valor">${esc(m.resp || '—')}</div></div>
-    <div class="det-campo"><div class="det-rotulo">Usuário</div><div class="det-valor">${esc(m.nomeUsuario || m.usuario || '—')}</div></div>`;
+    <div class="det-campo"><div class="det-rotulo">Usuário</div><div class="det-valor">${esc(nomeDeUsuario(m) || '—')}</div></div>`;
   if (m.obs) campos += `<div class="det-campo" style="grid-column:1/-1"><div class="det-rotulo">Observação</div><div class="det-valor">${esc(m.obs)}</div></div>`;
 
   let corpo = `<div class="det-bloco"><div class="det-grid">${campos}</div></div>`;
@@ -3458,7 +3503,7 @@ function gerarPDFLancamento(movId) {
   <div class="grid">
     <div class="campo"><div class="rot">Data do lançamento</div><div class="val">${dataMov}</div></div>
     <div class="campo"><div class="rot">Responsável</div><div class="val">${esc(m.resp || '—')}</div></div>
-    <div class="campo"><div class="rot">Usuário do sistema</div><div class="val">${esc(m.nomeUsuario || m.usuario || '—')}</div></div>
+    <div class="campo"><div class="rot">Usuário do sistema</div><div class="val">${esc(nomeDeUsuario(m) || '—')}</div></div>
     ${m.obs ? `<div class="campo"><div class="rot">Observação</div><div class="val">${esc(m.obs)}</div></div>` : ''}
   </div>
   <div class="secao-titulo">${(m.tipo === 'receita' || m.tipo === 'compra') ? 'Produtos do lançamento' : 'Produto'}</div>
@@ -3688,7 +3733,7 @@ function renderIrrigLista() {
         <div class="irrig-card-detalhe" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:3px">
           <span>${m.percentimetro}%</span>
           <span style="color:#ccc">·</span>
-          <span>${esc(m.nomeUsuario || m.usuario || '—')}</span>
+          <span>${esc(nomeDeUsuario(m) || '—')}</span>
           ${m.obs ? `<span style="color:#ccc">·</span><span>${esc(m.obs)}</span>` : ''}
           ${culturaHtml}${safraHtml}
         </div>
@@ -3978,7 +4023,7 @@ function exportarIrrigXLS() {
     'MM':            m.mm,
     'Cultura':       m.cultura || '',
     'Safra':         m.safra   || '',
-    'Usuário':       m.nomeUsuario || m.usuario || '',
+    'Usuário':       nomeDeUsuario(m),
     'Observação':    m.obs     || '',
   }));
   const wb = XLSX.utils.book_new();
@@ -4200,7 +4245,7 @@ function _expandirLinhas(lista) {
         Identificador: id, Produto: it.produto, Classe: it.classe || '',
         Quantidade: it.qtd, Unidade: it.unidade || '',
         'Estoque Após': it.estoqueApos !== undefined ? it.estoqueApos : '',
-        Responsável: m.resp || '', Usuário: m.nomeUsuario||m.usuario || '', Observação: m.obs || ''
+        Responsável: m.resp || '', Usuário: nomeDeUsuario(m), Observação: m.obs || ''
       }));
     } else {
       linhas.push({
@@ -4208,7 +4253,7 @@ function _expandirLinhas(lista) {
         Identificador: '', Produto: m.produto || '', Classe: m.classe || '',
         Quantidade: m.qtd, Unidade: m.unidade || '',
         'Estoque Após': m.estoqueApos !== undefined ? m.estoqueApos : '',
-        Responsável: m.resp || '', Usuário: m.nomeUsuario||m.usuario || '', Observação: m.obs || ''
+        Responsável: m.resp || '', Usuário: nomeDeUsuario(m), Observação: m.obs || ''
       });
     }
   });
@@ -4337,10 +4382,10 @@ function exportarCSV() {
     if (m.tipo === 'receita' && Array.isArray(m.itens)) {
       const obsReceita = `Receita ${m.numeroReceita || ''}${m.obs ? ' — ' + m.obs : ''}`;
       m.itens.forEach(it => {
-        linhas.push([d, tiposLabel.receita, it.produto, m.resp, m.nomeUsuario||m.nomeUsuario||m.usuario||'', it.qtd, it.unidade||'', it.estoqueApos, obsReceita]);
+        linhas.push([d, tiposLabel.receita, it.produto, m.resp, m.nomeUsuario||nomeDeUsuario(m), it.qtd, it.unidade||'', it.estoqueApos, obsReceita]);
       });
     } else {
-      linhas.push([d, tiposLabel[m.tipo]||m.tipo, m.produto, m.resp, m.nomeUsuario||m.nomeUsuario||m.usuario||'', m.qtd, m.unidade||'', m.estoqueApos, m.obs||'']);
+      linhas.push([d, tiposLabel[m.tipo]||m.tipo, m.produto, m.resp, m.nomeUsuario||nomeDeUsuario(m), m.qtd, m.unidade||'', m.estoqueApos, m.obs||'']);
     }
   });
   const csv = linhas.map(l => l.map(v => `"${v}"`).join(',')).join('\n');
