@@ -1806,10 +1806,17 @@ async function iniciarSessaoAutenticada(user) {
     try {
       const cfg = await Persistencia.obterConfigGlobal();
       if (cfg) { configGlobal = { ...configGlobal, ...cfg }; }
-      // Atualiza o título do header com o nome da fazenda configurado
       const elFazenda = document.getElementById('headerFazendaNome');
       if (elFazenda) elFazenda.textContent = configGlobal.fazenda;
     } catch (_) { /* usa o valor padrão já definido em configGlobal */ }
+
+    // Carrega config do módulo de irrigação (culturas e safras ativas).
+    // Feito aqui para que os selects fiquem populados mesmo antes de
+    // o usuário clicar na aba Irrigação.
+    try {
+      await carregarIrrigConfig();
+      popularSelectsCulturasSafras();
+    } catch (_) { /* offline — usa valores padrão */ }
   } catch (e) {
     console.error('Erro ao iniciar sessão:', e);
     mostrarToast('Erro ao carregar dados. Verifique sua conexão.', 'erro');
@@ -3556,7 +3563,8 @@ async function recarregarPivotos() {
 // --- Inicializa o módulo ---
 async function iniciarModuloIrrigacao() {
   await carregarPivotos();
-  await carregarIrrigConfig();
+  // irrigConfig já foi carregado no login — apenas popula os selects
+  // caso o usuário ainda não tenha aberto o modal de lançamento
   popularSelectsCulturasSafras();
   popularFiltrosFazenda();
   atualizarFiltrosCulturasSafras();
