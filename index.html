@@ -3360,10 +3360,13 @@ async function iniciarModuloIrrigacao() {
 
 // --- Listener em tempo real dos lançamentos ---
 function escutarLancamentosIrrig() {
-  if (irrigUnsubscribe) irrigUnsubscribe(); // cancela listener anterior
+  if (irrigUnsubscribe) irrigUnsubscribe();
+  // Usa dataLocal (número, disponível imediatamente no cliente) para ordenar.
+  // Evita dependência do serverTimestamp que chega de forma assíncrona e pode
+  // excluir o documento da query ordenada por dataOrdenacao no primeiro snapshot.
   const q = query(
     collection(db, 'irrigacao_lancamentos'),
-    orderBy('dataOrdenacao', 'desc'),
+    orderBy('dataLocal', 'desc'),
     limit(300)
   );
   irrigUnsubscribe = onSnapshot(q, snap => {
@@ -3420,7 +3423,8 @@ function getLancamentosFiltrados() {
     if (fazenda && m.fazenda !== fazenda) return false;
     if (pivo    && m.pivo    !== pivo)    return false;
     if (de) {
-      const data = new Date(m.dataLocal || m.data);
+      // dataLocal é timestamp em ms; m.data é string "YYYY-MM-DD"
+      const data = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
       if (data < de) return false;
     }
     return true;
@@ -3433,15 +3437,18 @@ function atualizarResumoIrrig() {
   const agora = new Date();
   const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
 
+  const getDataLanc = m => m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
+  const getDataStr  = m => m.data || new Date(m.dataLocal).toISOString().slice(0, 10);
+
   const todos = getLancamentosFiltrados();
   const mmHoje = todos
-    .filter(m => (m.dataLocal || m.data || '').slice(0, 10) === hoje)
+    .filter(m => getDataStr(m) === hoje)
     .reduce((s, m) => s + (m.mm || 0), 0);
   const mmMes = todos
-    .filter(m => new Date(m.dataLocal || m.data) >= inicioMes)
+    .filter(m => getDataLanc(m) >= inicioMes)
     .reduce((s, m) => s + (m.mm || 0), 0);
   const qtdMes = todos
-    .filter(m => new Date(m.dataLocal || m.data) >= inicioMes).length;
+    .filter(m => getDataLanc(m) >= inicioMes).length;
 
   const mesNome = agora.toLocaleDateString('pt-BR', { month: 'long' });
 
@@ -3464,7 +3471,7 @@ function renderIrrigLista() {
   }
 
   lista.innerHTML = items.map(m => {
-    const data = new Date(m.dataLocal || m.data);
+    const data = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
     const dataFmt = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const voltaClass = m.volta === 'Meia' ? 'meia' : '';
     return `
