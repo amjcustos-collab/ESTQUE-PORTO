@@ -898,14 +898,46 @@ header {
 <div class="overlay" id="overlayGestaoIrrig" onclick="if(event.target===this)window.AppEstoque.fecharGestaoIrrig()">
   <div class="modal" style="max-width:640px">
     <div class="modal-header" style="background:linear-gradient(90deg,#1a3a6b,#1a5fb4)">
-      <h2>⚙️ Gestão de Pivôs</h2>
+      <h2>⚙️ Gestão — Irrigação</h2>
       <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoIrrig()">×</button>
     </div>
-    <div class="modal-body" style="padding:16px 20px">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-        <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
+    <div class="modal-body" style="padding:0">
+
+      <!-- Abas -->
+      <div style="display:flex;border-bottom:2px solid var(--borda);padding:0 20px;background:#f7f9fc">
+        <button id="gestaoTabPivos"    onclick="window.AppEstoque.gestaoAba('pivotos')"  style="padding:12px 16px;font-size:13px;font-weight:700;border:none;background:none;cursor:pointer;border-bottom:3px solid var(--azul);color:var(--azul);margin-bottom:-2px">💧 Pivôs</button>
+        <button id="gestaoTabCulturas" onclick="window.AppEstoque.gestaoAba('culturas')" style="padding:12px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--texto-suave);margin-bottom:-2px">🌱 Culturas</button>
+        <button id="gestaoTabSafras"   onclick="window.AppEstoque.gestaoAba('safras')"   style="padding:12px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;color:var(--texto-suave);margin-bottom:-2px">📅 Safras</button>
       </div>
-      <div class="pivos-lista" id="gestaoIrrigLista"></div>
+
+      <!-- Aba Pivôs -->
+      <div id="gestaoSecPivotos" style="padding:16px 20px">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+          <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
+        </div>
+        <div class="pivos-lista" id="gestaoIrrigLista"></div>
+      </div>
+
+      <!-- Aba Culturas -->
+      <div id="gestaoSecCulturas" style="padding:16px 20px;display:none">
+        <p style="font-size:12px;color:var(--texto-suave);margin:0 0 12px">Apenas as culturas listadas aqui estarão disponíveis no lançamento. Ordem: como aparecem na lista.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="text" id="novaCulturaInput" placeholder="Ex: Soja" style="flex:1;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onkeydown="if(event.key==='Enter')window.AppEstoque.adicionarCultura()">
+          <button onclick="window.AppEstoque.adicionarCultura()" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">+ Adicionar</button>
+        </div>
+        <div id="culturasLista" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Aba Safras -->
+      <div id="gestaoSecSafras" style="padding:16px 20px;display:none">
+        <p style="font-size:12px;color:var(--texto-suave);margin:0 0 12px">Apenas as safras listadas aqui estarão disponíveis no lançamento. Adicione somente as safras em andamento ou planejadas.</p>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <input type="text" id="novaSafraInput" placeholder="Ex: 25/26" style="flex:1;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onkeydown="if(event.key==='Enter')window.AppEstoque.adicionarSafra()">
+          <button onclick="window.AppEstoque.adicionarSafra()" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer">+ Adicionar</button>
+        </div>
+        <div id="safrasLista" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto"></div>
+      </div>
+
     </div>
     <div class="modal-footer"><button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoIrrig()">Fechar</button></div>
   </div>
@@ -1014,40 +1046,14 @@ header {
           <label class="label-campo">Cultura</label>
           <select id="irrigCultura" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
             <option value="">Sem cultura</option>
-            <option value="Soja">🌱 Soja</option>
-            <option value="Milho">🌽 Milho</option>
-            <option value="Milho Verde">🌽 Milho Verde</option>
-            <option value="Feijão">🫘 Feijão</option>
-            <option value="Arroz">🍚 Arroz</option>
-            <option value="Trigo">🌾 Trigo</option>
-            <option value="Sorgo">🌾 Sorgo</option>
-            <option value="Amendoim">🥜 Amendoim</option>
-            <option value="Grão-de-Bico">🫘 Grão-de-Bico</option>
-            <option value="Algodão">Algodão</option>
-            <option value="Pasto">🌿 Pasto</option>
-            <option value="Outro">Outro</option>
+            <!-- populado dinamicamente via irrigConfig.culturas -->
           </select>
         </div>
         <div>
           <label class="label-campo">Safra</label>
           <select id="irrigSafra" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
             <option value="">Sem safra</option>
-            <optgroup label="Safra 2024">
-              <option value="24/24">24/24</option>
-              <option value="24/25">24/25</option>
-            </optgroup>
-            <optgroup label="Safra 2025">
-              <option value="25/25">25/25</option>
-              <option value="25/26">25/26</option>
-            </optgroup>
-            <optgroup label="Safra 2026">
-              <option value="26/26">26/26</option>
-              <option value="26/27">26/27</option>
-            </optgroup>
-            <optgroup label="Safra 2027">
-              <option value="27/27">27/27</option>
-              <option value="27/28">27/28</option>
-            </optgroup>
+            <!-- populado dinamicamente via irrigConfig.safras -->
           </select>
         </div>
       </div>
@@ -3550,6 +3556,8 @@ async function recarregarPivotos() {
 // --- Inicializa o módulo ---
 async function iniciarModuloIrrigacao() {
   await carregarPivotos();
+  await carregarIrrigConfig();
+  popularSelectsCulturasSafras();
   popularFiltrosFazenda();
   atualizarFiltrosCulturasSafras();
   // Botão gestão visível só para admin
@@ -3898,10 +3906,146 @@ async function confirmarExclusaoIrrig() {
   }
 }
 
+// ── CONFIGURAÇÃO CULTURAS & SAFRAS ────────────────────────────────────
+
+// Config padrão — usada na primeira vez que o admin abre a gestão
+const CULTURAS_PADRAO = [
+  'Soja', 'Milho', 'Milho Verde', 'Feijão', 'Arroz',
+  'Trigo', 'Sorgo', 'Amendoim', 'Grão-de-Bico', 'Algodão', 'Pasto', 'Outro'
+];
+const SAFRAS_PADRAO = ['25/25', '25/26', '26/26', '26/27'];
+
+let irrigConfig = { culturas: CULTURAS_PADRAO, safras: SAFRAS_PADRAO };
+
+async function carregarIrrigConfig() {
+  try {
+    const snap = await getDoc(doc(db, 'irrigacao_config', 'geral'));
+    if (snap.exists()) {
+      const d = snap.data();
+      irrigConfig = {
+        culturas: d.culturas?.length ? d.culturas : CULTURAS_PADRAO,
+        safras:   d.safras?.length   ? d.safras   : SAFRAS_PADRAO,
+      };
+    }
+  } catch (_) { /* offline — usa padrão */ }
+}
+
+async function salvarIrrigConfig() {
+  await setDoc(doc(db, 'irrigacao_config', 'geral'), irrigConfig, { merge: true });
+}
+
+function popularSelectsCulturasSafras() {
+  const selC = document.getElementById('irrigCultura');
+  const selS = document.getElementById('irrigSafra');
+  if (selC) selC.innerHTML = '<option value="">Sem cultura</option>' +
+    irrigConfig.culturas.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (selS) selS.innerHTML = '<option value="">Sem safra</option>' +
+    irrigConfig.safras.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+// ── ABAS DA GESTÃO ────────────────────────────────────────────────────
+
+function gestaoAba(aba) {
+  const abas = ['pivotos', 'culturas', 'safras'];
+  abas.forEach(a => {
+    const sec = document.getElementById(`gestaoSec${a.charAt(0).toUpperCase() + a.slice(1)}`);
+    const tab = document.getElementById(`gestaoTab${a.charAt(0).toUpperCase() + a.slice(1)}`);
+    if (sec) sec.style.display = a === aba ? 'block' : 'none';
+    if (tab) {
+      tab.style.color       = a === aba ? 'var(--azul)'        : 'var(--texto-suave)';
+      tab.style.fontWeight  = a === aba ? '700'                 : '600';
+      tab.style.borderBottom = a === aba ? '3px solid var(--azul)' : '3px solid transparent';
+    }
+  });
+  if (aba === 'culturas') renderCulturasLista();
+  if (aba === 'safras')   renderSafrasLista();
+}
+
+// ── GESTÃO DE CULTURAS ─────────────────────────────────────────────────
+
+function renderCulturasLista() {
+  const lista = document.getElementById('culturasLista');
+  if (!lista) return;
+  lista.innerHTML = irrigConfig.culturas.map((c, i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--borda);border-radius:8px;padding:9px 12px">
+      <span style="flex:1;font-size:13px;font-weight:500">${esc(c)}</span>
+      <button onclick="window.AppEstoque.moverItem('culturas',${i},-1)" title="Mover para cima" style="background:none;border:none;cursor:pointer;color:var(--texto-suave);font-size:14px;padding:2px 4px">▲</button>
+      <button onclick="window.AppEstoque.moverItem('culturas',${i},1)"  title="Mover para baixo" style="background:none;border:none;cursor:pointer;color:var(--texto-suave);font-size:14px;padding:2px 4px">▼</button>
+      <button onclick="window.AppEstoque.removerItem('culturas',${i})" style="background:var(--vermelho-fundo);border:none;border-radius:6px;color:var(--vermelho);cursor:pointer;font-size:12px;font-weight:700;padding:4px 8px">✕</button>
+    </div>`).join('');
+}
+
+async function adicionarCultura() {
+  const input = document.getElementById('novaCulturaInput');
+  const val = input.value.trim();
+  if (!val) return;
+  if (irrigConfig.culturas.includes(val)) { mostrarToast('Cultura já existe.', 'erro'); return; }
+  irrigConfig.culturas.push(val);
+  input.value = '';
+  await salvarIrrigConfig();
+  popularSelectsCulturasSafras();
+  renderCulturasLista();
+  mostrarToast(`"${val}" adicionada.`, 'sucesso');
+}
+
+// ── GESTÃO DE SAFRAS ───────────────────────────────────────────────────
+
+function renderSafrasLista() {
+  const lista = document.getElementById('safrasLista');
+  if (!lista) return;
+  lista.innerHTML = irrigConfig.safras.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;background:white;border:1.5px solid var(--borda);border-radius:8px;padding:9px 12px">
+      <span style="flex:1;font-size:13px;font-weight:500">${esc(s)}</span>
+      <button onclick="window.AppEstoque.moverItem('safras',${i},-1)" title="Mover para cima" style="background:none;border:none;cursor:pointer;color:var(--texto-suave);font-size:14px;padding:2px 4px">▲</button>
+      <button onclick="window.AppEstoque.moverItem('safras',${i},1)"  title="Mover para baixo" style="background:none;border:none;cursor:pointer;color:var(--texto-suave);font-size:14px;padding:2px 4px">▼</button>
+      <button onclick="window.AppEstoque.removerItem('safras',${i})" style="background:var(--vermelho-fundo);border:none;border-radius:6px;color:var(--vermelho);cursor:pointer;font-size:12px;font-weight:700;padding:4px 8px">✕</button>
+    </div>`).join('');
+}
+
+async function adicionarSafra() {
+  const input = document.getElementById('novaSafraInput');
+  const val = input.value.trim();
+  if (!val) return;
+  // Valida formato XX/XX ou XX/XX
+  if (!/^\d{2}\/\d{2}$/.test(val)) { mostrarToast('Formato inválido. Use XX/XX (ex: 25/26).', 'erro'); return; }
+  if (irrigConfig.safras.includes(val)) { mostrarToast('Safra já existe.', 'erro'); return; }
+  irrigConfig.safras.push(val);
+  input.value = '';
+  await salvarIrrigConfig();
+  popularSelectsCulturasSafras();
+  renderSafrasLista();
+  mostrarToast(`Safra "${val}" adicionada.`, 'sucesso');
+}
+
+// ── HELPER COMUM: mover / remover item ─────────────────────────────────
+
+async function moverItem(tipo, idx, dir) {
+  const arr = irrigConfig[tipo];
+  const dest = idx + dir;
+  if (dest < 0 || dest >= arr.length) return;
+  [arr[idx], arr[dest]] = [arr[dest], arr[idx]];
+  await salvarIrrigConfig();
+  popularSelectsCulturasSafras();
+  if (tipo === 'culturas') renderCulturasLista();
+  if (tipo === 'safras')   renderSafrasLista();
+}
+
+async function removerItem(tipo, idx) {
+  const arr = irrigConfig[tipo];
+  const nome = arr[idx];
+  arr.splice(idx, 1);
+  await salvarIrrigConfig();
+  popularSelectsCulturasSafras();
+  if (tipo === 'culturas') renderCulturasLista();
+  if (tipo === 'safras')   renderSafrasLista();
+  mostrarToast(`"${nome}" removido.`, 'sucesso');
+}
+
 // ── GESTÃO DE PIVÔS (admin) ────────────────────────────────────────────
 
 async function abrirGestaoIrrig() {
   await recarregarPivotos();
+  gestaoAba('pivotos');
   renderGestaoIrrigLista();
   document.getElementById('overlayGestaoIrrig').classList.add('aberto');
 }
@@ -4595,7 +4739,8 @@ window.AppEstoque = {
   onIrrigFazendaChange, onIrrigPivoChange, selecionarPctIrrig, calcularMmIrrig,
   filtrarIrrig,
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
-  abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista,
+  abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
+  adicionarCultura, adicionarSafra, moverItem, removerItem,
   abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo,
   exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
