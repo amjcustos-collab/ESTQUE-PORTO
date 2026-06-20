@@ -299,6 +299,46 @@ header {
   .tela-irrigacao { padding: 12px; }
 }
 
+/* Breakdown MM por pivô */
+.irrig-breakdown { margin-bottom: 20px; }
+.irrig-breakdown-titulo { font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.irrig-breakdown-lista { display: flex; flex-direction: column; gap: 6px; }
+.irrig-breakdown-item { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 14px; }
+.irrig-breakdown-pivo { flex: 1; min-width: 0; }
+.irrig-breakdown-pivo-nome { font-size: 13px; font-weight: 600; }
+.irrig-breakdown-pivo-faz  { font-size: 11px; color: var(--texto-suave); }
+.irrig-breakdown-bar-wrap  { flex: 2; height: 8px; background: #e8f0fe; border-radius: 999px; overflow: hidden; }
+.irrig-breakdown-bar       { height: 100%; background: #1a5fb4; border-radius: 999px; transition: width 0.4s ease; }
+.irrig-breakdown-mm        { font-size: 13px; font-weight: 700; color: #1a5fb4; min-width: 70px; text-align: right; }
+
+/* Pill cultura/safra */
+.irrig-pill-cultura { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #e8f8e8; color: #2a7a2a; }
+.irrig-pill-safra   { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 999px; background: #f3eeff; color: #6a3aaa; }
+
+/* Botão excluir lançamento */
+.irrig-btn-del { background: none; border: none; color: #d0d8e0; cursor: pointer; font-size: 16px; padding: 4px 6px; border-radius: 6px; transition: color 0.15s, background 0.15s; flex-shrink: 0; }
+.irrig-btn-del:hover { color: var(--vermelho); background: var(--vermelho-fundo); }
+
+/* Modal gestão de pivôs */
+.pivos-lista { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+.pivo-item { display: flex; align-items: center; gap: 10px; background: white; border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 14px; }
+.pivo-item-info { flex: 1; min-width: 0; }
+.pivo-item-nome { font-size: 13px; font-weight: 600; }
+.pivo-item-faz  { font-size: 11px; color: var(--texto-suave); }
+.pivo-item-acoes { display: flex; gap: 6px; }
+.btn-pivo-edit { background: var(--azul-fundo); border: none; color: var(--azul); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.btn-pivo-del  { background: var(--vermelho-fundo); border: none; color: var(--vermelho); border-radius: 6px; padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+
+/* Tabela MM no editor de pivô */
+.tabela-mm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.tabela-mm-item label { font-size: 11px; color: var(--texto-suave); font-weight: 600; display: block; margin-bottom: 2px; }
+.tabela-mm-item input { width: 100%; padding: 6px 8px; border: 1.5px solid var(--borda); border-radius: 6px; font-size: 12px; box-sizing: border-box; }
+
+@media (max-width: 600px) {
+  .tabela-mm-grid { grid-template-columns: repeat(2, 1fr); }
+  .irrig-breakdown-bar-wrap { display: none; }
+}
+
 /* PAINEL */
 /* MENU DE AÇÕES DO CARD — substitui editar/excluir/histórico isolados */
 .btn-menu-acoes {
@@ -676,6 +716,12 @@ header {
     </div>
   </div>
 
+  <!-- Breakdown por pivô -->
+  <div class="irrig-breakdown" id="irrigBreakdown" style="display:none">
+    <div class="irrig-breakdown-titulo">💧 MM acumulado por pivô (período selecionado)</div>
+    <div class="irrig-breakdown-lista" id="irrigBreakdownLista"></div>
+  </div>
+
   <!-- Barra de ações -->
   <div class="irrig-acoes">
     <button class="btn-header verde" style="padding:10px 18px;font-size:13px" onclick="window.AppEstoque.abrirLancamentoIrrig()">💧 + Novo Lançamento</button>
@@ -685,12 +731,21 @@ header {
     <select class="irrig-filtro-select" id="irrigFiltroPivo" onchange="window.AppEstoque.filtrarIrrig()">
       <option value="">Todos os pivôs</option>
     </select>
+    <select class="irrig-filtro-select" id="irrigFiltroCultura" onchange="window.AppEstoque.filtrarIrrig()">
+      <option value="">Todas as culturas</option>
+    </select>
+    <select class="irrig-filtro-select" id="irrigFiltroSafra" onchange="window.AppEstoque.filtrarIrrig()">
+      <option value="">Todas as safras</option>
+    </select>
     <select class="irrig-filtro-select" id="irrigFiltroPeriodo" onchange="window.AppEstoque.filtrarIrrig()">
       <option value="mes">Este mês</option>
       <option value="7d">Últimos 7 dias</option>
       <option value="30d">Últimos 30 dias</option>
       <option value="todos">Todos</option>
     </select>
+    <button class="irrig-filtro-select" style="background:white;cursor:pointer;font-size:13px;color:var(--azul);font-weight:600;border-color:var(--azul)" onclick="window.AppEstoque.exportarIrrigXLS()">📊 XLS</button>
+    <button class="irrig-filtro-select" style="background:white;cursor:pointer;font-size:13px;color:#c47a00;font-weight:600;border-color:#c47a00" onclick="window.AppEstoque.exportarIrrigPDF()">📄 PDF</button>
+    <button id="btnGestaoIrrig" class="irrig-filtro-select" style="display:none;background:white;cursor:pointer;font-size:13px;color:var(--texto-suave);font-weight:600" onclick="window.AppEstoque.abrirGestaoIrrig()">⚙️ Gestão</button>
   </div>
 
   <!-- Lista de lançamentos -->
@@ -839,6 +894,70 @@ header {
   </div>
 </div>
 
+<!-- MODAL GESTÃO DE PIVÔS (admin) -->
+<div class="overlay" id="overlayGestaoIrrig" onclick="if(event.target===this)window.AppEstoque.fecharGestaoIrrig()">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a3a6b,#1a5fb4)">
+      <h2>⚙️ Gestão de Pivôs</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoIrrig()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
+      </div>
+      <div class="pivos-lista" id="gestaoIrrigLista"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoIrrig()">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL EDITOR DE PIVÔ -->
+<div class="overlay" id="overlayEditorPivo" onclick="if(event.target===this)window.AppEstoque.fecharEditorPivo()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a3a6b,#1a5fb4)">
+      <h2 id="editorPivoTitulo">Novo Pivô</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditorPivo()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Fazenda</label>
+          <input type="text" id="editorPivoFazenda" placeholder="Ex: SEMPRE VERDE" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label class="label-campo">Pivô</label>
+          <input type="text" id="editorPivoNome" placeholder="Ex: CURRAL" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+        </div>
+      </div>
+      <label class="label-campo" style="margin-bottom:4px;display:block">Tabela de MM por percentímetro</label>
+      <div class="tabela-mm-grid" id="editorTabelaMM"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditorPivo()">Cancelar</button>
+      <button id="btnSalvarPivo" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarPivo()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR EXCLUSÃO DE LANÇAMENTO IRRIGAÇÃO -->
+<div class="overlay" id="overlayConfirmarExclusaoIrrig" onclick="if(event.target===this)window.AppEstoque.cancelarExclusaoIrrig()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#7a1a1a,#b83232)">
+      <h2>⚠️ Excluir lançamento</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.cancelarExclusaoIrrig()">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:28px 24px">
+      <div style="font-size:40px;margin-bottom:12px">🗑</div>
+      <div style="font-size:15px;font-weight:700;color:var(--texto);margin-bottom:8px" id="exclusaoIrrigDesc"></div>
+      <div style="font-size:13px;color:var(--texto-suave)">Esta ação é <strong>irreversível</strong>.</div>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:12px">
+      <button class="btn-cancelar" style="min-width:120px" onclick="window.AppEstoque.cancelarExclusaoIrrig()">Cancelar</button>
+      <button id="btnConfirmarExclusaoIrrig" style="min-width:140px;background:var(--vermelho);color:white;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarExclusaoIrrig()">🗑 Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL LANÇAMENTO IRRIGAÇÃO -->
 <div class="overlay" id="overlayIrrigacao" onclick="if(event.target===this)window.AppEstoque.fecharLancamentoIrrig()">
   <div class="modal estreito">
@@ -888,6 +1007,31 @@ header {
       <div class="irrig-mm-preview vazio" id="irrigMmPreview">
         <div class="irrig-mm-preview-valor" id="irrigMmValor">—</div>
         <div class="irrig-mm-preview-label">mm de lâmina</div>
+      </div>
+
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Cultura</label>
+          <select id="irrigCultura" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
+            <option value="">Sem cultura</option>
+            <option value="Soja">🌱 Soja</option>
+            <option value="Milho">🌽 Milho</option>
+            <option value="Feijão">🫘 Feijão</option>
+            <option value="Trigo">🌾 Trigo</option>
+            <option value="Algodão">Algodão</option>
+            <option value="Pasto">🌿 Pasto</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-campo">Safra</label>
+          <select id="irrigSafra" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
+            <option value="">Sem safra</option>
+            <option value="24/25">24/25</option>
+            <option value="25/26">25/26</option>
+            <option value="26/27">26/27</option>
+          </select>
+        </div>
       </div>
 
       <div style="margin-bottom:16px">
@@ -3339,49 +3483,63 @@ function gerarPDFLancamento(movId) {
 // =====================================================================
 
 // --- Estado em memória ---
-let irrigPivotos       = [];   // todos os pivôs carregados do Firestore
-let irrigLancamentos   = [];   // lançamentos carregados (filtrados em memória)
-let irrigPctSelecionado = null; // percentímetro selecionado no modal
-let irrigUnsubscribe   = null; // listener ativo de lançamentos
+let irrigPivotos        = [];
+let irrigLancamentos    = [];
+let irrigPctSelecionado = null;
+let irrigUnsubscribe    = null;
+let _editandoPivoId     = null;  // id do pivô sendo editado (null = novo)
+let _exclusaoPendenteIrrigId = null;
 
 // --- Persistência: carrega pivôs do Firestore ---
 async function carregarPivotos() {
-  if (irrigPivotos.length > 0) return; // já carregado
+  if (irrigPivotos.length > 0) return;
   const snap = await getDocs(query(collection(db, 'irrigacao_pivotos'), orderBy('fazenda')));
   irrigPivotos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
-// --- Inicializa o módulo (chamado ao navegar para irrigação) ---
+async function recarregarPivotos() {
+  const snap = await getDocs(query(collection(db, 'irrigacao_pivotos'), orderBy('fazenda')));
+  irrigPivotos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// --- Inicializa o módulo ---
 async function iniciarModuloIrrigacao() {
   await carregarPivotos();
   popularFiltrosFazenda();
+  atualizarFiltrosCulturasSafras();
+  // Botão gestão visível só para admin
+  const btnGestao = document.getElementById('btnGestaoIrrig');
+  if (btnGestao) btnGestao.style.display = ehAdminLocal() ? '' : 'none';
   escutarLancamentosIrrig();
 }
 
-// --- Listener em tempo real dos lançamentos ---
+function ehAdminLocal() {
+  const s = getSessao();
+  return s && s.nivel === 'admin';
+}
+
+// --- Listener em tempo real ---
 function escutarLancamentosIrrig() {
   if (irrigUnsubscribe) irrigUnsubscribe();
-  // Usa dataLocal (número, disponível imediatamente no cliente) para ordenar.
-  // Evita dependência do serverTimestamp que chega de forma assíncrona e pode
-  // excluir o documento da query ordenada por dataOrdenacao no primeiro snapshot.
   const q = query(
     collection(db, 'irrigacao_lancamentos'),
     orderBy('dataLocal', 'desc'),
-    limit(300)
+    limit(500)
   );
   irrigUnsubscribe = onSnapshot(q, snap => {
     irrigLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    atualizarFiltrosCulturasSafras();
     atualizarResumoIrrig();
+    renderBreakdownIrrig();
     renderIrrigLista();
   });
 }
 
-// --- Parar listener ao sair do módulo ---
 function pararModuloIrrigacao() {
   if (irrigUnsubscribe) { irrigUnsubscribe(); irrigUnsubscribe = null; }
 }
 
-// --- Popular dropdowns de filtro ---
+// --- Popular filtros ---
 function popularFiltrosFazenda() {
   const fazendas = [...new Set(irrigPivotos.map(p => p.fazenda))].sort();
   const sel = document.getElementById('irrigFiltroFazenda');
@@ -3400,17 +3558,32 @@ function popularFiltroPivos(fazenda) {
     pivosFazenda.map(p => `<option value="${p}">${p}</option>`).join('');
 }
 
+function atualizarFiltrosCulturasSafras() {
+  const culturas = [...new Set(irrigLancamentos.map(m => m.cultura).filter(Boolean))].sort();
+  const safras   = [...new Set(irrigLancamentos.map(m => m.safra).filter(Boolean))].sort();
+  const selC = document.getElementById('irrigFiltroCultura');
+  const selS = document.getElementById('irrigFiltroSafra');
+  const curC = selC?.value, curS = selS?.value;
+  if (selC) selC.innerHTML = '<option value="">Todas as culturas</option>' + culturas.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (selS) selS.innerHTML = '<option value="">Todas as safras</option>'   + safras.map(s => `<option value="${s}">${s}</option>`).join('');
+  if (selC && curC) selC.value = curC;
+  if (selS && curS) selS.value = curS;
+}
+
 function filtrarIrrig() {
   const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
   popularFiltroPivos(fazenda);
   atualizarResumoIrrig();
+  renderBreakdownIrrig();
   renderIrrigLista();
 }
 
-// --- Filtrar lançamentos pelos filtros ativos ---
+// --- Filtrar lançamentos ---
 function getLancamentosFiltrados() {
   const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
   const pivo    = document.getElementById('irrigFiltroPivo')?.value    || '';
+  const cultura = document.getElementById('irrigFiltroCultura')?.value || '';
+  const safra   = document.getElementById('irrigFiltroSafra')?.value   || '';
   const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
 
   const agora = new Date();
@@ -3422,8 +3595,9 @@ function getLancamentosFiltrados() {
   return irrigLancamentos.filter(m => {
     if (fazenda && m.fazenda !== fazenda) return false;
     if (pivo    && m.pivo    !== pivo)    return false;
+    if (cultura && m.cultura !== cultura) return false;
+    if (safra   && m.safra   !== safra)   return false;
     if (de) {
-      // dataLocal é timestamp em ms; m.data é string "YYYY-MM-DD"
       const data = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
       if (data < de) return false;
     }
@@ -3431,62 +3605,100 @@ function getLancamentosFiltrados() {
   });
 }
 
-// --- Atualizar cards de resumo ---
+const getDataLanc = m => m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
+const getDataStr  = m => m.data || new Date(m.dataLocal).toISOString().slice(0, 10);
+
+// --- Resumo ---
 function atualizarResumoIrrig() {
   const hoje = new Date().toISOString().slice(0, 10);
   const agora = new Date();
   const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-
-  const getDataLanc = m => m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
-  const getDataStr  = m => m.data || new Date(m.dataLocal).toISOString().slice(0, 10);
-
-  const todos = getLancamentosFiltrados();
-  const mmHoje = todos
-    .filter(m => getDataStr(m) === hoje)
-    .reduce((s, m) => s + (m.mm || 0), 0);
-  const mmMes = todos
-    .filter(m => getDataLanc(m) >= inicioMes)
-    .reduce((s, m) => s + (m.mm || 0), 0);
-  const qtdMes = todos
-    .filter(m => getDataLanc(m) >= inicioMes).length;
-
   const mesNome = agora.toLocaleDateString('pt-BR', { month: 'long' });
 
+  const todos = getLancamentosFiltrados();
+  const mmHoje = todos.filter(m => getDataStr(m) === hoje).reduce((s, m) => s + (m.mm || 0), 0);
+  const mmMes  = todos.filter(m => getDataLanc(m) >= inicioMes).reduce((s, m) => s + (m.mm || 0), 0);
+  const qtdMes = todos.filter(m => getDataLanc(m) >= inicioMes).length;
+
   const el = id => document.getElementById(id);
-  if (el('irrigMmHoje'))   el('irrigMmHoje').textContent   = mmHoje.toFixed(2) + ' mm';
-  if (el('irrigMmMes'))    el('irrigMmMes').textContent    = mmMes.toFixed(2) + ' mm';
-  if (el('irrigMmMesSub')) el('irrigMmMesSub').textContent = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+  if (el('irrigMmHoje'))    el('irrigMmHoje').textContent    = mmHoje.toFixed(2) + ' mm';
+  if (el('irrigMmMes'))     el('irrigMmMes').textContent     = mmMes.toFixed(2) + ' mm';
+  if (el('irrigMmMesSub'))  el('irrigMmMesSub').textContent  = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
   if (el('irrigTotalLanc')) el('irrigTotalLanc').textContent = qtdMes;
 }
 
-// --- Renderizar lista de lançamentos ---
+// --- Breakdown por pivô ---
+function renderBreakdownIrrig() {
+  const items = getLancamentosFiltrados();
+  const wrap  = document.getElementById('irrigBreakdown');
+  const lista = document.getElementById('irrigBreakdownLista');
+  if (!wrap || !lista) return;
+
+  // Agrupa MM por fazenda+pivô
+  const map = {};
+  items.forEach(m => {
+    const key = `${m.fazenda}||${m.pivo}`;
+    if (!map[key]) map[key] = { fazenda: m.fazenda, pivo: m.pivo, mm: 0 };
+    map[key].mm += m.mm || 0;
+  });
+
+  const pivosMM = Object.values(map).sort((a, b) => b.mm - a.mm);
+  if (pivosMM.length === 0) { wrap.style.display = 'none'; return; }
+
+  const maxMM = pivosMM[0].mm || 1;
+  wrap.style.display = 'block';
+  lista.innerHTML = pivosMM.map(p => `
+    <div class="irrig-breakdown-item">
+      <div class="irrig-breakdown-pivo">
+        <div class="irrig-breakdown-pivo-nome">${esc(p.pivo)}</div>
+        <div class="irrig-breakdown-pivo-faz">${esc(p.fazenda)}</div>
+      </div>
+      <div class="irrig-breakdown-bar-wrap">
+        <div class="irrig-breakdown-bar" style="width:${Math.round((p.mm / maxMM) * 100)}%"></div>
+      </div>
+      <div class="irrig-breakdown-mm">${p.mm.toFixed(2)} mm</div>
+    </div>`).join('');
+}
+
+// --- Render lista ---
 function renderIrrigLista() {
   const lista = document.getElementById('irrigLista');
   if (!lista) return;
   const items = getLancamentosFiltrados();
+  const isAdmin = ehAdminLocal();
 
   if (items.length === 0) {
-    lista.innerHTML = '<div class="irrig-vazio">💧 Nenhum lançamento encontrado para o período e filtros selecionados.</div>';
+    lista.innerHTML = '<div class="irrig-vazio">💧 Nenhum lançamento encontrado para os filtros selecionados.</div>';
     return;
   }
 
   lista.innerHTML = items.map(m => {
-    const data = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
-    const dataFmt = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const data     = m.dataLocal ? new Date(m.dataLocal) : new Date(m.data + 'T12:00:00');
+    const dataFmt  = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
     const voltaClass = m.volta === 'Meia' ? 'meia' : '';
+    const culturaHtml = m.cultura ? `<span class="irrig-pill-cultura">${esc(m.cultura)}</span>` : '';
+    const safraHtml   = m.safra   ? `<span class="irrig-pill-safra">${esc(m.safra)}</span>`   : '';
+    const delBtn = isAdmin ? `<button class="irrig-btn-del" onclick="window.AppEstoque.pedirExclusaoIrrig('${m.id}')" title="Excluir lançamento">🗑</button>` : '';
     return `
     <div class="irrig-card">
       <div class="irrig-card-data">${dataFmt}</div>
       <div class="irrig-card-info">
         <div class="irrig-card-fazenda">${esc(m.fazenda)}</div>
         <div class="irrig-card-pivo">${esc(m.pivo)}</div>
-        <div class="irrig-card-detalhe">${m.percentimetro}% · ${esc(m.usuario || '—')}${m.obs ? ' · ' + esc(m.obs) : ''}</div>
+        <div class="irrig-card-detalhe" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:3px">
+          <span>${m.percentimetro}%</span>
+          <span style="color:#ccc">·</span>
+          <span>${esc(m.usuario || '—')}</span>
+          ${m.obs ? `<span style="color:#ccc">·</span><span>${esc(m.obs)}</span>` : ''}
+          ${culturaHtml}${safraHtml}
+        </div>
       </div>
       <span class="irrig-card-volta ${voltaClass}">${m.volta}</span>
       <div class="irrig-card-mm">
         <div class="irrig-card-mm-valor">${m.mm.toFixed(2)}</div>
         <div class="irrig-card-mm-label">mm</div>
       </div>
+      ${delBtn}
     </div>`;
   }).join('');
 }
@@ -3494,20 +3706,19 @@ function renderIrrigLista() {
 // ── MODAL DE LANÇAMENTO ───────────────────────────────────────────────
 
 function abrirLancamentoIrrig() {
-  // Data padrão = hoje
   const hoje = new Date().toISOString().slice(0, 10);
-  document.getElementById('irrigData').value = hoje;
-  document.getElementById('irrigObs').value  = '';
+  document.getElementById('irrigData').value    = hoje;
+  document.getElementById('irrigObs').value     = '';
+  document.getElementById('irrigCultura').value = '';
+  document.getElementById('irrigSafra').value   = '';
   irrigPctSelecionado = null;
 
-  // Popular dropdown de fazendas
   const selFaz = document.getElementById('irrigFazenda');
   const fazendas = [...new Set(irrigPivotos.map(p => p.fazenda))].sort();
   selFaz.innerHTML = '<option value="">Selecione a fazenda</option>' +
     fazendas.map(f => `<option value="${f}">${f}</option>`).join('');
   document.getElementById('irrigPivo').innerHTML = '<option value="">Selecione o pivô</option>';
 
-  // Chips de percentímetro
   const chips = document.getElementById('irrigChipsPct');
   const pcts  = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
   chips.innerHTML = pcts.map(p =>
@@ -3554,22 +3765,14 @@ function calcularMmIrrig() {
   const valor   = document.getElementById('irrigMmValor');
 
   if (!fazenda || !pivo || !irrigPctSelecionado) {
-    preview?.classList.add('vazio');
-    if (valor) valor.textContent = '—';
-    return;
+    preview?.classList.add('vazio'); if (valor) valor.textContent = '—'; return;
   }
-
   const pivotoDoc = irrigPivotos.find(p => p.fazenda === fazenda && p.pivo === pivo);
-  if (!pivotoDoc) {
-    preview?.classList.add('vazio');
-    if (valor) valor.textContent = '—';
-    return;
-  }
+  if (!pivotoDoc) { preview?.classList.add('vazio'); if (valor) valor.textContent = '—'; return; }
 
   let mm = pivotoDoc.tabela[String(irrigPctSelecionado)] || 0;
   if (volta === 'Meia') mm = mm / 2;
   mm = Math.round(mm * 100) / 100;
-
   preview?.classList.remove('vazio');
   if (valor) valor.textContent = mm.toFixed(2);
 }
@@ -3579,6 +3782,8 @@ async function confirmarLancamentoIrrig() {
   const fazenda = document.getElementById('irrigFazenda').value;
   const pivo    = document.getElementById('irrigPivo').value;
   const volta   = document.getElementById('irrigVolta').value;
+  const cultura = document.getElementById('irrigCultura').value;
+  const safra   = document.getElementById('irrigSafra').value;
   const obs     = document.getElementById('irrigObs').value.trim();
 
   if (!data)    { mostrarToast('Informe a data.', 'erro'); return; }
@@ -3599,12 +3804,10 @@ async function confirmarLancamentoIrrig() {
   try {
     const s = getSessao();
     await addDoc(collection(db, 'irrigacao_lancamentos'), {
-      data:           data,
-      dataLocal:      new Date(data + 'T12:00:00').getTime(),
-      dataOrdenacao:  serverTimestamp(),
-      fazenda, pivo,
-      percentimetro:  irrigPctSelecionado,
-      volta, mm, obs,
+      data, dataLocal: new Date(data + 'T12:00:00').getTime(),
+      dataOrdenacao: serverTimestamp(),
+      fazenda, pivo, percentimetro: irrigPctSelecionado,
+      volta, mm, cultura, safra, obs,
       usuario: s ? s.email : '—',
     });
     fecharLancamentoIrrig();
@@ -3615,6 +3818,251 @@ async function confirmarLancamentoIrrig() {
   } finally {
     btn.disabled = false; btn.textContent = '💧 Confirmar';
   }
+}
+
+// ── EXCLUSÃO DE LANÇAMENTO ─────────────────────────────────────────────
+
+function pedirExclusaoIrrig(id) {
+  const m = irrigLancamentos.find(l => l.id === id);
+  if (!m) return;
+  _exclusaoPendenteIrrigId = id;
+  const desc = document.getElementById('exclusaoIrrigDesc');
+  if (desc) desc.textContent = `${m.fazenda} · ${m.pivo} · ${m.mm.toFixed(2)} mm (${m.data})`;
+  document.getElementById('overlayConfirmarExclusaoIrrig').classList.add('aberto');
+}
+
+function cancelarExclusaoIrrig() {
+  _exclusaoPendenteIrrigId = null;
+  document.getElementById('overlayConfirmarExclusaoIrrig').classList.remove('aberto');
+}
+
+async function confirmarExclusaoIrrig() {
+  const id = _exclusaoPendenteIrrigId;
+  if (!id) return;
+  const btn = document.getElementById('btnConfirmarExclusaoIrrig');
+  btn.disabled = true; btn.textContent = 'Excluindo…';
+  try {
+    await deleteDoc(doc(db, 'irrigacao_lancamentos', id));
+    cancelarExclusaoIrrig();
+    mostrarToast('Lançamento excluído.', 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao excluir.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '🗑 Sim, excluir';
+  }
+}
+
+// ── GESTÃO DE PIVÔS (admin) ────────────────────────────────────────────
+
+async function abrirGestaoIrrig() {
+  await recarregarPivotos();
+  renderGestaoIrrigLista();
+  document.getElementById('overlayGestaoIrrig').classList.add('aberto');
+}
+
+function fecharGestaoIrrig() {
+  document.getElementById('overlayGestaoIrrig').classList.remove('aberto');
+}
+
+function renderGestaoIrrigLista() {
+  const lista = document.getElementById('gestaoIrrigLista');
+  if (!lista) return;
+  const ordenados = [...irrigPivotos].sort((a, b) => a.fazenda.localeCompare(b.fazenda) || a.pivo.localeCompare(b.pivo));
+  lista.innerHTML = ordenados.map(p => `
+    <div class="pivo-item">
+      <div class="pivo-item-info">
+        <div class="pivo-item-nome">${esc(p.pivo)}</div>
+        <div class="pivo-item-faz">${esc(p.fazenda)}</div>
+      </div>
+      <div class="pivo-item-acoes">
+        <button class="btn-pivo-edit" onclick="window.AppEstoque.abrirEditorPivo('${p.id}')">✎ Editar</button>
+        <button class="btn-pivo-del"  onclick="window.AppEstoque.excluirPivo('${p.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrirEditorPivo(id) {
+  _editandoPivoId = id;
+  const titulo = document.getElementById('editorPivoTitulo');
+  const pcts   = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+
+  if (id) {
+    const p = irrigPivotos.find(x => x.id === id);
+    if (!p) return;
+    if (titulo) titulo.textContent = 'Editar Pivô';
+    document.getElementById('editorPivoFazenda').value = p.fazenda;
+    document.getElementById('editorPivoNome').value    = p.pivo;
+    document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
+      `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" value="${p.tabela[pct] || ''}"></div>`
+    ).join('');
+  } else {
+    if (titulo) titulo.textContent = 'Novo Pivô';
+    document.getElementById('editorPivoFazenda').value = '';
+    document.getElementById('editorPivoNome').value    = '';
+    document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
+      `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" placeholder="0.00"></div>`
+    ).join('');
+  }
+  document.getElementById('overlayEditorPivo').classList.add('aberto');
+}
+
+function fecharEditorPivo() {
+  document.getElementById('overlayEditorPivo').classList.remove('aberto');
+}
+
+async function salvarPivo() {
+  const fazenda = document.getElementById('editorPivoFazenda').value.trim().toUpperCase();
+  const pivo    = document.getElementById('editorPivoNome').value.trim().toUpperCase();
+  if (!fazenda || !pivo) { mostrarToast('Informe a fazenda e o nome do pivô.', 'erro'); return; }
+
+  const pcts = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+  const tabela = {};
+  for (const pct of pcts) {
+    const val = parseFloat(document.getElementById(`mm_${pct}`)?.value || '0');
+    tabela[String(pct)] = isNaN(val) ? 0 : Math.round(val * 10000) / 10000;
+  }
+
+  const btn = document.getElementById('btnSalvarPivo');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  try {
+    const normalize = s => s.trim().toUpperCase().replace(/\s+/g, '_');
+    const docId = _editandoPivoId || `${normalize(fazenda)}___${normalize(pivo)}`;
+    await setDoc(doc(db, 'irrigacao_pivotos', docId), { fazenda, pivo, tabela, ativo: true, atualizadoEm: new Date().toISOString() });
+    await recarregarPivotos();
+    // Atualiza dropdown do modal de lançamento
+    const selFaz = document.getElementById('irrigFazenda');
+    if (selFaz) {
+      const fazendas = [...new Set(irrigPivotos.map(p => p.fazenda))].sort();
+      selFaz.innerHTML = '<option value="">Selecione a fazenda</option>' + fazendas.map(f => `<option value="${f}">${f}</option>`).join('');
+    }
+    popularFiltrosFazenda();
+    fecharEditorPivo();
+    renderGestaoIrrigLista();
+    mostrarToast(`Pivô "${pivo}" salvo com sucesso!`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar o pivô.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Salvar';
+  }
+}
+
+async function excluirPivo(id) {
+  const p = irrigPivotos.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Excluir o pivô "${p.pivo}" (${p.fazenda})? Esta ação não afeta lançamentos já registrados.`)) return;
+  try {
+    await deleteDoc(doc(db, 'irrigacao_pivotos', id));
+    await recarregarPivotos();
+    popularFiltrosFazenda();
+    renderGestaoIrrigLista();
+    mostrarToast(`Pivô "${p.pivo}" excluído.`, 'sucesso');
+  } catch (e) {
+    mostrarToast('Erro ao excluir pivô.', 'erro');
+  }
+}
+
+// ── EXPORTAÇÃO XLS ─────────────────────────────────────────────────────
+
+function exportarIrrigXLS() {
+  const items = getLancamentosFiltrados();
+  if (items.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+  const linhas = items.map(m => ({
+    'Data':          m.data,
+    'Fazenda':       m.fazenda,
+    'Pivô':          m.pivo,
+    'Percentímetro': m.percentimetro + '%',
+    'Volta':         m.volta,
+    'MM':            m.mm,
+    'Cultura':       m.cultura || '',
+    'Safra':         m.safra   || '',
+    'Usuário':       m.usuario || '',
+    'Observação':    m.obs     || '',
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws['!cols'] = Object.keys(linhas[0]).map(k => ({ wch: Math.max(k.length + 2, 14) }));
+  XLSX.utils.book_append_sheet(wb, ws, 'Irrigação');
+  const nome = `irrigacao_${configGlobal.fazenda.replace(/\s+/g,'-')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+  XLSX.writeFile(wb, `${nome}.xlsx`);
+  mostrarToast(`✓ ${linhas.length} lançamentos exportados!`, 'sucesso');
+}
+
+// ── EXPORTAÇÃO PDF ─────────────────────────────────────────────────────
+
+function exportarIrrigPDF() {
+  const items = getLancamentosFiltrados();
+  if (items.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+
+  const totalMM = items.reduce((s, m) => s + (m.mm || 0), 0);
+  const data    = new Date().toLocaleString('pt-BR');
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.selectedOptions[0]?.text || '';
+  const fazFiltro = document.getElementById('irrigFiltroFazenda')?.value || 'Todas';
+  const pivFiltro = document.getElementById('irrigFiltroPivo')?.value   || 'Todos';
+
+  const linhas = items.map(m => `
+    <tr>
+      <td>${m.data}</td>
+      <td>${esc(m.fazenda)}</td>
+      <td>${esc(m.pivo)}</td>
+      <td style="text-align:center">${m.percentimetro}%</td>
+      <td style="text-align:center">${m.volta}</td>
+      <td style="text-align:right;font-weight:700;color:#1a5fb4">${m.mm.toFixed(2)}</td>
+      <td>${esc(m.cultura || '—')}</td>
+      <td>${esc(m.safra   || '—')}</td>
+      <td>${esc(m.obs     || '')}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Relatório de Irrigação</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:24px;color:#1a2535;font-size:12px}
+    .logo-wrap{display:flex;align-items:center;gap:16px;margin-bottom:8px}
+    .logo-wrap img{height:56px}
+    .capa-empresa{font-size:13px;font-weight:700;color:#1a3a6b}
+    .capa-fazenda{font-size:18px;font-weight:900;color:#1a2535}
+    .capa-titulo{font-size:14px;color:#5a6472;margin-top:2px}
+    .resumo{display:flex;gap:16px;margin:16px 0;flex-wrap:wrap}
+    .resumo-card{border:1.5px solid #d0d8e0;border-radius:8px;padding:10px 14px;min-width:120px}
+    .resumo-num{font-size:22px;font-weight:800;color:#1a5fb4}
+    .resumo-label{font-size:10px;color:#6a7a8a;text-transform:uppercase;letter-spacing:0.5px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th{background:#1a3a6b;color:white;padding:8px 10px;font-size:11px;text-align:left}
+    td{padding:7px 10px;border-bottom:1px solid #e8edf2;font-size:11px}
+    tr:nth-child(even) td{background:#f7f9fc}
+    .rodape{margin-top:24px;font-size:10px;color:#9aa5b0;text-align:center;border-top:1px solid #e0e4e8;padding-top:8px}
+  </style></head><body>
+  <div class="logo-wrap">
+    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
+    <div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="capa-titulo">Relatório de Irrigação · ${periodo} · Emitido em ${data}</div>
+    </div>
+  </div>
+  <div style="font-size:11px;color:#6a7a8a;margin-bottom:8px">
+    Fazenda: <strong>${esc(fazFiltro)}</strong> · Pivô: <strong>${esc(pivFiltro)}</strong>
+  </div>
+  <div class="resumo">
+    <div class="resumo-card"><div class="resumo-num">${totalMM.toFixed(2)} mm</div><div class="resumo-label">Total MM</div></div>
+    <div class="resumo-card"><div class="resumo-num">${items.length}</div><div class="resumo-label">Lançamentos</div></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Data</th><th>Fazenda</th><th>Pivô</th><th>%</th>
+      <th>Volta</th><th>MM</th><th>Cultura</th><th>Safra</th><th>Obs.</th>
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+  </table>
+  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Controle de Irrigação · Gerado automaticamente em ${data}</div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────
@@ -4101,6 +4549,10 @@ window.AppEstoque = {
   abrirLancamentoIrrig, fecharLancamentoIrrig, confirmarLancamentoIrrig,
   onIrrigFazendaChange, onIrrigPivoChange, selecionarPctIrrig, calcularMmIrrig,
   filtrarIrrig,
+  pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
+  abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista,
+  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo,
+  exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
   gerarPDFLancamento, gerarPDFLancamentoAtual,
