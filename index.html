@@ -233,6 +233,72 @@ header {
 .export-preview-icone { font-size: 18px; }
 .export-preview strong { color: var(--texto); }
 
+/* ── MÓDULO IRRIGAÇÃO ─────────────────────────────────────────────────── */
+.tela-irrigacao { display: none; padding: 20px; max-width: 1100px; margin: 0 auto; }
+.tela-irrigacao.ativa { display: block; }
+.tela-estoque { display: block; }
+.tela-estoque.oculta { display: none; }
+
+/* Cards de resumo MM */
+.irrig-resumo { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.irrig-stat {
+  flex: 1; min-width: 160px; background: white; border: 1.5px solid var(--borda);
+  border-radius: 10px; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px;
+}
+.irrig-stat-valor { font-size: 28px; font-weight: 800; color: #1a5fb4; line-height: 1; }
+.irrig-stat-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.irrig-stat-sub { font-size: 12px; color: var(--texto-suave); }
+
+/* Barra de ações do módulo */
+.irrig-acoes { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.irrig-acoes .irrig-filtro-select {
+  padding: 9px 12px; border: 1.5px solid var(--borda); border-radius: 8px;
+  font-size: 13px; background: white; color: var(--texto); cursor: pointer;
+}
+
+/* Lista de lançamentos */
+.irrig-lista { display: flex; flex-direction: column; gap: 8px; }
+.irrig-card {
+  background: white; border: 1.5px solid var(--borda); border-radius: 10px;
+  padding: 14px 18px; display: flex; align-items: center; gap: 16px;
+  transition: box-shadow 0.15s;
+}
+.irrig-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+.irrig-card-data { font-size: 12px; color: var(--texto-suave); min-width: 80px; }
+.irrig-card-info { flex: 1; min-width: 0; }
+.irrig-card-fazenda { font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; }
+.irrig-card-pivo { font-size: 15px; font-weight: 600; color: var(--texto); }
+.irrig-card-detalhe { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
+.irrig-card-mm { text-align: right; min-width: 90px; }
+.irrig-card-mm-valor { font-size: 22px; font-weight: 800; color: #1a5fb4; line-height: 1; }
+.irrig-card-mm-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; }
+.irrig-card-volta {
+  font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
+  background: #e8f0fe; color: #1a5fb4;
+}
+.irrig-card-volta.meia { background: #fef3cd; color: #c47a00; }
+.irrig-vazio { text-align: center; padding: 48px 20px; color: var(--texto-suave); font-size: 14px; }
+
+/* Modal lançamento irrigação */
+.irrig-form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.irrig-form-row > * { flex: 1; min-width: 140px; }
+.irrig-mm-preview {
+  background: linear-gradient(135deg, #1a5fb4, #1e6dd5);
+  color: white; border-radius: 10px; padding: 18px 20px;
+  text-align: center; margin: 16px 0 4px;
+}
+.irrig-mm-preview-valor { font-size: 42px; font-weight: 900; line-height: 1; }
+.irrig-mm-preview-label { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+.irrig-mm-preview.vazio { background: #e0e4ea; color: var(--texto-suave); }
+
+@media (max-width: 600px) {
+  .irrig-resumo { gap: 8px; }
+  .irrig-stat { min-width: 130px; padding: 12px 14px; }
+  .irrig-stat-valor { font-size: 22px; }
+  .irrig-card { flex-wrap: wrap; gap: 10px; }
+  .tela-irrigacao { padding: 12px; }
+}
+
 /* PAINEL */
 /* MENU DE AÇÕES DO CARD — substitui editar/excluir/histórico isolados */
 .btn-menu-acoes {
@@ -546,8 +612,8 @@ header {
   <button class="modulo-tab ativo" onclick="window.AppEstoque.navegarModulo('estoque')" id="tab-estoque">
     📦 Estoque
   </button>
-  <button class="modulo-tab futuro" title="Em desenvolvimento">
-    💧 Irrigação <span class="modulo-badge em-breve">em breve</span>
+  <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('irrigacao')" id="tab-irrigacao">
+    💧 Irrigação
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
     🌧️ Pluviometria <span class="modulo-badge em-breve">em breve</span>
@@ -560,6 +626,7 @@ header {
   </button>
 </nav>
 
+<div class="tela-estoque" id="telaEstoque">
 <div class="filtros">
   <input class="busca" type="text" placeholder="🔍 Buscar produto ou princípio ativo..." oninput="window.AppEstoque.filtrar()" id="busca">
   <select class="filtro-classe" onchange="window.AppEstoque.filtrar()" id="filtroClasse">
@@ -587,6 +654,51 @@ header {
 </div>
 
 <div class="lista" id="lista"></div>
+</div><!-- /tela-estoque -->
+
+<!-- ── TELA DE IRRIGAÇÃO ─────────────────────────────────────────── -->
+<div class="tela-irrigacao" id="telaIrrigacao">
+
+  <!-- Resumo MM -->
+  <div class="irrig-resumo" id="irrigResumo">
+    <div class="irrig-stat">
+      <div class="irrig-stat-valor" id="irrigMmHoje">—</div>
+      <div class="irrig-stat-label">MM Hoje</div>
+    </div>
+    <div class="irrig-stat">
+      <div class="irrig-stat-valor" id="irrigMmMes">—</div>
+      <div class="irrig-stat-label">MM Este Mês</div>
+      <div class="irrig-stat-sub" id="irrigMmMesSub"></div>
+    </div>
+    <div class="irrig-stat">
+      <div class="irrig-stat-valor" id="irrigTotalLanc">—</div>
+      <div class="irrig-stat-label">Lançamentos no mês</div>
+    </div>
+  </div>
+
+  <!-- Barra de ações -->
+  <div class="irrig-acoes">
+    <button class="btn-header verde" style="padding:10px 18px;font-size:13px" onclick="window.AppEstoque.abrirLancamentoIrrig()">💧 + Novo Lançamento</button>
+    <select class="irrig-filtro-select" id="irrigFiltroFazenda" onchange="window.AppEstoque.filtrarIrrig()">
+      <option value="">Todas as fazendas</option>
+    </select>
+    <select class="irrig-filtro-select" id="irrigFiltroPivo" onchange="window.AppEstoque.filtrarIrrig()">
+      <option value="">Todos os pivôs</option>
+    </select>
+    <select class="irrig-filtro-select" id="irrigFiltroPeriodo" onchange="window.AppEstoque.filtrarIrrig()">
+      <option value="mes">Este mês</option>
+      <option value="7d">Últimos 7 dias</option>
+      <option value="30d">Últimos 30 dias</option>
+      <option value="todos">Todos</option>
+    </select>
+  </div>
+
+  <!-- Lista de lançamentos -->
+  <div class="irrig-lista" id="irrigLista">
+    <div class="irrig-vazio">Carregando lançamentos...</div>
+  </div>
+
+</div><!-- /tela-irrigacao -->
 
 <!-- MODAL HISTÓRICO -->
 <div class="overlay" id="overlayHistorico" onclick="if(event.target===this)window.AppEstoque.fecharHistorico()">
@@ -722,6 +834,72 @@ header {
       <button class="btn-cancelar" onclick="window.AppEstoque.fecharExportacao()">Cancelar</button>
       <button id="btnConfirmarExport" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px" onclick="window.AppEstoque.confirmarExportacao()">
         <span>⬇️</span> Baixar arquivo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LANÇAMENTO IRRIGAÇÃO -->
+<div class="overlay" id="overlayIrrigacao" onclick="if(event.target===this)window.AppEstoque.fecharLancamentoIrrig()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a3a6b,#1a5fb4)">
+      <h2>💧 Registrar Irrigação</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharLancamentoIrrig()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 8px">
+
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Data</label>
+          <input type="date" id="irrigData" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label class="label-campo">Fazenda</label>
+          <select id="irrigFazenda" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onchange="window.AppEstoque.onIrrigFazendaChange()">
+            <option value="">Selecione a fazenda</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Pivô</label>
+          <select id="irrigPivo" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onchange="window.AppEstoque.onIrrigPivoChange()">
+            <option value="">Selecione o pivô</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-campo">Volta</label>
+          <select id="irrigVolta" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onchange="window.AppEstoque.calcularMmIrrig()">
+            <option value="Inteira">Inteira</option>
+            <option value="Meia">Meia</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="label-campo">% Percentímetro</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="irrigChipsPct">
+          <!-- chips 5%..100% gerados dinamicamente -->
+        </div>
+      </div>
+
+      <!-- Preview MM calculado -->
+      <div class="irrig-mm-preview vazio" id="irrigMmPreview">
+        <div class="irrig-mm-preview-valor" id="irrigMmValor">—</div>
+        <div class="irrig-mm-preview-label">mm de lâmina</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label class="label-campo">Observação (opcional)</label>
+        <input type="text" id="irrigObs" placeholder="Ex: Irrigação noturna" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box;margin-top:4px">
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharLancamentoIrrig()">Cancelar</button>
+      <button id="btnConfirmarIrrig" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarLancamentoIrrig()">
+        💧 Confirmar
       </button>
     </div>
   </div>
@@ -991,7 +1169,7 @@ import {
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, increment, runTransaction,
-  addDoc, onSnapshot, query, orderBy, limit, startAfter, writeBatch, serverTimestamp
+  addDoc, onSnapshot, query, orderBy, where, limit, startAfter, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // =====================================================================
@@ -3157,21 +3335,313 @@ function gerarPDFLancamento(movId) {
 // EXPORTAR CSV
 // =====================================================================
 // =====================================================================
-// NAVEGAÇÃO DE MÓDULOS — controla qual módulo está visível.
-// Módulos futuros: irrigação, pluviometria, custos, máquinas.
-// Hoje só "estoque" é real; os demais são placeholders visuais.
+// MÓDULO IRRIGAÇÃO
 // =====================================================================
+
+// --- Estado em memória ---
+let irrigPivotos       = [];   // todos os pivôs carregados do Firestore
+let irrigLancamentos   = [];   // lançamentos carregados (filtrados em memória)
+let irrigPctSelecionado = null; // percentímetro selecionado no modal
+let irrigUnsubscribe   = null; // listener ativo de lançamentos
+
+// --- Persistência: carrega pivôs do Firestore ---
+async function carregarPivotos() {
+  if (irrigPivotos.length > 0) return; // já carregado
+  const snap = await getDocs(query(collection(db, 'irrigacao_pivotos'), orderBy('fazenda')));
+  irrigPivotos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// --- Inicializa o módulo (chamado ao navegar para irrigação) ---
+async function iniciarModuloIrrigacao() {
+  await carregarPivotos();
+  popularFiltrosFazenda();
+  escutarLancamentosIrrig();
+}
+
+// --- Listener em tempo real dos lançamentos ---
+function escutarLancamentosIrrig() {
+  if (irrigUnsubscribe) irrigUnsubscribe(); // cancela listener anterior
+  const q = query(
+    collection(db, 'irrigacao_lancamentos'),
+    orderBy('dataOrdenacao', 'desc'),
+    limit(300)
+  );
+  irrigUnsubscribe = onSnapshot(q, snap => {
+    irrigLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    atualizarResumoIrrig();
+    renderIrrigLista();
+  });
+}
+
+// --- Parar listener ao sair do módulo ---
+function pararModuloIrrigacao() {
+  if (irrigUnsubscribe) { irrigUnsubscribe(); irrigUnsubscribe = null; }
+}
+
+// --- Popular dropdowns de filtro ---
+function popularFiltrosFazenda() {
+  const fazendas = [...new Set(irrigPivotos.map(p => p.fazenda))].sort();
+  const sel = document.getElementById('irrigFiltroFazenda');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Todas as fazendas</option>' +
+    fazendas.map(f => `<option value="${f}">${f}</option>`).join('');
+}
+
+function popularFiltroPivos(fazenda) {
+  const sel = document.getElementById('irrigFiltroPivo');
+  if (!sel) return;
+  const pivosFazenda = irrigPivotos
+    .filter(p => !fazenda || p.fazenda === fazenda)
+    .map(p => p.pivo).sort();
+  sel.innerHTML = '<option value="">Todos os pivôs</option>' +
+    pivosFazenda.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+function filtrarIrrig() {
+  const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
+  popularFiltroPivos(fazenda);
+  atualizarResumoIrrig();
+  renderIrrigLista();
+}
+
+// --- Filtrar lançamentos pelos filtros ativos ---
+function getLancamentosFiltrados() {
+  const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
+  const pivo    = document.getElementById('irrigFiltroPivo')?.value    || '';
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
+
+  const agora = new Date();
+  let de = null;
+  if (periodo === 'mes') de = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  else if (periodo === '7d')  de = new Date(agora.getTime() - 7 * 86400000);
+  else if (periodo === '30d') de = new Date(agora.getTime() - 30 * 86400000);
+
+  return irrigLancamentos.filter(m => {
+    if (fazenda && m.fazenda !== fazenda) return false;
+    if (pivo    && m.pivo    !== pivo)    return false;
+    if (de) {
+      const data = new Date(m.dataLocal || m.data);
+      if (data < de) return false;
+    }
+    return true;
+  });
+}
+
+// --- Atualizar cards de resumo ---
+function atualizarResumoIrrig() {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const agora = new Date();
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+  const todos = getLancamentosFiltrados();
+  const mmHoje = todos
+    .filter(m => (m.dataLocal || m.data || '').slice(0, 10) === hoje)
+    .reduce((s, m) => s + (m.mm || 0), 0);
+  const mmMes = todos
+    .filter(m => new Date(m.dataLocal || m.data) >= inicioMes)
+    .reduce((s, m) => s + (m.mm || 0), 0);
+  const qtdMes = todos
+    .filter(m => new Date(m.dataLocal || m.data) >= inicioMes).length;
+
+  const mesNome = agora.toLocaleDateString('pt-BR', { month: 'long' });
+
+  const el = id => document.getElementById(id);
+  if (el('irrigMmHoje'))   el('irrigMmHoje').textContent   = mmHoje.toFixed(2) + ' mm';
+  if (el('irrigMmMes'))    el('irrigMmMes').textContent    = mmMes.toFixed(2) + ' mm';
+  if (el('irrigMmMesSub')) el('irrigMmMesSub').textContent = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+  if (el('irrigTotalLanc')) el('irrigTotalLanc').textContent = qtdMes;
+}
+
+// --- Renderizar lista de lançamentos ---
+function renderIrrigLista() {
+  const lista = document.getElementById('irrigLista');
+  if (!lista) return;
+  const items = getLancamentosFiltrados();
+
+  if (items.length === 0) {
+    lista.innerHTML = '<div class="irrig-vazio">💧 Nenhum lançamento encontrado para o período e filtros selecionados.</div>';
+    return;
+  }
+
+  lista.innerHTML = items.map(m => {
+    const data = new Date(m.dataLocal || m.data);
+    const dataFmt = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const voltaClass = m.volta === 'Meia' ? 'meia' : '';
+    return `
+    <div class="irrig-card">
+      <div class="irrig-card-data">${dataFmt}</div>
+      <div class="irrig-card-info">
+        <div class="irrig-card-fazenda">${esc(m.fazenda)}</div>
+        <div class="irrig-card-pivo">${esc(m.pivo)}</div>
+        <div class="irrig-card-detalhe">${m.percentimetro}% · ${esc(m.usuario || '—')}${m.obs ? ' · ' + esc(m.obs) : ''}</div>
+      </div>
+      <span class="irrig-card-volta ${voltaClass}">${m.volta}</span>
+      <div class="irrig-card-mm">
+        <div class="irrig-card-mm-valor">${m.mm.toFixed(2)}</div>
+        <div class="irrig-card-mm-label">mm</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL DE LANÇAMENTO ───────────────────────────────────────────────
+
+function abrirLancamentoIrrig() {
+  // Data padrão = hoje
+  const hoje = new Date().toISOString().slice(0, 10);
+  document.getElementById('irrigData').value = hoje;
+  document.getElementById('irrigObs').value  = '';
+  irrigPctSelecionado = null;
+
+  // Popular dropdown de fazendas
+  const selFaz = document.getElementById('irrigFazenda');
+  const fazendas = [...new Set(irrigPivotos.map(p => p.fazenda))].sort();
+  selFaz.innerHTML = '<option value="">Selecione a fazenda</option>' +
+    fazendas.map(f => `<option value="${f}">${f}</option>`).join('');
+  document.getElementById('irrigPivo').innerHTML = '<option value="">Selecione o pivô</option>';
+
+  // Chips de percentímetro
+  const chips = document.getElementById('irrigChipsPct');
+  const pcts  = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+  chips.innerHTML = pcts.map(p =>
+    `<button class="export-chip" data-pct="${p}" onclick="window.AppEstoque.selecionarPctIrrig(this)">${p}%</button>`
+  ).join('');
+
+  calcularMmIrrig();
+  document.getElementById('overlayIrrigacao').classList.add('aberto');
+}
+
+function fecharLancamentoIrrig() {
+  document.getElementById('overlayIrrigacao').classList.remove('aberto');
+}
+
+function onIrrigFazendaChange() {
+  const fazenda = document.getElementById('irrigFazenda').value;
+  const pivosFaz = irrigPivotos.filter(p => p.fazenda === fazenda).map(p => p.pivo).sort();
+  const sel = document.getElementById('irrigPivo');
+  sel.innerHTML = '<option value="">Selecione o pivô</option>' +
+    pivosFaz.map(p => `<option value="${p}">${p}</option>`).join('');
+  irrigPctSelecionado = null;
+  document.querySelectorAll('#irrigChipsPct .export-chip').forEach(c => c.classList.remove('ativo'));
+  calcularMmIrrig();
+}
+
+function onIrrigPivoChange() {
+  irrigPctSelecionado = null;
+  document.querySelectorAll('#irrigChipsPct .export-chip').forEach(c => c.classList.remove('ativo'));
+  calcularMmIrrig();
+}
+
+function selecionarPctIrrig(btn) {
+  document.querySelectorAll('#irrigChipsPct .export-chip').forEach(c => c.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  irrigPctSelecionado = Number(btn.dataset.pct);
+  calcularMmIrrig();
+}
+
+function calcularMmIrrig() {
+  const fazenda = document.getElementById('irrigFazenda')?.value;
+  const pivo    = document.getElementById('irrigPivo')?.value;
+  const volta   = document.getElementById('irrigVolta')?.value || 'Inteira';
+  const preview = document.getElementById('irrigMmPreview');
+  const valor   = document.getElementById('irrigMmValor');
+
+  if (!fazenda || !pivo || !irrigPctSelecionado) {
+    preview?.classList.add('vazio');
+    if (valor) valor.textContent = '—';
+    return;
+  }
+
+  const pivotoDoc = irrigPivotos.find(p => p.fazenda === fazenda && p.pivo === pivo);
+  if (!pivotoDoc) {
+    preview?.classList.add('vazio');
+    if (valor) valor.textContent = '—';
+    return;
+  }
+
+  let mm = pivotoDoc.tabela[String(irrigPctSelecionado)] || 0;
+  if (volta === 'Meia') mm = mm / 2;
+  mm = Math.round(mm * 100) / 100;
+
+  preview?.classList.remove('vazio');
+  if (valor) valor.textContent = mm.toFixed(2);
+}
+
+async function confirmarLancamentoIrrig() {
+  const data    = document.getElementById('irrigData').value;
+  const fazenda = document.getElementById('irrigFazenda').value;
+  const pivo    = document.getElementById('irrigPivo').value;
+  const volta   = document.getElementById('irrigVolta').value;
+  const obs     = document.getElementById('irrigObs').value.trim();
+
+  if (!data)    { mostrarToast('Informe a data.', 'erro'); return; }
+  if (!fazenda) { mostrarToast('Selecione a fazenda.', 'erro'); return; }
+  if (!pivo)    { mostrarToast('Selecione o pivô.', 'erro'); return; }
+  if (!irrigPctSelecionado) { mostrarToast('Selecione o percentímetro.', 'erro'); return; }
+
+  const pivotoDoc = irrigPivotos.find(p => p.fazenda === fazenda && p.pivo === pivo);
+  if (!pivotoDoc) { mostrarToast('Pivô não encontrado.', 'erro'); return; }
+
+  let mm = pivotoDoc.tabela[String(irrigPctSelecionado)] || 0;
+  if (volta === 'Meia') mm = mm / 2;
+  mm = Math.round(mm * 100) / 100;
+
+  const btn = document.getElementById('btnConfirmarIrrig');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  try {
+    const s = getSessao();
+    await addDoc(collection(db, 'irrigacao_lancamentos'), {
+      data:           data,
+      dataLocal:      new Date(data + 'T12:00:00').getTime(),
+      dataOrdenacao:  serverTimestamp(),
+      fazenda, pivo,
+      percentimetro:  irrigPctSelecionado,
+      volta, mm, obs,
+      usuario: s ? s.email : '—',
+    });
+    fecharLancamentoIrrig();
+    mostrarToast(`✓ Irrigação registrada — ${mm.toFixed(2)} mm (${pivo})`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '💧 Confirmar';
+  }
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────────────────────
+
 function navegarModulo(modulo) {
-  if (modulo !== 'estoque') return; // futuros módulos não implementados ainda
   moduloAtivo = modulo;
+
+  // Mostra/oculta telas
+  const telaEst  = document.getElementById('telaEstoque');
+  const telaIrr  = document.getElementById('telaIrrigacao');
+  const filtros  = document.querySelector('.filtros');
+  if (telaEst)  telaEst.classList.toggle('oculta', modulo !== 'estoque');
+  if (telaIrr)  telaIrr.classList.toggle('ativa',  modulo === 'irrigacao');
+  if (filtros)  filtros.style.display = modulo === 'estoque' ? '' : 'none';
+
   // Ativa a aba correta
   document.querySelectorAll('.modulo-tab:not(.futuro)').forEach(btn => {
     btn.classList.toggle('ativo', btn.id === `tab-${modulo}`);
   });
-  // Atualiza o subtítulo do header
-  const titulos = { estoque: `${configGlobal.fazenda} — Estoque` };
+
+  // Subtítulo do header
+  const titulos = {
+    estoque:   `${configGlobal.fazenda} — Estoque`,
+    irrigacao: `${configGlobal.fazenda} — Irrigação`,
+  };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
+
+  // Inicia/para módulos
+  if (modulo === 'irrigacao') {
+    iniciarModuloIrrigacao();
+  } else {
+    pararModuloIrrigacao();
+  }
 }
 
 // =====================================================================
@@ -3303,27 +3773,47 @@ function atualizarPreviewExport() {
   }
 }
 
-function confirmarExportacao() {
-  const lista = _filtrarHistoricoExport();
-  const linhas = _expandirLinhas(lista);
-  if (linhas.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
-
-  const nomeArq = `historico_${configGlobal.fazenda.replace(/\s+/g,'-')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+async function confirmarExportacao() {
   const btn = document.getElementById('btnConfirmarExport');
-  btn.disabled = true; btn.innerHTML = '<span>⏳</span> Gerando…';
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span> Buscando…';
 
   try {
+    // Busca TODOS os registros do Firestore com paginação automática.
+    // Não usa o array `historico` em memória (limitado a 100 docs) —
+    // garante que nenhum lançamento seja omitido na exportação.
+    const LOTE = 500;
+    let todos = [];
+    let ultimoDoc = null;
+    let temMais = true;
+
+    while (temMais) {
+      const res = await Persistencia.carregarHistorico(LOTE, ultimoDoc);
+      todos = todos.concat(res.lista);
+      ultimoDoc = res.ultimoDoc;
+      temMais = res.temMais;
+      btn.innerHTML = `<span>⏳</span> Buscando… (${todos.length})`;
+    }
+
+    // Aplica filtros de período e tipo sobre o conjunto completo
+    const filtrados = _aplicarFiltrosExport(todos);
+    const linhas    = _expandirLinhas(filtrados);
+
+    if (linhas.length === 0) {
+      mostrarToast('Nenhum lançamento encontrado para os filtros selecionados.', 'erro');
+      return;
+    }
+
+    const nomeArq = `historico_${configGlobal.fazenda.replace(/\s+/g,'-')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+    btn.innerHTML = '<span>⏳</span> Gerando arquivo…';
+
     if (_exportFormato === 'xls') {
-      // XLS via SheetJS
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(linhas);
-      // Larguras de coluna automáticas
-      const cols = Object.keys(linhas[0]).map(k => ({ wch: Math.max(k.length, 14) }));
+      const cols = Object.keys(linhas[0]).map(k => ({ wch: Math.max(k.length + 2, 16) }));
       ws['!cols'] = cols;
       XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
       XLSX.writeFile(wb, `${nomeArq}.xlsx`);
     } else {
-      // CSV com BOM para Excel pt-BR
       const cabecalho = Object.keys(linhas[0]);
       const csvLinhas = [cabecalho, ...linhas.map(l => cabecalho.map(k => `"${String(l[k] ?? '').replace(/"/g, '""')}"`))]
         .map(r => r.join(','))
@@ -3333,14 +3823,50 @@ function confirmarExportacao() {
       const a = document.createElement('a'); a.href = url; a.download = `${nomeArq}.csv`;
       a.click(); URL.revokeObjectURL(url);
     }
+
     fecharExportacao();
-    mostrarToast(`✓ ${linhas.length} lançamentos exportados!`, 'sucesso');
+    mostrarToast(`✓ ${linhas.length} lançamento${linhas.length > 1 ? 's' : ''} exportado${linhas.length > 1 ? 's' : ''}!`, 'sucesso');
   } catch (e) {
     console.error(e);
-    mostrarToast('Erro ao gerar o arquivo. Tente novamente.', 'erro');
+    mostrarToast('Erro ao gerar o arquivo. Verifique a conexão e tente novamente.', 'erro');
   } finally {
     btn.disabled = false; btn.innerHTML = '<span>⬇️</span> Baixar arquivo';
   }
+}
+
+// _aplicarFiltrosExport: versão desacoplada do array em memória,
+// pode ser chamada sobre qualquer lista — inclusive a buscada do Firestore.
+function _aplicarFiltrosExport(lista) {
+  const agora = new Date();
+  let de = null, ate = null;
+  if (_exportPeriodo === 'hoje') {
+    de = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    ate = new Date(de.getTime() + 86400000 - 1);
+  } else if (_exportPeriodo === '7d') {
+    de = new Date(agora.getTime() - 7 * 86400000);
+  } else if (_exportPeriodo === '30d') {
+    de = new Date(agora.getTime() - 30 * 86400000);
+  } else if (_exportPeriodo === 'mes') {
+    de = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  } else if (_exportPeriodo === 'personalizado') {
+    const deDe = document.getElementById('exportDataDe').value;
+    const deAte = document.getElementById('exportDataAte').value;
+    if (deDe) de = new Date(deDe + 'T00:00:00');
+    if (deAte) ate = new Date(deAte + 'T23:59:59');
+  }
+
+  return lista.filter(m => {
+    const data = new Date(m.dataLocal || m.data);
+    if (de  && data < de)  return false;
+    if (ate && data > ate) return false;
+    if (_exportTipo !== 'todos') {
+      if (_exportTipo === 'entrada' && m.tipo !== 'entrada') return false;
+      if (_exportTipo === 'saida'   && m.tipo !== 'saida')   return false;
+      if (_exportTipo === 'receita' && m.tipo !== 'receita') return false;
+      if (_exportTipo === 'compra'  && m.tipo !== 'compra')  return false;
+    }
+    return true;
+  });
 }
 
 function exportarCSV() {
@@ -3565,6 +4091,9 @@ window.AppEstoque = {
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   carregarMaisHistorico, recarregarHistorico,
   navegarModulo,
+  abrirLancamentoIrrig, fecharLancamentoIrrig, confirmarLancamentoIrrig,
+  onIrrigFazendaChange, onIrrigPivoChange, selecionarPctIrrig, calcularMmIrrig,
+  filtrarIrrig,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
   gerarPDFLancamento, gerarPDFLancamentoAtual,
