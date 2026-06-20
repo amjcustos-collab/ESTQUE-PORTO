@@ -79,6 +79,19 @@ header {
 .btn-header.verde:hover { background: var(--verde-claro); }
 .badge-usuario { font-size: 11px; color: rgba(255,255,255,0.65); padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.08); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
 .badge-usuario .ponto { width: 6px; height: 6px; border-radius: 50%; background: #4a9e4a; }
+/* Indicador de conexão — só visível quando offline */
+.badge-offline {
+  font-size: 11px; font-weight: 600; padding: 6px 10px; border-radius: 8px;
+  background: rgba(184,50,50,0.85); color: white; display: none;
+  align-items: center; gap: 5px; white-space: nowrap;
+  animation: pulsar-offline 2s ease-in-out infinite;
+}
+.badge-offline.visivel { display: flex; }
+.badge-offline .ponto-off { width: 6px; height: 6px; border-radius: 50%; background: #ffaaaa; }
+@keyframes pulsar-offline {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.7; }
+}
 .btn-sair { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; }
 .btn-sair:hover { background: rgba(255,255,255,0.15); color: white; }
 
@@ -178,6 +191,37 @@ header {
 .btn-editar:hover { background: #d8e3f3; }
 .btn-excluir { background: #fdeaea; color: var(--vermelho); border: 1px solid #f0bcbc; border-radius: 8px; padding: 9px 11px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .btn-excluir:hover { background: #fadbdb; }
+
+/* MODAL DE EXPORTAÇÃO */
+.export-formatos { display: flex; gap: 10px; margin-bottom: 4px; }
+.export-formato-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 16px 12px; border: 2px solid var(--borda); border-radius: 10px;
+  background: white; cursor: pointer; transition: all 0.15s; color: var(--texto);
+}
+.export-formato-btn:hover { border-color: var(--azul); background: var(--azul-fundo); }
+.export-formato-btn.ativo { border-color: var(--azul); background: var(--azul-fundo); box-shadow: 0 0 0 3px rgba(30,80,150,0.10); }
+.export-formato-icone { font-size: 28px; line-height: 1; }
+.export-formato-label { font-size: 13px; font-weight: 700; }
+.export-formato-sub { font-size: 11px; color: var(--texto-suave); }
+.export-secao { margin-bottom: 18px; }
+.export-secao-titulo { font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.export-linha { display: flex; gap: 10px; }
+.export-linha > * { flex: 1; }
+.export-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.export-chip {
+  padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid var(--borda); background: white; cursor: pointer;
+  color: var(--texto-suave); transition: all 0.12s;
+}
+.export-chip:hover { border-color: var(--azul); color: var(--azul); }
+.export-chip.ativo { background: var(--azul); border-color: var(--azul); color: white; }
+.export-preview {
+  background: var(--cinza-claro); border-radius: 8px; padding: 12px 16px;
+  font-size: 12px; color: var(--texto-suave); display: flex; align-items: center; gap: 8px;
+}
+.export-preview-icone { font-size: 18px; }
+.export-preview strong { color: var(--texto); }
 
 /* PAINEL */
 /* MENU DE AÇÕES DO CARD — substitui editar/excluir/histórico isolados */
@@ -448,8 +492,9 @@ header {
 .det-campo .det-valor { font-size: 14px; font-weight: 600; color: var(--texto); }
 @media (max-width: 480px) { .det-grid { grid-template-columns: 1fr; } }
 </style>
+  <!-- SheetJS para exportação XLS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
-<body>
 
 <!-- TELA DE LOGIN -->
 <div class="login-overlay" id="loginOverlay">
@@ -475,10 +520,12 @@ header {
     </div>
   </div>
   <div class="header-right">
+    <span class="badge-offline" id="badgeOffline"><span class="ponto-off"></span>Offline — sincronizando ao reconectar</span>
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
     <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
     <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.exportarCSV()">📊 <span>Excel</span></button>
+    <button class="btn-header" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.2)" onclick="window.AppEstoque.abrirExportacao()">📤 <span>Histórico</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -587,6 +634,107 @@ header {
     <div class="modal-body" id="detConteudo"></div>
     <div class="modal-footer">
       <button class="btn-header destaque" onclick="window.AppEstoque.gerarPDFLancamentoAtual()">📄 Gerar PDF deste lançamento</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORTAÇÃO DE HISTÓRICO -->
+<div class="overlay" id="overlayExportacao" onclick="if(event.target===this)window.AppEstoque.fecharExportacao()">
+  <div class="modal estreito">
+    <div class="modal-header">
+      <h2>📤 Exportar Histórico</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharExportacao()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px 24px">
+
+      <!-- FORMATO -->
+      <div class="export-secao">
+        <div class="export-secao-titulo">Formato do arquivo</div>
+        <div class="export-formatos">
+          <button class="export-formato-btn ativo" id="exportBtnCSV" onclick="window.AppEstoque.selecionarFormatoExport('csv')">
+            <span class="export-formato-icone">📄</span>
+            <span class="export-formato-label">CSV</span>
+            <span class="export-formato-sub">Excel, Google Sheets</span>
+          </button>
+          <button class="export-formato-btn" id="exportBtnXLS" onclick="window.AppEstoque.selecionarFormatoExport('xls')">
+            <span class="export-formato-icone">📊</span>
+            <span class="export-formato-label">XLS</span>
+            <span class="export-formato-sub">Excel nativo</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PERÍODO -->
+      <div class="export-secao">
+        <div class="export-secao-titulo">Período</div>
+        <div class="export-chips" id="exportChipsPeriodo">
+          <button class="export-chip ativo" data-periodo="todos" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Todos</button>
+          <button class="export-chip" data-periodo="hoje" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Hoje</button>
+          <button class="export-chip" data-periodo="7d" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Últimos 7 dias</button>
+          <button class="export-chip" data-periodo="30d" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Últimos 30 dias</button>
+          <button class="export-chip" data-periodo="mes" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Este mês</button>
+          <button class="export-chip" data-periodo="personalizado" onclick="window.AppEstoque.selecionarPeriodoExport(this)">Personalizado</button>
+        </div>
+        <div id="exportDatasPersonalizadas" style="display:none;margin-top:10px">
+          <div class="export-linha">
+            <div>
+              <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DE</label>
+              <input type="date" id="exportDataDe" style="width:100%;padding:8px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;margin-top:4px" oninput="window.AppEstoque.atualizarPreviewExport()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--texto-suave);font-weight:600">ATÉ</label>
+              <input type="date" id="exportDataAte" style="width:100%;padding:8px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;margin-top:4px" oninput="window.AppEstoque.atualizarPreviewExport()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TIPO DE MOVIMENTAÇÃO -->
+      <div class="export-secao">
+        <div class="export-secao-titulo">Tipo de movimentação</div>
+        <div class="export-chips" id="exportChipsTipo">
+          <button class="export-chip ativo" data-tipo="todos" onclick="window.AppEstoque.selecionarTipoExport(this)">Todos</button>
+          <button class="export-chip" data-tipo="saida" onclick="window.AppEstoque.selecionarTipoExport(this)">Retiradas</button>
+          <button class="export-chip" data-tipo="entrada" onclick="window.AppEstoque.selecionarTipoExport(this)">Entradas</button>
+          <button class="export-chip" data-tipo="receita" onclick="window.AppEstoque.selecionarTipoExport(this)">Receitas</button>
+          <button class="export-chip" data-tipo="compra" onclick="window.AppEstoque.selecionarTipoExport(this)">Compras (NF)</button>
+        </div>
+      </div>
+
+      <!-- PREVIEW -->
+      <div class="export-preview" id="exportPreview">
+        <span class="export-preview-icone">📋</span>
+        <span id="exportPreviewTexto">Carregando…</span>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharExportacao()">Cancelar</button>
+      <button id="btnConfirmarExport" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px" onclick="window.AppEstoque.confirmarExportacao()">
+        <span>⬇️</span> Baixar arquivo
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAÇÃO DE EXCLUSÃO -->
+<div class="overlay" id="overlayConfirmarExclusao" onclick="if(event.target===this)window.AppEstoque.cancelarExclusao()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#7a1a1a,#b83232)">
+      <h2>⚠️ Excluir produto</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.cancelarExclusao()">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:28px 24px">
+      <div style="font-size:40px;margin-bottom:12px">🗑</div>
+      <div style="font-size:16px;font-weight:700;color:var(--texto);margin-bottom:8px" id="exclusaoNomeProduto"></div>
+      <div style="font-size:13px;color:var(--texto-suave);line-height:1.6">
+        Esta ação é <strong>permanente e irreversível</strong>.<br>
+        O produto será removido do estoque e não poderá ser recuperado.
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:center;gap:12px">
+      <button class="btn-cancelar" style="min-width:120px" onclick="window.AppEstoque.cancelarExclusao()">Cancelar</button>
+      <button id="btnConfirmarExclusao" style="min-width:140px;background:var(--vermelho);color:white;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarExclusao()">🗑 Sim, excluir</button>
     </div>
   </div>
 </div>
@@ -832,7 +980,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, increment,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, increment, runTransaction,
   addDoc, onSnapshot, query, orderBy, limit, startAfter, writeBatch, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -887,13 +1035,34 @@ const Persistencia = {
     const { id, ...dados } = produto;
     await setDoc(ref, dados, { merge: true });
   },
-  // Ajuste ATÔMICO de estoque: soma/subtrai direto no servidor com increment().
-  // Isso evita "atropelo" quando duas pessoas mexem no mesmo produto ao mesmo
-  // tempo (cada operação é aplicada sobre o valor real, sem sobrescrever a outra)
-  // e funciona offline (a operação fica na fila e é enviada ao reconectar).
-  async ajustarEstoque(id, delta) {
+  // Entrada de estoque: increment() simples é suficiente — não há risco de
+  // valor inválido ao somar.
+  async darEntrada(id, qtd) {
     const ref = doc(db, 'produtos', String(id));
-    await updateDoc(ref, { estoque: increment(Math.round(delta * 100) / 100) });
+    await updateDoc(ref, { estoque: increment(Math.round(qtd * 100) / 100) });
+  },
+
+  // Baixa de estoque: usa runTransaction para ler o saldo REAL do servidor
+  // antes de subtrair. Se dois usuários derem baixa ao mesmo tempo, o
+  // Firestore garante que apenas uma transação por vez lê-e-escreve o doc.
+  // Se o saldo for insuficiente no momento da escrita, lança um erro
+  // controlado com código 'ESTOQUE_INSUFICIENTE' para o app tratar.
+  async darBaixa(id, qtd) {
+    const ref = doc(db, 'produtos', String(id));
+    const delta = Math.round(qtd * 100) / 100;
+    return runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw Object.assign(new Error('Produto não encontrado.'), { code: 'PRODUTO_NAO_ENCONTRADO' });
+      const estoqueAtual = Math.round((snap.data().estoque || 0) * 100) / 100;
+      if (estoqueAtual < delta) {
+        throw Object.assign(
+          new Error(`Estoque insuficiente. Disponível: ${estoqueAtual}, solicitado: ${delta}.`),
+          { code: 'ESTOQUE_INSUFICIENTE', estoqueAtual }
+        );
+      }
+      tx.update(ref, { estoque: increment(-delta) });
+      return Math.round((estoqueAtual - delta) * 100) / 100; // retorna o novo saldo real
+    });
   },
   async excluirProduto(id) {
     await deleteDoc(doc(db, 'produtos', String(id)));
@@ -1198,6 +1367,25 @@ async function sair() {
 // Fecha o menu de ações ao clicar em qualquer lugar fora dele
 document.addEventListener('click', () => fecharTodosMenus());
 
+// =====================================================================
+// INDICADOR DE STATUS DE REDE
+// Exibe o badge "Offline" no header quando a conexão cai.
+// O Firestore continua funcionando offline (IndexedDB) — o badge apenas
+// avisa o operador que lançamentos serão enviados ao reconectar.
+// =====================================================================
+function atualizarStatusRede() {
+  const badge = document.getElementById('badgeOffline');
+  if (!badge) return;
+  if (navigator.onLine) {
+    badge.classList.remove('visivel');
+  } else {
+    badge.classList.add('visivel');
+  }
+}
+window.addEventListener('online',  atualizarStatusRede);
+window.addEventListener('offline', atualizarStatusRede);
+atualizarStatusRede(); // verifica o estado inicial ao carregar
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     await iniciarSessaoAutenticada(user);
@@ -1482,6 +1670,13 @@ const PRODUTOS_INICIAIS = [
 // RENDERIZAR
 // =====================================================================
 function statusCard(estoque) { if (estoque <= 0) return 'zerado'; if (estoque <= 10) return 'baixo'; return ''; }
+// parseQtd: converte string de quantidade para número, aceitando vírgula
+// (padrão pt-BR) ou ponto como separador decimal. Retorna NaN se inválido.
+function parseQtd(valor) {
+  if (valor === null || valor === undefined) return NaN;
+  // Substitui vírgula por ponto antes do parseFloat
+  return parseFloat(String(valor).replace(',', '.'));
+}
 function fmt(n) { return n % 1 === 0 ? n : n.toFixed(1); }
 function esc(s) {
   return String(s == null ? '' : s)
@@ -1663,7 +1858,9 @@ function validarQtd(id) {
   const p = produtos.find(x => String(x.id) === String(id));
   const input = document.getElementById(`qtd-${id}`);
   if (!p || !input) return;
-  if (tipoPainelAberto === 'saida' && parseFloat(input.value) > p.estoque) input.style.borderColor = 'var(--vermelho)';
+  // Normaliza vírgula → ponto em tempo real (teclados pt-BR em mobile)
+  if (input.value.includes(',')) input.value = input.value.replace(',', '.');
+  if (tipoPainelAberto === 'saida' && parseQtd(input.value) > p.estoque) input.style.borderColor = 'var(--vermelho)';
   else input.style.borderColor = '';
 }
 
@@ -1685,7 +1882,7 @@ async function confirmarMovimento(id, tipo) {
 
   const p = produtos.find(x => String(x.id) === String(id));
   if (!p) return;
-  const qtd = parseFloat(document.getElementById(`qtd-${id}`).value);
+  const qtd = parseQtd(document.getElementById(`qtd-${id}`).value);
   const resp = document.getElementById(`resp-${id}`).value.trim();
   const obs = document.getElementById(`obs-${id}`).value.trim();
   if (!qtd || qtd <= 0) { mostrarToast('Informe a quantidade.', 'erro'); return; }
@@ -1694,26 +1891,34 @@ async function confirmarMovimento(id, tipo) {
 
   travarBotao(id, true);
   try {
-    const delta = tipo === 'saida' ? -qtd : qtd;
-    const novoEstoque = Math.round((p.estoque + delta) * 100) / 100; // estimativa p/ o histórico
+    let estoqueApos;
 
-    // Ajuste atômico no servidor (não sobrescreve alterações simultâneas).
-    await Persistencia.ajustarEstoque(id, delta);
+    if (tipo === 'saida') {
+      // darBaixa usa transaction — verifica saldo real no servidor antes de subtrair.
+      // Retorna o novo saldo confirmado pelo servidor.
+      estoqueApos = await Persistencia.darBaixa(id, qtd);
+    } else {
+      await Persistencia.darEntrada(id, qtd);
+      estoqueApos = Math.round((p.estoque + qtd) * 100) / 100; // estimativa p/ histórico
+    }
 
     const s = getSessao();
     await Persistencia.registrarHistorico({
       produtoId: id, produto: p.nome, classe: p.classe, qtd, unidade: p.unidade,
-      resp, obs, estoqueApos: novoEstoque, data: new Date().toISOString(),
+      resp, obs, estoqueApos, data: new Date().toISOString(),
       tipo, usuario: s ? s.email : '—'
     });
 
     fecharPainel(id);
     if (tipo === 'saida') mostrarToast(`✓ Retirada de ${fmt(qtd)} ${p.unidade} de ${p.nome} registrada!`, 'sucesso');
     else mostrarToast(`✓ Entrada de ${fmt(qtd)} ${p.unidade} de ${p.nome} registrada!`, 'sucesso');
-    // A lista é atualizada automaticamente pelo listener em tempo real.
   } catch (e) {
-    console.error(e);
-    mostrarToast('Erro ao salvar. Verifique sua conexão e tente novamente.', 'erro');
+    if (e.code === 'ESTOQUE_INSUFICIENTE') {
+      mostrarToast(`Estoque insuficiente. Disponível: ${fmt(e.estoqueAtual)} ${p.unidade}.`, 'erro');
+    } else {
+      console.error(e);
+      mostrarToast('Erro ao salvar. Verifique sua conexão e tente novamente.', 'erro');
+    }
   } finally {
     travarBotao(id, false);
   }
@@ -1726,7 +1931,7 @@ async function confirmarEdicao(id) {
   const novoNome = document.getElementById(`ed-nome-${id}`).value.trim();
   const novoPA = document.getElementById(`ed-pa-${id}`).value.trim();
   const novaUnidade = document.getElementById(`ed-unidade-${id}`).value;
-  const novoEstoque = parseFloat(document.getElementById(`ed-estoque-${id}`).value);
+  const novoEstoque = parseQtd(document.getElementById(`ed-estoque-${id}`).value);
   if (!novoNome) { mostrarToast('O nome não pode ficar vazio.', 'erro'); return; }
   if (isNaN(novoEstoque) || novoEstoque < 0) { mostrarToast('Estoque inválido.', 'erro'); return; }
 
@@ -1759,11 +1964,31 @@ async function confirmarEdicao(id) {
   }
 }
 
-async function excluirProduto(id) {
+let _exclusaoPendenteId = null; // produto aguardando confirmação no modal
+
+function excluirProduto(id) {
   if (!exigirPermissao('excluirProduto', 'Você não tem permissão para excluir produtos.')) return;
   const p = produtos.find(x => String(x.id) === String(id));
   if (!p) return;
-  if (!confirm(`Excluir o produto "${p.nome}" definitivamente? Essa ação não pode ser desfeita.`)) return;
+  _exclusaoPendenteId = String(id);
+  document.getElementById('exclusaoNomeProduto').textContent = p.nome;
+  document.getElementById('overlayConfirmarExclusao').classList.add('aberto');
+}
+
+function cancelarExclusao() {
+  _exclusaoPendenteId = null;
+  document.getElementById('overlayConfirmarExclusao').classList.remove('aberto');
+}
+
+async function confirmarExclusao() {
+  const id = _exclusaoPendenteId;
+  if (!id) return;
+  const p = produtos.find(x => String(x.id) === id);
+  if (!p) { cancelarExclusao(); return; }
+
+  const btn = document.getElementById('btnConfirmarExclusao');
+  btn.disabled = true;
+  btn.textContent = 'Excluindo…';
 
   try {
     await Persistencia.excluirProduto(id);
@@ -1773,10 +1998,14 @@ async function excluirProduto(id) {
       resp: s ? s.label : '—', obs: 'Produto excluído do sistema', estoqueApos: 0,
       data: new Date().toISOString(), tipo: 'exclusao', usuario: s ? s.email : '—'
     });
+    cancelarExclusao();
     mostrarToast(`Produto "${p.nome}" excluído.`, 'sucesso');
   } catch (e) {
     console.error(e);
     mostrarToast('Erro ao excluir produto.', 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗑 Sim, excluir';
   }
 }
 
@@ -1800,7 +2029,7 @@ async function confirmarNovoProduto() {
   const pa = document.getElementById('np-pa').value.trim();
   const classe = document.getElementById('np-classe').value;
   const unidade = document.getElementById('np-unidade').value;
-  const estoque = parseFloat(document.getElementById('np-estoque').value) || 0;
+  const estoque = parseQtd(document.getElementById('np-estoque').value) || 0;
   if (!nome) { mostrarToast('Informe o nome do produto.', 'erro'); return; }
 
   const btn = document.querySelector('#overlayNovoProduto .btn-confirmar-editar');
@@ -1905,7 +2134,7 @@ function atualizarQtdReceita(idx, valor) {
   const item = receitaItens[idx];
   const input = document.getElementById(`rec-qtd-${idx}`);
   const previewEl = document.getElementById(`rec-preview-${idx}`);
-  const qtdNum = parseFloat(valor);
+  const qtdNum = parseQtd(valor);
 
   if (input) {
     if (qtdNum > item.estoqueDisponivel) input.classList.add('erro');
@@ -1977,7 +2206,7 @@ async function confirmarReceita() {
 
   // Validação de quantidades antes de gravar qualquer coisa
   for (const item of receitaItens) {
-    const qtd = parseFloat(item.qtd);
+    const qtd = parseQtd(item.qtd);
     if (!qtd || qtd <= 0) { mostrarToast(`Informe a quantidade de "${item.nome}".`, 'erro'); return; }
     if (qtd > item.estoqueDisponivel) { mostrarToast(`Quantidade de "${item.nome}" maior que o estoque disponível!`, 'erro'); return; }
   }
@@ -1990,14 +2219,13 @@ async function confirmarReceita() {
     const s = getSessao();
     const itensFinais = [];
 
-    // Atualiza o estoque de cada produto da receita (baixa atômica)
+    // Baixa de cada produto da receita — transaction garante saldo real no servidor
     for (const item of receitaItens) {
       const p = produtos.find(x => String(x.id) === String(item.produtoId));
       if (!p) continue;
-      const qtd = parseFloat(item.qtd);
-      const novoEstoque = Math.round((p.estoque - qtd) * 100) / 100; // estimativa p/ o histórico
-      await Persistencia.ajustarEstoque(item.produtoId, -qtd);
-      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos: novoEstoque });
+      const qtd = parseQtd(item.qtd);
+      const estoqueApos = await Persistencia.darBaixa(item.produtoId, qtd);
+      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos });
     }
 
     // Um único registro de histórico, com a lista de itens dentro
@@ -2015,7 +2243,11 @@ async function confirmarReceita() {
     mostrarToast(`✓ Baixa da receita "${numero}" registrada (${itensFinais.length} produtos)!`, 'sucesso');
   } catch (e) {
     console.error(e);
-    mostrarToast('Erro ao registrar a receita. Tente novamente.', 'erro');
+    if (e.code === 'ESTOQUE_INSUFICIENTE') {
+      mostrarToast(`Estoque insuficiente para um dos produtos. Disponível: ${fmt(e.estoqueAtual)}. Corrija as quantidades e tente novamente.`, 'erro');
+    } else {
+      mostrarToast('Erro ao registrar a receita. Tente novamente.', 'erro');
+    }
   } finally {
     btn.disabled = false;
     btn.textContent = '✓ Confirmar Baixa da Receita';
@@ -2102,7 +2334,7 @@ function atualizarQtdCompra(idx, valor) {
   compraItens[idx].qtd = valor;
   const item = compraItens[idx];
   const previewEl = document.getElementById(`compra-preview-${idx}`);
-  const qtdNum = parseFloat(valor);
+  const qtdNum = parseQtd(valor);
 
   if (previewEl) {
     if (!valor || isNaN(qtdNum) || qtdNum <= 0) {
@@ -2162,7 +2394,7 @@ async function confirmarCompra() {
   if (compraItens.length === 0) { mostrarToast('Adicione ao menos um produto à nota fiscal.', 'erro'); return; }
 
   for (const item of compraItens) {
-    const qtd = parseFloat(item.qtd);
+    const qtd = parseQtd(item.qtd);
     if (!qtd || qtd <= 0) { mostrarToast(`Informe a quantidade de "${item.nome}".`, 'erro'); return; }
   }
 
@@ -2177,10 +2409,10 @@ async function confirmarCompra() {
     for (const item of compraItens) {
       const p = produtos.find(x => String(x.id) === String(item.produtoId));
       if (!p) continue;
-      const qtd = parseFloat(item.qtd);
-      const novoEstoque = Math.round((p.estoque + qtd) * 100) / 100; // estimativa p/ o histórico
-      await Persistencia.ajustarEstoque(item.produtoId, qtd);
-      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos: novoEstoque });
+      const qtd = parseQtd(item.qtd);
+      await Persistencia.darEntrada(item.produtoId, qtd);
+      const estoqueApos = Math.round((p.estoque + qtd) * 100) / 100; // estimativa p/ histórico
+      itensFinais.push({ produtoId: item.produtoId, produto: item.nome, classe: p.classe, qtd, unidade: item.unidade, estoqueApos });
     }
 
     await Persistencia.registrarHistorico({
@@ -2924,6 +3156,170 @@ function navegarModulo(modulo) {
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
 }
 
+// =====================================================================
+// EXPORTAÇÃO DE HISTÓRICO — modal com filtros de período, tipo e formato
+// Suporta CSV (texto) e XLS (Excel nativo via SheetJS)
+// =====================================================================
+let _exportFormato  = 'csv';  // 'csv' | 'xls'
+let _exportPeriodo  = 'todos';
+let _exportTipo     = 'todos';
+
+function abrirExportacao() {
+  if (!exigirPermissao('verRelatorios', 'Você não tem permissão para exportar relatórios.')) return;
+  _exportFormato = 'csv';
+  _exportPeriodo = 'todos';
+  _exportTipo    = 'todos';
+  // Resetar UI
+  document.querySelectorAll('#exportChipsPeriodo .export-chip').forEach(c => c.classList.toggle('ativo', c.dataset.periodo === 'todos'));
+  document.querySelectorAll('#exportChipsTipo .export-chip').forEach(c => c.classList.toggle('ativo', c.dataset.tipo === 'todos'));
+  document.getElementById('exportBtnCSV').classList.add('ativo');
+  document.getElementById('exportBtnXLS').classList.remove('ativo');
+  document.getElementById('exportDatasPersonalizadas').style.display = 'none';
+  atualizarPreviewExport();
+  document.getElementById('overlayExportacao').classList.add('aberto');
+}
+
+function fecharExportacao() {
+  document.getElementById('overlayExportacao').classList.remove('aberto');
+}
+
+function selecionarFormatoExport(fmt) {
+  _exportFormato = fmt;
+  document.getElementById('exportBtnCSV').classList.toggle('ativo', fmt === 'csv');
+  document.getElementById('exportBtnXLS').classList.toggle('ativo', fmt === 'xls');
+  atualizarPreviewExport();
+}
+
+function selecionarPeriodoExport(btn) {
+  _exportPeriodo = btn.dataset.periodo;
+  document.querySelectorAll('#exportChipsPeriodo .export-chip').forEach(c => c.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.getElementById('exportDatasPersonalizadas').style.display = _exportPeriodo === 'personalizado' ? 'block' : 'none';
+  atualizarPreviewExport();
+}
+
+function selecionarTipoExport(btn) {
+  _exportTipo = btn.dataset.tipo;
+  document.querySelectorAll('#exportChipsTipo .export-chip').forEach(c => c.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  atualizarPreviewExport();
+}
+
+function _filtrarHistoricoExport() {
+  const agora = new Date();
+  let de = null, ate = null;
+  if (_exportPeriodo === 'hoje') {
+    de = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    ate = new Date(de.getTime() + 86400000 - 1);
+  } else if (_exportPeriodo === '7d') {
+    de = new Date(agora.getTime() - 7 * 86400000);
+  } else if (_exportPeriodo === '30d') {
+    de = new Date(agora.getTime() - 30 * 86400000);
+  } else if (_exportPeriodo === 'mes') {
+    de = new Date(agora.getFullYear(), agora.getMonth(), 1);
+  } else if (_exportPeriodo === 'personalizado') {
+    const deDe = document.getElementById('exportDataDe').value;
+    const deAte = document.getElementById('exportDataAte').value;
+    if (deDe) de = new Date(deDe + 'T00:00:00');
+    if (deAte) ate = new Date(deAte + 'T23:59:59');
+  }
+
+  return historico.filter(m => {
+    const data = new Date(m.dataLocal || m.data);
+    if (de  && data < de)  return false;
+    if (ate && data > ate) return false;
+    if (_exportTipo !== 'todos') {
+      // receita/compra têm tipo próprio; entrada/saida cobrem avulsos
+      if (_exportTipo === 'entrada' && m.tipo !== 'entrada') return false;
+      if (_exportTipo === 'saida'   && m.tipo !== 'saida')   return false;
+      if (_exportTipo === 'receita' && m.tipo !== 'receita') return false;
+      if (_exportTipo === 'compra'  && m.tipo !== 'compra')  return false;
+    }
+    return true;
+  });
+}
+
+// Expande receitas/compras em linhas individuais por produto
+function _expandirLinhas(lista) {
+  const tiposLabel = { saida:'Retirada', entrada:'Entrada', edicao:'Edição', exclusao:'Exclusão', receita:'Baixa c/ Receita', compra:'Entrada NF' };
+  const linhas = [];
+  lista.forEach(m => {
+    const data = new Date(m.dataLocal || m.data).toLocaleString('pt-BR');
+    if ((m.tipo === 'receita' || m.tipo === 'compra') && Array.isArray(m.itens)) {
+      const id = m.tipo === 'receita' ? `Receita ${m.numeroReceita || ''}` : `NF ${m.numeroNF || ''}`;
+      m.itens.forEach(it => linhas.push({
+        Data: data, Tipo: tiposLabel[m.tipo] || m.tipo,
+        Identificador: id, Produto: it.produto, Classe: it.classe || '',
+        Quantidade: it.qtd, Unidade: it.unidade || '',
+        'Estoque Após': it.estoqueApos !== undefined ? it.estoqueApos : '',
+        Responsável: m.resp || '', Usuário: m.usuario || '', Observação: m.obs || ''
+      }));
+    } else {
+      linhas.push({
+        Data: data, Tipo: tiposLabel[m.tipo] || m.tipo,
+        Identificador: '', Produto: m.produto || '', Classe: m.classe || '',
+        Quantidade: m.qtd, Unidade: m.unidade || '',
+        'Estoque Após': m.estoqueApos !== undefined ? m.estoqueApos : '',
+        Responsável: m.resp || '', Usuário: m.usuario || '', Observação: m.obs || ''
+      });
+    }
+  });
+  return linhas;
+}
+
+function atualizarPreviewExport() {
+  const lista = _filtrarHistoricoExport();
+  const linhas = _expandirLinhas(lista);
+  const ext = _exportFormato === 'xls' ? 'XLS' : 'CSV';
+  const el = document.getElementById('exportPreviewTexto');
+  if (!el) return;
+  if (linhas.length === 0) {
+    el.innerHTML = 'Nenhum lançamento encontrado para os filtros selecionados.';
+  } else {
+    el.innerHTML = `Serão exportados <strong>${linhas.length} lançamento${linhas.length > 1 ? 's' : ''}</strong> em formato <strong>${ext}</strong>.`;
+  }
+}
+
+function confirmarExportacao() {
+  const lista = _filtrarHistoricoExport();
+  const linhas = _expandirLinhas(lista);
+  if (linhas.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+
+  const nomeArq = `historico_${configGlobal.fazenda.replace(/\s+/g,'-')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+  const btn = document.getElementById('btnConfirmarExport');
+  btn.disabled = true; btn.innerHTML = '<span>⏳</span> Gerando…';
+
+  try {
+    if (_exportFormato === 'xls') {
+      // XLS via SheetJS
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(linhas);
+      // Larguras de coluna automáticas
+      const cols = Object.keys(linhas[0]).map(k => ({ wch: Math.max(k.length, 14) }));
+      ws['!cols'] = cols;
+      XLSX.utils.book_append_sheet(wb, ws, 'Histórico');
+      XLSX.writeFile(wb, `${nomeArq}.xlsx`);
+    } else {
+      // CSV com BOM para Excel pt-BR
+      const cabecalho = Object.keys(linhas[0]);
+      const csvLinhas = [cabecalho, ...linhas.map(l => cabecalho.map(k => `"${String(l[k] ?? '').replace(/"/g, '""')}"`))]
+        .map(r => r.join(','))
+        .join('\n');
+      const blob = new Blob(['\uFEFF' + csvLinhas], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = `${nomeArq}.csv`;
+      a.click(); URL.revokeObjectURL(url);
+    }
+    fecharExportacao();
+    mostrarToast(`✓ ${linhas.length} lançamentos exportados!`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao gerar o arquivo. Tente novamente.', 'erro');
+  } finally {
+    btn.disabled = false; btn.innerHTML = '<span>⬇️</span> Baixar arquivo';
+  }
+}
+
 function exportarCSV() {
   if (!exigirPermissao('verRelatorios', 'Você não tem permissão para exportar relatórios.')) return;
   const filtrados = obterFiltrados();
@@ -3139,7 +3535,7 @@ function mostrarToast(msg, tipo = '') {
 // =====================================================================
 window.AppEstoque = {
   fazerLogin, sair, togglePainel, abrirPainel, fecharPainel, validarQtd,
-  confirmarMovimento, confirmarEdicao, excluirProduto,
+  confirmarMovimento, confirmarEdicao, excluirProduto, confirmarExclusao, cancelarExclusao,
   abrirNovoProduto, fecharNovoProduto, confirmarNovoProduto,
   toggleMenuAcoes, fecharTodosMenus,
   abrirHistorico, fecharHistorico, limparHistorico,
@@ -3156,7 +3552,9 @@ window.AppEstoque = {
   abrirCompra, fecharCompra, buscarProdutoCompra, adicionarItemCompra,
   removerItemCompra, atualizarQtdCompra, confirmarCompra, focarBuscaCompra,
   abrirCadastroInlineCompra, fecharCadastroInlineCompra, confirmarCadastroInlineCompra,
-  exportarCSV, abrirModalPDF, fecharModalPDF, gerarPDF, filtrar
+  exportarCSV, abrirExportacao, fecharExportacao, selecionarFormatoExport,
+  selecionarPeriodoExport, selecionarTipoExport, atualizarPreviewExport, confirmarExportacao,
+  abrirModalPDF, fecharModalPDF, gerarPDF, filtrar
 };
 </script>
 
