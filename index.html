@@ -180,6 +180,32 @@ header {
 .btn-excluir:hover { background: #fadbdb; }
 
 /* PAINEL */
+/* MENU DE AÇÕES DO CARD — substitui editar/excluir/histórico isolados */
+.btn-menu-acoes {
+  background: var(--cinza-claro); border: 1px solid var(--borda); color: var(--cinza);
+  border-radius: 8px; padding: 9px 12px; font-size: 18px; font-weight: 700; cursor: pointer;
+  line-height: 1; transition: background 0.15s; position: relative; flex-shrink: 0;
+  letter-spacing: 1px;
+}
+.btn-menu-acoes:hover { background: #e0e4e8; color: var(--texto); }
+.menu-acoes-dropdown {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 500;
+  background: white; border: 1px solid var(--borda); border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14); min-width: 170px; overflow: hidden;
+  display: none;
+}
+.menu-acoes-dropdown.aberto { display: block; }
+.menu-acao-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 11px 16px; font-size: 13px; font-weight: 500; cursor: pointer;
+  background: none; border: none; color: var(--texto); text-align: left;
+  transition: background 0.12s;
+}
+.menu-acao-item:hover { background: var(--cinza-claro); }
+.menu-acao-item.perigo { color: var(--vermelho); }
+.menu-acao-item.perigo:hover { background: var(--vermelho-fundo); }
+.menu-acao-item .menu-acao-icone { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.menu-acoes-sep { height: 1px; background: var(--borda); margin: 4px 0; }
 .painel-baixa { display: none; border-top: 1.5px solid var(--borda); padding: 16px; }
 .painel-baixa.aberto { display: block; }
 .painel-baixa.tipo-saida { background: #fff5f5; }
@@ -1169,6 +1195,9 @@ async function sair() {
 
 // Disparado automaticamente pelo Firebase sempre que o estado de login muda
 // (login bem-sucedido, logout, ou sessão restaurada ao reabrir o app).
+// Fecha o menu de ações ao clicar em qualquer lugar fora dele
+document.addEventListener('click', () => fecharTodosMenus());
+
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     await iniciarSessaoAutenticada(user);
@@ -1508,9 +1537,16 @@ function renderLista() {
           <div class="btn-acoes">
             ${podeEntrada ? `<button class="btn-entrada" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','entrada')" title="Registrar entrada">+ Entrada</button>` : ''}
             ${podeBaixa ? `<button class="btn-baixa" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','saida')" ${p.estoque<=0?'disabled':''}>− Baixa</button>` : ''}
-            ${podeEditar ? `<button class="btn-editar" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','editar')" title="Editar produto">✎</button>` : ''}
-            ${podeExcluir ? `<button class="btn-excluir" onclick="event.stopPropagation();window.AppEstoque.excluirProduto('${p.id}')" title="Excluir produto">🗑</button>` : ''}
-            ${podeVerHist ? `<button class="btn-historico-prod" onclick="event.stopPropagation();window.AppEstoque.abrirHistoricoProduto('${p.id}')" title="Ver movimentações deste produto">🕑</button>` : ''}
+            ${(podeEditar || podeExcluir || podeVerHist) ? `
+            <div style="position:relative">
+              <button class="btn-menu-acoes" onclick="event.stopPropagation();window.AppEstoque.toggleMenuAcoes('${p.id}')" title="Mais ações">⋯</button>
+              <div class="menu-acoes-dropdown" id="menu-acoes-${p.id}">
+                ${podeEditar ? `<button class="menu-acao-item" onclick="event.stopPropagation();window.AppEstoque.fecharTodosMenus();window.AppEstoque.abrirPainel('${p.id}','editar')"><span class="menu-acao-icone">✎</span> Editar produto</button>` : ''}
+                ${podeVerHist ? `<button class="menu-acao-item" onclick="event.stopPropagation();window.AppEstoque.fecharTodosMenus();window.AppEstoque.abrirHistoricoProduto('${p.id}')"><span class="menu-acao-icone">📋</span> Ver histórico</button>` : ''}
+                ${(podeEditar || podeVerHist) && podeExcluir ? `<div class="menu-acoes-sep"></div>` : ''}
+                ${podeExcluir ? `<button class="menu-acao-item perigo" onclick="event.stopPropagation();window.AppEstoque.fecharTodosMenus();window.AppEstoque.excluirProduto('${p.id}')"><span class="menu-acao-icone">🗑</span> Excluir produto</button>` : ''}
+              </div>
+            </div>` : ''}
           </div>
         </div>
         <div class="painel-baixa" id="painel-${p.id}">
@@ -1587,6 +1623,20 @@ function renderPainelConteudo(id, tipo) {
     const primeiro = el.querySelector('input');
     if (primeiro) primeiro.focus();
   }, 80);
+}
+
+// =====================================================================
+// MENU DE AÇÕES DO CARD (⋯) — controla abertura/fechamento do dropdown
+// =====================================================================
+function toggleMenuAcoes(id) {
+  const alvo = document.getElementById(`menu-acoes-${id}`);
+  if (!alvo) return;
+  const estaAberto = alvo.classList.contains('aberto');
+  fecharTodosMenus();
+  if (!estaAberto) alvo.classList.add('aberto');
+}
+function fecharTodosMenus() {
+  document.querySelectorAll('.menu-acoes-dropdown.aberto').forEach(el => el.classList.remove('aberto'));
 }
 
 function togglePainel(id, tipo) {
@@ -3091,6 +3141,7 @@ window.AppEstoque = {
   fazerLogin, sair, togglePainel, abrirPainel, fecharPainel, validarQtd,
   confirmarMovimento, confirmarEdicao, excluirProduto,
   abrirNovoProduto, fecharNovoProduto, confirmarNovoProduto,
+  toggleMenuAcoes, fecharTodosMenus,
   abrirHistorico, fecharHistorico, limparHistorico,
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   carregarMaisHistorico, recarregarHistorico,
