@@ -151,11 +151,11 @@ header {
 .classe-grupo { margin-bottom: 24px; }
 .classe-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--azul); padding: 0 4px 8px; border-bottom: 2px solid var(--azul-fundo); margin-bottom: 10px; }
 
-.produto-card { background: white; border: 1.5px solid var(--borda); border-radius: 10px; margin-bottom: 8px; overflow: hidden; transition: box-shadow 0.15s; }
+.produto-card { background: white; border: 1.5px solid var(--borda); border-radius: 10px; margin-bottom: 8px; transition: box-shadow 0.15s; position: relative; }
 .produto-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
 .produto-card.baixo { border-color: #f0b860; background: #fffdf5; }
 .produto-card.zerado { border-color: var(--vermelho); background: var(--vermelho-fundo); }
-.produto-linha { display: flex; align-items: center; padding: 12px 16px; gap: 12px; cursor: pointer; }
+.produto-linha { display: flex; align-items: center; padding: 12px 16px; gap: 12px; cursor: pointer; border-radius: 10px; }
 .produto-info { flex: 1; min-width: 0; }
 .produto-nome { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .produto-pa { font-size: 12px; color: var(--texto-suave); margin-top: 2px; }
@@ -1525,7 +1525,7 @@ function renderLista() {
       card.className = `produto-card ${status}`;
       card.id = `card-${p.id}`;
       card.innerHTML = `
-        <div class="produto-linha" onclick="window.AppEstoque.togglePainel('${p.id}', 'saida')">
+        <div class="produto-linha" onclick="window.AppEstoque.fecharTodosMenus()">
           <div class="produto-info">
             <div class="produto-nome">${p.nome}</div>
             <div class="produto-pa">${p.pa}</div>
