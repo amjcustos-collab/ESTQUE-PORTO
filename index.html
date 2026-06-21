@@ -726,17 +726,12 @@ header {
 </style>
   <!-- SheetJS para exportação XLS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Controle de flash: adiciona classe 'sem-sessao' no <html> se não há
-       sessão Firebase, fazendo o overlay aparecer antes de qualquer render. -->
+  <!-- Controle de flash: lê flag próprio no localStorage para saber se há
+       sessão ativa. Síncrono, sem depender da API do Firebase. -->
   <script>
     (function() {
       try {
-        var hasSession = false;
-        for (var i = 0; i < localStorage.length; i++) {
-          var k = localStorage.key(i);
-          if (k && k.indexOf('firebase:authUser:') !== -1) { hasSession = true; break; }
-        }
-        if (!hasSession) {
+        if (!localStorage.getItem('amj_tem_sessao')) {
           document.documentElement.classList.add('sem-sessao');
         }
       } catch(e) {
@@ -2099,6 +2094,7 @@ async function iniciarSessaoAutenticada(user) {
     document.getElementById('loginOverlay').classList.add('escondido');
     document.getElementById('loginOverlay').classList.remove('visivel');
     document.documentElement.classList.remove('sem-sessao');
+    try { localStorage.setItem('amj_tem_sessao', '1'); } catch(e) {}
     document.getElementById('loginErro').textContent = '';
     document.body.classList.add('app-pronto');
     aplicarPermissoesUI();
@@ -2154,6 +2150,7 @@ function finalizarSessao() {
   if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
   produtos = [];
   historico = [];
+  try { localStorage.removeItem('amj_tem_sessao'); } catch(e) {}
   document.body.classList.remove('app-pronto');
   document.getElementById('loginOverlay').classList.remove('escondido');
   document.getElementById('loginOverlay').classList.add('visivel');
