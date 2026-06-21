@@ -4458,8 +4458,10 @@ function exportarIrrigPDF() {
   </body></html>`;
 
   const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
   w.document.write(html);
   w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
 }
 
 // =====================================================================
@@ -4814,7 +4816,9 @@ function exportarPluvPDF() {
   const fazendas     = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
   const dias         = [...new Set(lancs.map(m => m.data))].sort();
 
-  if (fazendas.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+  if (fazendas.length === 0 || dias.length === 0) {
+    mostrarToast('Nenhum lançamento registrado neste mês.', 'erro'); return;
+  }
 
   const [ano, mesNum] = mes.split('-');
   const mesNome = new Date(Number(ano), Number(mesNum) - 1, 1)
@@ -4878,11 +4882,11 @@ function exportarPluvPDF() {
   </body></html>`;
 
   const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
   w.document.write(html);
   w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
 }
-
-// ── EXPORTAÇÃO XLS ─────────────────────────────────────────────────────
 
 function exportarPluvXLS() {
   const mes   = getMesAtivo();
