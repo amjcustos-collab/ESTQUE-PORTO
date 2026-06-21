@@ -339,6 +339,63 @@ header {
   .irrig-breakdown-bar-wrap { display: none; }
 }
 
+/* ── DASHBOARD ────────────────────────────────────────────────────── */
+.tela-dash { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.tela-dash.ativa { display: block; }
+
+.dash-saudacao { font-size: 20px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
+.dash-sub      { font-size: 13px; color: var(--texto-suave); margin-bottom: 20px; }
+
+/* Cards de resumo topo */
+.dash-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.dash-card  { background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 16px 18px; }
+.dash-card-valor { font-size: 28px; font-weight: 900; line-height: 1; }
+.dash-card-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
+.dash-card-sub   { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
+.dash-card.alerta  { border-color: #f0b860; background: #fffdf5; }
+.dash-card.critico { border-color: var(--vermelho); background: var(--vermelho-fundo); }
+.dash-card.azul    { border-color: #1a5fb4; background: #f0f4ff; }
+.dash-card.verde   { border-color: #2a7a2a; background: #f0faf0; }
+
+/* Grid de seções */
+.dash-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.dash-secao { background: white; border: 1.5px solid var(--borda); border-radius: 10px; overflow: hidden; }
+.dash-secao-header { padding: 12px 16px; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; border-bottom: 1.5px solid var(--borda); }
+.dash-secao-body   { padding: 12px 0; }
+.dash-secao-item   { display: flex; align-items: center; gap: 10px; padding: 7px 16px; font-size: 13px; transition: background 0.1s; }
+.dash-secao-item:hover { background: var(--cinza-claro); }
+.dash-secao-item-nome  { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-secao-item-val   { font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.dash-secao-vazio      { padding: 24px 16px; text-align: center; color: var(--texto-suave); font-size: 13px; }
+
+/* Pill status */
+.dash-pill { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+.dash-pill.zerado { background: var(--vermelho-fundo); color: var(--vermelho); }
+.dash-pill.baixo  { background: #fff3cc; color: #c47a00; }
+
+/* Últimas movimentações */
+.dash-mov-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; font-size: 12px; border-bottom: 1px solid var(--borda); }
+.dash-mov-item:last-child { border-bottom: none; }
+.dash-mov-tipo  { font-size: 16px; flex-shrink: 0; }
+.dash-mov-info  { flex: 1; min-width: 0; }
+.dash-mov-nome  { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-mov-sub   { color: var(--texto-suave); font-size: 11px; }
+.dash-mov-qtd   { font-weight: 700; flex-shrink: 0; }
+.dash-mov-qtd.saida   { color: var(--vermelho); }
+.dash-mov-qtd.entrada { color: var(--verde); }
+
+/* Barra mini para breakdown */
+.dash-bar-wrap { flex: 1; height: 6px; background: #e8f0fe; border-radius: 999px; overflow: hidden; margin: 0 8px; }
+.dash-bar      { height: 100%; border-radius: 999px; }
+
+@media (max-width: 900px) {
+  .dash-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .tela-dash { padding: 12px; }
+}
+
 /* ── MÓDULO PLUVIOMETRIA ───────────────────────────────────────────── */
 .tela-pluv { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
 .tela-pluv.ativa { display: block; }
@@ -696,6 +753,9 @@ header {
 
 <!-- BARRA DE MÓDULOS — plataforma de gestão agro -->
 <nav class="modulos-nav" id="modulosNav">
+  <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('dashboard')" id="tab-dashboard">
+    📊 Dashboard
+  </button>
   <button class="modulo-tab ativo" onclick="window.AppEstoque.navegarModulo('estoque')" id="tab-estoque">
     📦 Estoque
   </button>
@@ -742,6 +802,53 @@ header {
 
 <div class="lista" id="lista"></div>
 </div><!-- /tela-estoque -->
+
+<!-- ── DASHBOARD ──────────────────────────────────────────────────── -->
+<div class="tela-dash" id="telaDash">
+
+  <div class="dash-saudacao" id="dashSaudacao">Bom dia!</div>
+  <div class="dash-sub" id="dashSub">Resumo de hoje · <span id="dashData"></span></div>
+
+  <!-- Cards de resumo rápido -->
+  <div class="dash-cards" id="dashCards"></div>
+
+  <!-- Grid de seções -->
+  <div class="dash-grid">
+
+    <!-- Estoque crítico -->
+    <div class="dash-secao">
+      <div class="dash-secao-header" style="color:var(--vermelho)">
+        ⚠️ Estoque em alerta
+      </div>
+      <div class="dash-secao-body" id="dashEstoqueAlerta"></div>
+    </div>
+
+    <!-- Últimas movimentações -->
+    <div class="dash-secao">
+      <div class="dash-secao-header" style="color:var(--texto-suave)">
+        🕑 Últimas movimentações
+      </div>
+      <div class="dash-secao-body" id="dashUltimasMov"></div>
+    </div>
+
+    <!-- Irrigação do mês -->
+    <div class="dash-secao">
+      <div class="dash-secao-header" style="color:#1a5fb4">
+        💧 Irrigação — <span id="dashIrrigMesNome"></span>
+      </div>
+      <div class="dash-secao-body" id="dashIrrigacao"></div>
+    </div>
+
+    <!-- Pluviometria do mês -->
+    <div class="dash-secao" style="grid-column: 1 / -1">
+      <div class="dash-secao-header" style="color:#1a7a5b">
+        🌧️ Pluviometria — <span id="dashPluvMesNome"></span>
+      </div>
+      <div class="dash-secao-body" id="dashPluv" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));padding:12px 16px;gap:10px"></div>
+    </div>
+
+  </div>
+</div><!-- /tela-dash -->
 
 <!-- ── TELA DE IRRIGAÇÃO ─────────────────────────────────────────── -->
 <div class="tela-irrigacao" id="telaIrrigacao">
@@ -3096,6 +3203,10 @@ async function abrirUsuarios() {
   document.getElementById('usuarios-lista').innerHTML = 'Carregando...';
   try {
     const lista = await Persistencia.listarUsuarios();
+    // Atualiza o mapa de nomes com os dados mais recentes
+    lista.forEach(u => {
+      if (u.email) _mapaUsuarios[u.email] = u.nomeCustom || u.label || u.email;
+    });
     renderUsuarios(lista);
   } catch (e) {
     console.error(e);
@@ -3117,16 +3228,25 @@ function renderUsuarios(lista) {
     return;
   }
   const s = getSessao();
-  // Ordena: admins primeiro, depois por e-mail
   lista.sort((a, b) => (a.nivel === b.nivel ? (a.email||'').localeCompare(b.email||'') : (a.nivel === 'admin' ? -1 : 1)));
 
   cont.innerHTML = lista.map(u => {
     const ehVoce = s && s.uid === u.uid;
     const opcoes = NIVEIS_DISPONIVEIS.map(n => `<option value="${n.valor}" ${u.nivel === n.valor ? 'selected' : ''}>${n.label}</option>`).join('');
+    // Nome customizado: campo editável. O label padrão é o nível se não tiver nome definido.
+    const nomeAtual = u.nomeCustom || u.label || '';
     return `
       <div class="user-card ${ehVoce ? 'voce' : ''}">
         <div class="user-info">
           <div class="user-email">${u.email || u.uid} ${ehVoce ? '<span class="user-tag-voce">você</span>' : ''}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <input type="text" id="nome-${u.uid}" value="${esc(nomeAtual)}"
+              placeholder="Nome de exibição (ex: João Silva)"
+              style="flex:1;padding:5px 9px;border:1.5px solid var(--borda);border-radius:6px;font-size:12px;min-width:0"
+              onblur="window.AppEstoque.salvarNomeUsuario('${u.uid}')"
+              onkeydown="if(event.key==='Enter')this.blur()">
+            <span style="font-size:11px;color:var(--texto-suave)" title="Pressione Enter ou clique fora para salvar">↵</span>
+          </div>
           <div class="user-meta">${u.criadoEm ? 'Desde ' + new Date(u.criadoEm).toLocaleDateString('pt-BR') : ''}</div>
         </div>
         <select class="user-nivel-select" id="nivel-${u.uid}" ${ehVoce ? 'disabled title="Você não pode alterar seu próprio nível"' : ''} onchange="window.AppEstoque.confirmarMudancaNivel('${u.uid}', '${(u.email||'').replace(/'/g, "\\'")}')">
@@ -3135,6 +3255,45 @@ function renderUsuarios(lista) {
         <button class="btn-engrenagem" onclick="window.AppEstoque.abrirPermissoes('${u.uid}')" title="Configurar permissões individuais">⚙️</button>
       </div>`;
   }).join('');
+}
+
+async function salvarNomeUsuario(uid) {
+  const input = document.getElementById(`nome-${uid}`);
+  if (!input) return;
+  const nome = input.value.trim();
+  const u    = usuariosCarregados.find(x => x.uid === uid);
+  if (!u) return;
+
+  // Não salva se não mudou
+  const nomeAtual = u.nomeCustom || u.label || '';
+  if (nome === nomeAtual) return;
+
+  try {
+    // Salva nomeCustom no documento do usuário
+    await setDoc(doc(db, 'usuarios', uid), { nomeCustom: nome }, { merge: true });
+
+    // Atualiza o label para manter compatibilidade com o sistema de lançamentos
+    // (novos lançamentos desse usuário vão usar o nome atualizado)
+    const novoLabel = nome || NIVEIS_DISPONIVEIS.find(n => n.valor === u.nivel)?.label || u.nivel;
+    await setDoc(doc(db, 'usuarios', uid), { label: novoLabel }, { merge: true });
+
+    // Atualiza o mapa em memória imediatamente
+    if (u.email) _mapaUsuarios[u.email] = novoLabel;
+
+    // Se for o próprio usuário logado, atualiza a sessão
+    const s = getSessao();
+    if (s && s.uid === uid) {
+      sessaoAtual = { ...sessaoAtual, label: novoLabel };
+      const badge = document.querySelector('.badge-usuario .txt');
+      if (badge) badge.textContent = novoLabel;
+    }
+
+    mostrarToast(`✓ Nome "${novoLabel}" salvo.`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar nome.', 'erro');
+    input.value = nomeAtual; // reverte visualmente
+  }
 }
 
 async function confirmarMudancaNivel(uid, email) {
@@ -4923,6 +5082,141 @@ function exportarPluvXLS() {
   mostrarToast('✓ XLS exportado!', 'sucesso');
 }
 
+// =====================================================================
+// DASHBOARD
+// =====================================================================
+
+function renderDashboard() {
+  const agora    = new Date();
+  const hora     = agora.getHours();
+  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  const s        = getSessao();
+  const nomeUser = s?.label || 'Usuário';
+  const dataFmt  = agora.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+  const anoMes   = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}`;
+  const mesNome  = agora.toLocaleDateString('pt-BR', { month: 'long' });
+  const mesLabel = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
+
+  const el = id => document.getElementById(id);
+  if (el('dashSaudacao')) el('dashSaudacao').textContent = `${saudacao}, ${nomeUser}!`;
+  if (el('dashData'))     el('dashData').textContent     = dataFmt;
+  if (el('dashIrrigMesNome')) el('dashIrrigMesNome').textContent = mesLabel;
+  if (el('dashPluvMesNome'))  el('dashPluvMesNome').textContent  = mesLabel;
+
+  // ── CARDS DE RESUMO RÁPIDO ──────────────────────────────────────────
+  const totalProd   = produtos.length;
+  const zerados     = produtos.filter(p => p.estoque <= 0).length;
+  const baixos      = produtos.filter(p => p.estoque > 0 && p.estoque <= 10).length;
+
+  const irrigMes    = irrigLancamentos
+    .filter(m => (m.data || '').startsWith(anoMes))
+    .reduce((s, m) => s + (m.mm || 0), 0);
+
+  const pluvMes = (() => {
+    const agr = agregarPorFazendaDia(pluvLancamentos.filter(m => (m.data || '').startsWith(anoMes)));
+    const fazendas = Object.keys(agr);
+    if (!fazendas.length) return 0;
+    const totais = fazendas.map(f => Object.values(agr[f]).reduce((a, b) => a + b, 0));
+    return Math.round(totais.reduce((a, b) => a + b, 0) / totais.length * 10) / 10;
+  })();
+
+  const cards = [
+    { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
+    { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
+    { valor: baixos,              label: 'Estoque baixo',        sub: '≤ 10 unidades',                     cls: baixos  > 0 ? 'alerta'  : '' },
+    { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
+    { valor: pluvMes.toFixed(1)  + ' mm', label: 'Chuva média no mês', sub: 'média entre fazendas',       cls: 'verde' },
+  ];
+
+  if (el('dashCards')) {
+    el('dashCards').innerHTML = cards.map(c => `
+      <div class="dash-card ${c.cls}">
+        <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
+        <div class="dash-card-label">${c.label}</div>
+        ${c.sub ? `<div class="dash-card-sub">${c.sub}</div>` : ''}
+      </div>`).join('');
+  }
+
+  // ── ESTOQUE EM ALERTA ───────────────────────────────────────────────
+  const emAlerta = produtos
+    .filter(p => p.estoque <= 10)
+    .sort((a, b) => a.estoque - b.estoque)
+    .slice(0, 8);
+
+  if (el('dashEstoqueAlerta')) {
+    el('dashEstoqueAlerta').innerHTML = emAlerta.length === 0
+      ? '<div class="dash-secao-vazio">✅ Todos os produtos com estoque normal</div>'
+      : emAlerta.map(p => `
+        <div class="dash-secao-item">
+          <span class="dash-secao-item-nome" title="${esc(p.nome)}">${esc(p.nome)}</span>
+          <span class="dash-pill ${p.estoque <= 0 ? 'zerado' : 'baixo'}">${p.estoque <= 0 ? 'Zerado' : 'Baixo'}</span>
+          <span class="dash-secao-item-val" style="${p.estoque <= 0 ? 'color:var(--vermelho)' : 'color:#c47a00'}">${fmt(p.estoque)} ${p.unidade}</span>
+        </div>`).join('');
+  }
+
+  // ── ÚLTIMAS MOVIMENTAÇÕES ───────────────────────────────────────────
+  const tipoIcn = { saida: '↓', entrada: '↑', receita: '📋', compra: '📦', edicao: '✎', exclusao: '🗑' };
+  const tipoLabel = { saida: 'Retirada', entrada: 'Entrada', receita: 'Receita', compra: 'Compra NF', edicao: 'Edição', exclusao: 'Exclusão' };
+  const ultMov = historico.slice(0, 6);
+
+  if (el('dashUltimasMov')) {
+    el('dashUltimasMov').innerHTML = ultMov.length === 0
+      ? '<div class="dash-secao-vazio">Nenhuma movimentação ainda</div>'
+      : ultMov.map(m => {
+          const data = new Date(m.dataLocal || m.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+          const isSaida = m.tipo === 'saida' || m.tipo === 'receita';
+          const qtdTxt  = m.qtd ? `${isSaida ? '−' : '+'}${fmt(m.qtd)} ${m.unidade || ''}` : '';
+          return `
+          <div class="dash-mov-item">
+            <span class="dash-mov-tipo">${tipoIcn[m.tipo] || '•'}</span>
+            <div class="dash-mov-info">
+              <div class="dash-mov-nome">${esc(m.produto || (m.tipo === 'receita' ? `Receita ${m.numeroReceita || ''}` : m.tipo === 'compra' ? `NF ${m.numeroNF || ''}` : '—'))}</div>
+              <div class="dash-mov-sub">${tipoLabel[m.tipo] || m.tipo} · ${data} · ${esc(nomeDeUsuario(m))}</div>
+            </div>
+            ${qtdTxt ? `<span class="dash-mov-qtd ${isSaida ? 'saida' : 'entrada'}">${qtdTxt}</span>` : ''}
+          </div>`;
+        }).join('');
+  }
+
+  // ── IRRIGAÇÃO POR FAZENDA ───────────────────────────────────────────
+  const irrigMesLancs = irrigLancamentos.filter(m => (m.data || '').startsWith(anoMes));
+  const irrigPorFaz   = {};
+  irrigMesLancs.forEach(m => {
+    irrigPorFaz[m.fazenda] = (irrigPorFaz[m.fazenda] || 0) + (m.mm || 0);
+  });
+  const irrigFazList = Object.entries(irrigPorFaz).sort((a, b) => b[1] - a[1]);
+  const irrigMax = irrigFazList[0]?.[1] || 1;
+
+  if (el('dashIrrigacao')) {
+    el('dashIrrigacao').innerHTML = irrigFazList.length === 0
+      ? '<div class="dash-secao-vazio">Nenhum lançamento de irrigação neste mês</div>'
+      : irrigFazList.map(([faz, mm]) => `
+        <div class="dash-secao-item">
+          <span class="dash-secao-item-nome">${esc(faz)}</span>
+          <div class="dash-bar-wrap"><div class="dash-bar" style="width:${Math.round(mm/irrigMax*100)}%;background:#1a5fb4"></div></div>
+          <span class="dash-secao-item-val" style="color:#1a5fb4">${mm.toFixed(1)} mm</span>
+        </div>`).join('');
+  }
+
+  // ── PLUVIOMETRIA POR FAZENDA ────────────────────────────────────────
+  const pluvMesLancs = pluvLancamentos.filter(m => (m.data || '').startsWith(anoMes));
+  const pluvAgr      = agregarPorFazendaDia(pluvMesLancs);
+  const pluvFazList  = Object.entries(pluvAgr)
+    .map(([faz, dias]) => [faz, Math.round(Object.values(dias).reduce((a, b) => a + b, 0) * 10) / 10])
+    .sort((a, b) => b[1] - a[1]);
+
+  if (el('dashPluv')) {
+    el('dashPluv').innerHTML = pluvFazList.length === 0
+      ? '<div style="grid-column:1/-1" class="dash-secao-vazio">Nenhum lançamento de chuva neste mês</div>'
+      : pluvFazList.map(([faz, mm]) => `
+        <div style="background:var(--cinza-claro);border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:12px;font-weight:600;color:var(--texto)">${esc(faz)}</span>
+          <span style="font-size:16px;font-weight:800;color:#1a7a5b">${mm.toFixed(1)} <span style="font-size:11px;font-weight:600">mm</span></span>
+        </div>`).join('');
+  }
+}
+
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────
 
 function navegarModulo(modulo) {
@@ -4931,11 +5225,13 @@ function navegarModulo(modulo) {
   const telaEst  = document.getElementById('telaEstoque');
   const telaIrr  = document.getElementById('telaIrrigacao');
   const telaPluv = document.getElementById('telaPluv');
+  const telaDash = document.getElementById('telaDash');
   const filtros  = document.querySelector('.filtros');
 
   if (telaEst)   telaEst.classList.toggle('oculta',  modulo !== 'estoque');
   if (telaIrr)   telaIrr.classList.toggle('ativa',   modulo === 'irrigacao');
   if (telaPluv)  telaPluv.classList.toggle('ativa',  modulo === 'pluviometria');
+  if (telaDash)  telaDash.classList.toggle('ativa',  modulo === 'dashboard');
   if (filtros)   filtros.style.display = modulo === 'estoque' ? '' : 'none';
 
   document.querySelectorAll('.modulo-tab:not(.futuro)').forEach(btn => {
@@ -4943,24 +5239,17 @@ function navegarModulo(modulo) {
   });
 
   const titulos = {
-    estoque:       `${configGlobal.fazenda} — Estoque`,
-    irrigacao:     `${configGlobal.fazenda} — Irrigação`,
-    pluviometria:  `${configGlobal.fazenda} — Pluviometria`,
+    dashboard:    `${configGlobal.fazenda} — Dashboard`,
+    estoque:      `${configGlobal.fazenda} — Estoque`,
+    irrigacao:    `${configGlobal.fazenda} — Irrigação`,
+    pluviometria: `${configGlobal.fazenda} — Pluviometria`,
   };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
 
-  if (modulo === 'irrigacao') {
-    iniciarModuloIrrigacao();
-  } else {
-    pararModuloIrrigacao();
-  }
-
-  if (modulo === 'pluviometria') {
-    iniciarModuloPluv();
-  } else {
-    pararModuloPluv();
-  }
+  if (modulo === 'irrigacao')    iniciarModuloIrrigacao(); else pararModuloIrrigacao();
+  if (modulo === 'pluviometria') iniciarModuloPluv();      else pararModuloPluv();
+  if (modulo === 'dashboard')    renderDashboard();
 }
 
 // =====================================================================
@@ -5409,7 +5698,7 @@ window.AppEstoque = {
   abrirHistorico, fecharHistorico, limparHistorico,
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   carregarMaisHistorico, recarregarHistorico,
-  navegarModulo,
+  navegarModulo, renderDashboard,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
   renderTabelaPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
@@ -5428,7 +5717,7 @@ window.AppEstoque = {
   gerarPDFLancamento, gerarPDFLancamentoAtual,
   abrirReceita, fecharReceita, buscarProdutoReceita, adicionarItemReceita,
   removerItemReceita, atualizarQtdReceita, confirmarReceita, focarBuscaReceita,
-  abrirUsuarios, fecharUsuarios, confirmarMudancaNivel,
+  abrirUsuarios, fecharUsuarios, confirmarMudancaNivel, salvarNomeUsuario,
   abrirPermissoes, fecharPermissoes, salvarPermissoes,
   abrirCompra, fecharCompra, buscarProdutoCompra, adicionarItemCompra,
   removerItemCompra, atualizarQtdCompra, confirmarCompra, focarBuscaCompra,
