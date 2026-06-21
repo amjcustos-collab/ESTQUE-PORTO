@@ -172,12 +172,29 @@ header {
 
 /* LISTA */
 .lista { padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
-.classe-grupo { margin-bottom: 24px; }
+.classe-grupo { margin-bottom: 28px; }
+.classe-header {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 12px; padding: 10px 16px;
+  border-radius: 12px; background: white;
+  border: 1.5px solid var(--borda);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+.classe-icone {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.classe-info { flex: 1; }
 .classe-titulo {
-  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px;
-  color: var(--azul); padding: 4px 10px; border-left: 3px solid var(--azul);
-  background: var(--azul-fundo); border-radius: 0 6px 6px 0;
-  margin-bottom: 10px; display: inline-block;
+  font-size: 12px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--texto);
+}
+.classe-subtitulo { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
+.classe-contador {
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 20px; background: var(--fundo); color: var(--texto-suave);
+  border: 1px solid var(--borda);
 }
 
 .produto-card { background: white; border: 1.5px solid var(--borda); border-radius: 10px; margin-bottom: 8px; transition: box-shadow 0.15s; position: relative; }
@@ -2439,10 +2456,31 @@ function renderLista() {
   const podeVerHist = temPermissao('verRelatorios');
   const podeEntrada = temPermissao('darEntrada');
   const podeBaixa = temPermissao('darBaixa');
+  const CLASSE_META = {
+    'ADJUVANTE':      { icone: '🧪', cor: '#e8f4fd', desc: 'Adjuvantes e espalhantes' },
+    'BIOLÓGICO':      { icone: '🦠', cor: '#e8f8e8', desc: 'Controle biológico' },
+    'FOLIAR':         { icone: '🌿', cor: '#edf7ed', desc: 'Nutrição e estimulantes' },
+    'FUNGICIDA':      { icone: '🍄', cor: '#fdf3e8', desc: 'Controle de fungos' },
+    'HERBICIDA':      { icone: '🌾', cor: '#fef9e7', desc: 'Controle de plantas daninhas' },
+    'INSETICIDA':     { icone: '🐛', cor: '#fdecea', desc: 'Controle de insetos e pragas' },
+    'MEIO DE CULTURA':{ icone: '🔬', cor: '#f3e8fd', desc: 'Meios e substratos' },
+    'MOLUSCICIDA':    { icone: '🐌', cor: '#fce8f4', desc: 'Controle de moluscos' },
+    'OLEO':           { icone: '💧', cor: '#e8f0fd', desc: 'Óleos minerais e vegetais' },
+  };
   Object.keys(grupos).sort().forEach(classe => {
+    const meta = CLASSE_META[classe] || { icone: '📦', cor: '#f5f5f5', desc: 'Produtos' };
+    const qtd = grupos[classe].length;
     const grupo = document.createElement('div');
     grupo.className = 'classe-grupo';
-    grupo.innerHTML = `<div class="classe-titulo">${classe}</div>`;
+    grupo.innerHTML = `
+      <div class="classe-header">
+        <div class="classe-icone" style="background:${meta.cor}">${meta.icone}</div>
+        <div class="classe-info">
+          <div class="classe-titulo">${classe}</div>
+          <div class="classe-subtitulo">${meta.desc}</div>
+        </div>
+        <div class="classe-contador">${qtd} produto${qtd !== 1 ? 's' : ''}</div>
+      </div>`;
     grupos[classe].forEach(p => {
       const status = statusCard(p.estoque);
       const card = document.createElement('div');
