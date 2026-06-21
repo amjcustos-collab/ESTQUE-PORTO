@@ -339,6 +339,54 @@ header {
   .irrig-breakdown-bar-wrap { display: none; }
 }
 
+/* ── MÓDULO PLUVIOMETRIA ───────────────────────────────────────────── */
+.tela-pluv { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.tela-pluv.ativa { display: block; }
+
+/* Barra de ações */
+.pluv-acoes { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+.pluv-select { padding: 9px 12px; border: 1.5px solid var(--borda); border-radius: 8px; font-size: 13px; background: white; color: var(--texto); cursor: pointer; }
+
+/* Tabela principal */
+.pluv-tabela-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid var(--borda); background: white; }
+.pluv-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.pluv-tabela thead th {
+  background: #1a3a6b; color: white; padding: 10px 14px;
+  font-weight: 700; text-align: center; font-size: 12px;
+  white-space: nowrap; border-right: 1px solid rgba(255,255,255,0.15);
+}
+.pluv-tabela thead th:first-child { text-align: left; min-width: 90px; }
+.pluv-tabela tbody tr:hover { background: #f0f4ff; }
+.pluv-tabela tbody td {
+  padding: 9px 14px; border-bottom: 1px solid var(--borda);
+  text-align: center; border-right: 1px solid #eef0f4;
+  color: var(--texto);
+}
+.pluv-tabela tbody td:first-child { text-align: left; font-weight: 600; color: var(--texto-suave); }
+.pluv-tabela tbody td.pluv-zero { color: #ccc; }
+.pluv-tabela tbody td.pluv-tem { font-weight: 700; color: #1a5fb4; }
+.pluv-tabela tfoot td {
+  background: #fef3cd; padding: 10px 14px; font-weight: 800;
+  font-size: 13px; text-align: center; border-top: 2px solid #f0d080;
+  color: #7a5000;
+}
+.pluv-tabela tfoot td:first-child { text-align: left; }
+
+/* Célula clicável */
+.pluv-cell-btn { cursor: pointer; border-radius: 6px; padding: 4px 8px; transition: background 0.12s; display: inline-block; min-width: 32px; }
+.pluv-cell-btn:hover { background: #d0e4ff; }
+
+/* Cards de resumo */
+.pluv-resumo { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.pluv-stat { flex: 1; min-width: 140px; background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 14px 16px; }
+.pluv-stat-valor { font-size: 26px; font-weight: 800; color: #1a5fb4; line-height: 1; }
+.pluv-stat-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+@media (max-width: 600px) {
+  .tela-pluv { padding: 12px; }
+  .pluv-tabela thead th, .pluv-tabela tbody td, .pluv-tabela tfoot td { padding: 7px 8px; font-size: 11px; }
+}
+
 /* PAINEL */
 /* MENU DE AÇÕES DO CARD — substitui editar/excluir/histórico isolados */
 .btn-menu-acoes {
@@ -641,7 +689,6 @@ header {
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
     <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
     <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.abrirExportacaoXLS()">📊 <span>Excel</span></button>
-    <button class="btn-header" style="background:rgba(255,255,255,0.10);border-color:rgba(255,255,255,0.2)" onclick="window.AppEstoque.abrirExportacao()">📤 <span>Histórico</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -656,7 +703,8 @@ header {
     💧 Irrigação
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
-    🌧️ Pluviometria <span class="modulo-badge em-breve">em breve</span>
+  <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('pluviometria')" id="tab-pluviometria">
+    🌧️ Pluviometria
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
     💰 Custos <span class="modulo-badge em-breve">em breve</span>
@@ -754,6 +802,47 @@ header {
   </div>
 
 </div><!-- /tela-irrigacao -->
+
+<!-- ── TELA DE PLUVIOMETRIA ──────────────────────────────────────── -->
+<div class="tela-pluv" id="telaPluv">
+
+  <!-- Resumo -->
+  <div class="pluv-resumo">
+    <div class="pluv-stat">
+      <div class="pluv-stat-valor" id="pluvTotalMes">—</div>
+      <div class="pluv-stat-label">Total médio no mês (mm)</div>
+    </div>
+    <div class="pluv-stat">
+      <div class="pluv-stat-valor" id="pluvMaiorFaz">—</div>
+      <div class="pluv-stat-label">Maior acumulado</div>
+    </div>
+    <div class="pluv-stat">
+      <div class="pluv-stat-valor" id="pluvDiasComChuva">—</div>
+      <div class="pluv-stat-label">Dias com chuva</div>
+    </div>
+  </div>
+
+  <!-- Barra de ações -->
+  <div class="pluv-acoes">
+    <button class="btn-header verde" style="padding:10px 18px;font-size:13px" onclick="window.AppEstoque.abrirLancamentoPluv()">🌧️ + Registrar Chuva</button>
+    <select class="pluv-select" id="pluvFiltroMes" onchange="window.AppEstoque.renderTabelaPluv()">
+      <!-- meses populados dinamicamente -->
+    </select>
+    <button class="pluv-select" style="cursor:pointer;font-weight:600;color:var(--azul);border-color:var(--azul)" onclick="window.AppEstoque.exportarPluvPDF()">📄 PDF Mensal</button>
+    <button class="pluv-select" style="cursor:pointer;font-weight:600;color:#2a7a2a;border-color:#2a7a2a" onclick="window.AppEstoque.exportarPluvXLS()">📊 XLS</button>
+    <button id="btnGestaoPluv" style="display:none" class="pluv-select" onclick="window.AppEstoque.abrirGestaoPluv()">⚙️ Gestão</button>
+  </div>
+
+  <!-- Tabela -->
+  <div class="pluv-tabela-wrap">
+    <table class="pluv-tabela" id="pluvTabela">
+      <thead id="pluvThead"></thead>
+      <tbody id="pluvTbody"></tbody>
+      <tfoot id="pluvTfoot"></tfoot>
+    </table>
+  </div>
+
+</div><!-- /tela-pluv -->
 
 <!-- MODAL HISTÓRICO -->
 <div class="overlay" id="overlayHistorico" onclick="if(event.target===this)window.AppEstoque.fecharHistorico()">
@@ -986,6 +1075,97 @@ header {
     <div class="modal-footer" style="justify-content:center;gap:12px">
       <button class="btn-cancelar" style="min-width:120px" onclick="window.AppEstoque.cancelarExclusaoIrrig()">Cancelar</button>
       <button id="btnConfirmarExclusaoIrrig" style="min-width:140px;background:var(--vermelho);color:white;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarExclusaoIrrig()">🗑 Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL LANÇAMENTO PLUVIOMETRIA -->
+<div class="overlay" id="overlayLancPluv" onclick="if(event.target===this)window.AppEstoque.fecharLancamentoPluv()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a5b)">
+      <h2>🌧️ Registrar Chuva</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharLancamentoPluv()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Data</label>
+          <input type="date" id="pluvData" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label class="label-campo">Fazenda</label>
+          <select id="pluvFazenda" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px" onchange="window.AppEstoque.onPluvFazendaChange()">
+            <option value="">Selecione a fazenda</option>
+          </select>
+        </div>
+      </div>
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Pluviômetro</label>
+          <select id="pluvPluviometro" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px">
+            <option value="">Selecione a fazenda primeiro</option>
+          </select>
+        </div>
+        <div>
+          <label class="label-campo">Milímetros (mm)</label>
+          <input type="number" id="pluvMM" min="0" step="0.1" placeholder="Ex: 25.5"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+        </div>
+      </div>
+      <div>
+        <label class="label-campo">Observação (opcional)</label>
+        <input type="text" id="pluvObs" placeholder="Ex: Chuva forte à tarde"
+          style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box;margin-top:4px">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharLancamentoPluv()">Cancelar</button>
+      <button id="btnConfirmarPluv" style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarLancamentoPluv()">
+        🌧️ Confirmar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL GESTÃO PLUVIÔMETROS (admin) -->
+<div class="overlay" id="overlayGestaoPluv" onclick="if(event.target===this)window.AppEstoque.fecharGestaoPluv()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a5b)">
+      <h2>⚙️ Gestão — Pluviômetros</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoPluv()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPluv(null)">+ Novo Pluviômetro</button>
+      </div>
+      <div class="pivos-lista" id="gestaoPluvLista"></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoPluv()">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL EDITOR PLUVIÔMETRO -->
+<div class="overlay" id="overlayEditorPluv" onclick="if(event.target===this)window.AppEstoque.fecharEditorPluv()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a5b)">
+      <h2 id="editorPluvTitulo">Novo Pluviômetro</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditorPluv()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <div class="irrig-form-row">
+        <div>
+          <label class="label-campo">Fazenda</label>
+          <input type="text" id="editorPluvFazenda" placeholder="Ex: CATARINA" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+        </div>
+        <div>
+          <label class="label-campo">Nome do pluviômetro</label>
+          <input type="text" id="editorPluvNome" placeholder="Ex: Principal" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditorPluv()">Cancelar</button>
+      <button id="btnSalvarPluv" style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarPluviometro()">💾 Salvar</button>
     </div>
   </div>
 </div>
@@ -4283,37 +4463,500 @@ function exportarIrrigPDF() {
   w.document.close();
 }
 
+// =====================================================================
+// MÓDULO PLUVIOMETRIA
+// =====================================================================
+
+let pluvPluviometros   = [];  // cadastro de pluviômetros
+let pluvLancamentos    = [];  // lançamentos carregados
+let pluvUnsubscribe    = null;
+let _editandoPluvId    = null;
+
+// ── PERSISTÊNCIA ──────────────────────────────────────────────────────
+
+async function carregarPluviometros() {
+  if (pluvPluviometros.length > 0) return;
+  const snap = await getDocs(query(collection(db, 'pluv_pluviometros'), orderBy('fazenda')));
+  pluvPluviometros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function recarregarPluviometros() {
+  const snap = await getDocs(query(collection(db, 'pluv_pluviometros'), orderBy('fazenda')));
+  pluvPluviometros = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ── INICIALIZAÇÃO ─────────────────────────────────────────────────────
+
+async function iniciarModuloPluv() {
+  await carregarPluviometros();
+  popularMesesPluv();
+  const btn = document.getElementById('btnGestaoPluv');
+  if (btn) btn.style.display = ehAdminLocal() ? '' : 'none';
+  escutarLancamentosPluv();
+}
+
+function pararModuloPluv() {
+  if (pluvUnsubscribe) { pluvUnsubscribe(); pluvUnsubscribe = null; }
+}
+
+function escutarLancamentosPluv() {
+  if (pluvUnsubscribe) pluvUnsubscribe();
+  const q = query(collection(db, 'pluv_lancamentos'), orderBy('dataLocal', 'desc'), limit(1000));
+  pluvUnsubscribe = onSnapshot(q, snap => {
+    pluvLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    atualizarResumoPluv();
+    renderTabelaPluv();
+  });
+}
+
+// ── MESES ─────────────────────────────────────────────────────────────
+
+function popularMesesPluv() {
+  const sel = document.getElementById('pluvFiltroMes');
+  if (!sel) return;
+  const agora = new Date();
+  const opcoes = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - i, 1);
+    const val = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    opcoes.push(`<option value="${val}">${label.charAt(0).toUpperCase() + label.slice(1)}</option>`);
+  }
+  sel.innerHTML = opcoes.join('');
+}
+
+function getMesAtivo() {
+  return document.getElementById('pluvFiltroMes')?.value ||
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+}
+
+// ── DADOS: filtra e agrega ─────────────────────────────────────────────
+
+function getLancamentosMes(anoMes) {
+  return pluvLancamentos.filter(m => (m.data || '').startsWith(anoMes));
+}
+
+// Retorna { fazenda: { data: mm_medio } } — média entre pluviômetros da mesma fazenda no mesmo dia
+function agregarPorFazendaDia(lancamentos) {
+  // Agrupa por fazenda+data → lista de mm
+  const mapa = {}; // { "CATARINA|2026-06-12": [15, 18] }
+  lancamentos.forEach(m => {
+    const key = `${m.fazenda}|${m.data}`;
+    if (!mapa[key]) mapa[key] = [];
+    mapa[key].push(m.mm || 0);
+  });
+  // Calcula média e reorganiza em { fazenda: { data: media } }
+  const resultado = {};
+  Object.entries(mapa).forEach(([key, vals]) => {
+    const [fazenda, data] = key.split('|');
+    if (!resultado[fazenda]) resultado[fazenda] = {};
+    const media = vals.reduce((a, b) => a + b, 0) / vals.length;
+    resultado[fazenda][data] = Math.round(media * 10) / 10;
+  });
+  return resultado;
+}
+
+// ── RESUMO ─────────────────────────────────────────────────────────────
+
+function atualizarResumoPluv() {
+  const mes = getMesAtivo();
+  const lancs = getLancamentosMes(mes);
+  const agr   = agregarPorFazendaDia(lancs);
+
+  // Total médio geral (média dos totais por fazenda)
+  const fazendas = Object.keys(agr);
+  let totalMedio = 0, maiorFaz = '—', maiorVal = 0;
+  fazendas.forEach(faz => {
+    const total = Object.values(agr[faz]).reduce((a, b) => a + b, 0);
+    if (total > maiorVal) { maiorVal = total; maiorFaz = faz; }
+    totalMedio += total;
+  });
+  if (fazendas.length) totalMedio = Math.round((totalMedio / fazendas.length) * 10) / 10;
+
+  // Dias com chuva (pelo menos uma fazenda registrou > 0)
+  const diasComChuva = new Set(lancs.filter(m => m.mm > 0).map(m => m.data)).size;
+
+  const el = id => document.getElementById(id);
+  if (el('pluvTotalMes'))    el('pluvTotalMes').textContent    = totalMedio + ' mm';
+  if (el('pluvMaiorFaz'))    el('pluvMaiorFaz').textContent    = maiorFaz !== '—' ? `${maiorFaz} (${maiorVal} mm)` : '—';
+  if (el('pluvDiasComChuva')) el('pluvDiasComChuva').textContent = diasComChuva;
+}
+
+// ── TABELA PRINCIPAL ───────────────────────────────────────────────────
+
+function renderTabelaPluv() {
+  const mes    = getMesAtivo();
+  const lancs  = getLancamentosMes(mes);
+  const agr    = agregarPorFazendaDia(lancs);
+
+  // Fazendas ordenadas (union dos pluviômetros cadastrados + lançamentos)
+  const fazendasCad = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agr).sort();
+  const fazendas = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
+
+  // Dias do mês com pelo menos um lançamento
+  const diasSet = new Set(lancs.map(m => m.data));
+  const dias = [...diasSet].sort();
+
+  const thead = document.getElementById('pluvThead');
+  const tbody = document.getElementById('pluvTbody');
+  const tfoot = document.getElementById('pluvTfoot');
+  if (!thead || !tbody || !tfoot) return;
+
+  if (fazendas.length === 0) {
+    thead.innerHTML = '<tr><th>Data</th></tr>';
+    tbody.innerHTML = '<tr><td colspan="1" style="text-align:center;padding:32px;color:var(--texto-suave)">Nenhum lançamento neste mês. Clique em "+ Registrar Chuva" para começar.</td></tr>';
+    tfoot.innerHTML = '';
+    return;
+  }
+
+  // Cabeçalho
+  thead.innerHTML = `<tr>
+    <th>📅 Data</th>
+    ${fazendas.map(f => `<th>${esc(f)}</th>`).join('')}
+  </tr>`;
+
+  // Totais por fazenda (para o rodapé)
+  const totais = {};
+  fazendas.forEach(f => {
+    totais[f] = Object.values(agr[f] || {}).reduce((a, b) => a + b, 0);
+  });
+
+  // Linhas por dia
+  if (dias.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="' + (fazendas.length + 1) + '" style="text-align:center;padding:32px;color:var(--texto-suave)">Nenhum lançamento neste mês.</td></tr>';
+  } else {
+    tbody.innerHTML = dias.map(data => {
+      const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+      const cels = fazendas.map(f => {
+        const val = agr[f]?.[data];
+        if (val === undefined || val === null) return `<td class="pluv-zero">—</td>`;
+        const cl = val > 0 ? 'pluv-tem' : 'pluv-zero';
+        return `<td class="${cl}">
+          <span class="pluv-cell-btn" onclick="window.AppEstoque.abrirLancamentoPluv('${data}','${f}')" title="Editar / ver lançamento">
+            ${val > 0 ? val.toFixed(1) : '—'}
+          </span>
+        </td>`;
+      }).join('');
+      return `<tr><td>${dataFmt}</td>${cels}</tr>`;
+    }).join('');
+  }
+
+  // Rodapé com totais
+  tfoot.innerHTML = `<tr>
+    <td>Total</td>
+    ${fazendas.map(f => `<td>${totais[f] > 0 ? totais[f].toFixed(1) : '—'}</td>`).join('')}
+  </tr>`;
+
+  atualizarResumoPluv();
+}
+
+// ── MODAL DE LANÇAMENTO ────────────────────────────────────────────────
+
+function abrirLancamentoPluv(data, fazenda) {
+  const hoje = new Date().toISOString().slice(0, 10);
+  document.getElementById('pluvData').value = data || hoje;
+  document.getElementById('pluvObs').value  = '';
+  document.getElementById('pluvMM').value   = '';
+
+  // Popular fazendas
+  const fazendas = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const selFaz = document.getElementById('pluvFazenda');
+  selFaz.innerHTML = '<option value="">Selecione a fazenda</option>' +
+    fazendas.map(f => `<option value="${f}" ${f === fazenda ? 'selected' : ''}>${esc(f)}</option>`).join('');
+
+  // Popular pluviômetros
+  onPluvFazendaChange(fazenda);
+
+  document.getElementById('overlayLancPluv').classList.add('aberto');
+}
+
+function fecharLancamentoPluv() {
+  document.getElementById('overlayLancPluv').classList.remove('aberto');
+}
+
+function onPluvFazendaChange(fazendaInicial) {
+  const fazenda = fazendaInicial || document.getElementById('pluvFazenda').value;
+  const sel = document.getElementById('pluvPluviometro');
+  const pluvsF = pluvPluviometros.filter(p => p.fazenda === fazenda);
+  if (pluvsF.length === 0) {
+    sel.innerHTML = '<option value="">Selecione a fazenda primeiro</option>';
+  } else {
+    sel.innerHTML = pluvsF.map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join('');
+  }
+}
+
+async function confirmarLancamentoPluv() {
+  const data    = document.getElementById('pluvData').value;
+  const fazenda = document.getElementById('pluvFazenda').value;
+  const pluvId  = document.getElementById('pluvPluviometro').value;
+  const mmRaw   = document.getElementById('pluvMM').value;
+  const obs     = document.getElementById('pluvObs').value.trim();
+
+  if (!data)    { mostrarToast('Informe a data.', 'erro'); return; }
+  if (!fazenda) { mostrarToast('Selecione a fazenda.', 'erro'); return; }
+  if (!pluvId)  { mostrarToast('Selecione o pluviômetro.', 'erro'); return; }
+  const mm = parseQtd(mmRaw);
+  if (isNaN(mm) || mm < 0) { mostrarToast('Informe os mm de chuva.', 'erro'); return; }
+
+  const pluv = pluvPluviometros.find(p => p.id === pluvId);
+  const btn  = document.getElementById('btnConfirmarPluv');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+
+  try {
+    const s = getSessao();
+    await addDoc(collection(db, 'pluv_lancamentos'), {
+      data, dataLocal: new Date(data + 'T12:00:00').getTime(),
+      dataOrdenacao: serverTimestamp(),
+      fazenda, pluviometroId: pluvId,
+      pluviometroNome: pluv?.nome || '',
+      mm, obs,
+      usuario: s ? s.email : '—', nomeUsuario: s ? s.label : '—',
+    });
+    fecharLancamentoPluv();
+    mostrarToast(`✓ ${mm} mm registrado em ${fazenda}`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '🌧️ Confirmar';
+  }
+}
+
+// ── GESTÃO DE PLUVIÔMETROS ─────────────────────────────────────────────
+
+async function abrirGestaoPluv() {
+  await recarregarPluviometros();
+  renderGestaoPluvLista();
+  document.getElementById('overlayGestaoPluv').classList.add('aberto');
+}
+function fecharGestaoPluv() { document.getElementById('overlayGestaoPluv').classList.remove('aberto'); }
+
+function renderGestaoPluvLista() {
+  const lista = document.getElementById('gestaoPluvLista');
+  if (!lista) return;
+  const ordenados = [...pluvPluviometros].sort((a, b) => a.fazenda.localeCompare(b.fazenda) || a.nome.localeCompare(b.nome));
+  lista.innerHTML = ordenados.length === 0
+    ? '<div style="text-align:center;padding:24px;color:var(--texto-suave)">Nenhum pluviômetro cadastrado ainda.</div>'
+    : ordenados.map(p => `
+    <div class="pivo-item">
+      <div class="pivo-item-info">
+        <div class="pivo-item-nome">${esc(p.nome)}</div>
+        <div class="pivo-item-faz">${esc(p.fazenda)}</div>
+      </div>
+      <div class="pivo-item-acoes">
+        <button class="btn-pivo-edit" onclick="window.AppEstoque.abrirEditorPluv('${p.id}')">✎ Editar</button>
+        <button class="btn-pivo-del"  onclick="window.AppEstoque.excluirPluviometro('${p.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrirEditorPluv(id) {
+  _editandoPluvId = id;
+  const titulo = document.getElementById('editorPluvTitulo');
+  if (id) {
+    const p = pluvPluviometros.find(x => x.id === id);
+    if (!p) return;
+    if (titulo) titulo.textContent = 'Editar Pluviômetro';
+    document.getElementById('editorPluvFazenda').value = p.fazenda;
+    document.getElementById('editorPluvNome').value    = p.nome;
+  } else {
+    if (titulo) titulo.textContent = 'Novo Pluviômetro';
+    document.getElementById('editorPluvFazenda').value = '';
+    document.getElementById('editorPluvNome').value    = '';
+  }
+  document.getElementById('overlayEditorPluv').classList.add('aberto');
+}
+function fecharEditorPluv() { document.getElementById('overlayEditorPluv').classList.remove('aberto'); }
+
+async function salvarPluviometro() {
+  const fazenda = document.getElementById('editorPluvFazenda').value.trim().toUpperCase();
+  const nome    = document.getElementById('editorPluvNome').value.trim();
+  if (!fazenda || !nome) { mostrarToast('Informe a fazenda e o nome.', 'erro'); return; }
+
+  const btn = document.getElementById('btnSalvarPluv');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    const normalize = s => s.trim().toUpperCase().replace(/\s+/g, '_');
+    const docId = _editandoPluvId || `${normalize(fazenda)}___${normalize(nome)}`;
+    await setDoc(doc(db, 'pluv_pluviometros', docId), { fazenda, nome, ativo: true, criadoEm: new Date().toISOString() });
+    await recarregarPluviometros();
+    fecharEditorPluv();
+    renderGestaoPluvLista();
+    mostrarToast(`Pluviômetro "${nome}" salvo!`, 'sucesso');
+  } catch (e) {
+    mostrarToast('Erro ao salvar.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '💾 Salvar';
+  }
+}
+
+async function excluirPluviometro(id) {
+  const p = pluvPluviometros.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`Excluir o pluviômetro "${p.nome}" (${p.fazenda})?`)) return;
+  try {
+    await deleteDoc(doc(db, 'pluv_pluviometros', id));
+    await recarregarPluviometros();
+    renderGestaoPluvLista();
+    mostrarToast(`"${p.nome}" excluído.`, 'sucesso');
+  } catch (e) { mostrarToast('Erro ao excluir.', 'erro'); }
+}
+
+// ── EXPORTAÇÃO PDF ─────────────────────────────────────────────────────
+
+function exportarPluvPDF() {
+  const mes   = getMesAtivo();
+  const lancs = getLancamentosMes(mes);
+  const agr   = agregarPorFazendaDia(lancs);
+
+  const fazendasCad  = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agr).sort();
+  const fazendas     = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
+  const dias         = [...new Set(lancs.map(m => m.data))].sort();
+
+  if (fazendas.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+
+  const [ano, mesNum] = mes.split('-');
+  const mesNome = new Date(Number(ano), Number(mesNum) - 1, 1)
+    .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  const totais = {};
+  fazendas.forEach(f => {
+    totais[f] = Object.values(agr[f] || {}).reduce((a, b) => a + b, 0);
+  });
+
+  const linhas = dias.map(data => {
+    const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
+    const cels = fazendas.map(f => {
+      const val = agr[f]?.[data];
+      return `<td>${val !== undefined && val > 0 ? val.toFixed(1) : ''}</td>`;
+    }).join('');
+    return `<tr><td>${dataFmt}</td>${cels}</tr>`;
+  }).join('');
+
+  const totalRow = fazendas.map(f => `<td>${totais[f] > 0 ? totais[f].toFixed(1) : '—'}</td>`).join('');
+  const emitido  = new Date().toLocaleString('pt-BR');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Pluviometria ${mesNome}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .logo-wrap img { height:52px; }
+    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:18px; font-weight:900; }
+    .capa-titulo  { font-size:13px; color:#5a6472; }
+    h2 { text-align:center; background:#1a3a6b; color:white; padding:10px; border-radius:6px; font-size:14px; margin:12px 0; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:center; border:1px solid #2a5aaa; }
+    th:first-child { text-align:left; min-width:80px; }
+    td { padding:6px 10px; text-align:center; border:1px solid #d0d8e0; font-size:11px; }
+    td:first-child { text-align:left; font-weight:600; }
+    tr:nth-child(even) td { background:#f7f9fc; }
+    .total-row td { background:#fef3cd; font-weight:800; font-size:12px; border-top:2px solid #f0d080; color:#7a5000; }
+    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
+  </style></head><body>
+  <div class="logo-wrap">
+    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
+    <div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="capa-titulo">Emitido em: ${emitido}</div>
+    </div>
+  </div>
+  <h2>🌧️ REGIME PLUVIOMÉTRICO — ${mesNome.toUpperCase()} (milímetros)</h2>
+  <table>
+    <thead><tr>
+      <th>DATA</th>
+      ${fazendas.map(f => `<th>${esc(f)}</th>`).join('')}
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+    <tfoot><tr class="total-row"><td>TOTAL</td>${totalRow}</tr></tfoot>
+  </table>
+  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Regime Pluviométrico · Gerado em ${emitido}</div>
+  <script>window.onload = () => window.print()<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── EXPORTAÇÃO XLS ─────────────────────────────────────────────────────
+
+function exportarPluvXLS() {
+  const mes   = getMesAtivo();
+  const lancs = getLancamentosMes(mes);
+  const agr   = agregarPorFazendaDia(lancs);
+
+  const fazendasCad  = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agr).sort();
+  const fazendas     = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
+  const dias         = [...new Set(lancs.map(m => m.data))].sort();
+
+  if (fazendas.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
+
+  const linhas = dias.map(data => {
+    const row = { 'Data': data };
+    fazendas.forEach(f => { row[f] = agr[f]?.[data] ?? ''; });
+    return row;
+  });
+
+  // Linha de totais
+  const totRow = { 'Data': 'TOTAL' };
+  fazendas.forEach(f => {
+    totRow[f] = Math.round(Object.values(agr[f] || {}).reduce((a, b) => a + b, 0) * 10) / 10;
+  });
+  linhas.push(totRow);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws['!cols'] = [{ wch: 12 }, ...fazendas.map(() => ({ wch: 14 }))];
+  XLSX.utils.book_append_sheet(wb, ws, 'Pluviometria');
+
+  const [ano, mesNum] = mes.split('-');
+  XLSX.writeFile(wb, `pluviometria_${ano}_${mesNum}.xlsx`);
+  mostrarToast('✓ XLS exportado!', 'sucesso');
+}
+
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────
 
 function navegarModulo(modulo) {
   moduloAtivo = modulo;
 
-  // Mostra/oculta telas
   const telaEst  = document.getElementById('telaEstoque');
   const telaIrr  = document.getElementById('telaIrrigacao');
+  const telaPluv = document.getElementById('telaPluv');
   const filtros  = document.querySelector('.filtros');
-  if (telaEst)  telaEst.classList.toggle('oculta', modulo !== 'estoque');
-  if (telaIrr)  telaIrr.classList.toggle('ativa',  modulo === 'irrigacao');
-  if (filtros)  filtros.style.display = modulo === 'estoque' ? '' : 'none';
 
-  // Ativa a aba correta
+  if (telaEst)   telaEst.classList.toggle('oculta',  modulo !== 'estoque');
+  if (telaIrr)   telaIrr.classList.toggle('ativa',   modulo === 'irrigacao');
+  if (telaPluv)  telaPluv.classList.toggle('ativa',  modulo === 'pluviometria');
+  if (filtros)   filtros.style.display = modulo === 'estoque' ? '' : 'none';
+
   document.querySelectorAll('.modulo-tab:not(.futuro)').forEach(btn => {
     btn.classList.toggle('ativo', btn.id === `tab-${modulo}`);
   });
 
-  // Subtítulo do header
   const titulos = {
-    estoque:   `${configGlobal.fazenda} — Estoque`,
-    irrigacao: `${configGlobal.fazenda} — Irrigação`,
+    estoque:       `${configGlobal.fazenda} — Estoque`,
+    irrigacao:     `${configGlobal.fazenda} — Irrigação`,
+    pluviometria:  `${configGlobal.fazenda} — Pluviometria`,
   };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
 
-  // Inicia/para módulos
   if (modulo === 'irrigacao') {
     iniciarModuloIrrigacao();
   } else {
     pararModuloIrrigacao();
+  }
+
+  if (modulo === 'pluviometria') {
+    iniciarModuloPluv();
+  } else {
+    pararModuloPluv();
   }
 }
 
@@ -4764,6 +5407,11 @@ window.AppEstoque = {
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   carregarMaisHistorico, recarregarHistorico,
   navegarModulo,
+  abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
+  renderTabelaPluv,
+  abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
+  abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
+  exportarPluvPDF, exportarPluvXLS,
   abrirLancamentoIrrig, fecharLancamentoIrrig, confirmarLancamentoIrrig,
   onIrrigFazendaChange, onIrrigPivoChange, selecionarPctIrrig, calcularMmIrrig,
   filtrarIrrig,
