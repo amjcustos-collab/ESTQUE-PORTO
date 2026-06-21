@@ -32,6 +32,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   display: none; position: fixed; inset: 0; background: linear-gradient(135deg, #0f2545 0%, #1a4080 60%, #2a5fa8 100%);
   z-index: 1000; align-items: center; justify-content: center; flex-direction: column;
 }
+.sem-sessao #loginOverlay { display: flex; }
 .login-overlay.visivel { display: flex; }
 .login-overlay.escondido { display: none; }
 .login-box {
@@ -725,8 +726,8 @@ header {
 </style>
   <!-- SheetJS para exportação XLS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Controle de flash: se não há sessão Firebase salva, injeta CSS que mostra
-       o overlay imediatamente (ainda no <head>, antes de qualquer render). -->
+  <!-- Controle de flash: adiciona classe 'sem-sessao' no <html> se não há
+       sessão Firebase, fazendo o overlay aparecer antes de qualquer render. -->
   <script>
     (function() {
       try {
@@ -736,10 +737,10 @@ header {
           if (k && k.indexOf('firebase:authUser:') !== -1) { hasSession = true; break; }
         }
         if (!hasSession) {
-          document.write('<style>#loginOverlay{display:flex!important}</style>');
+          document.documentElement.classList.add('sem-sessao');
         }
       } catch(e) {
-        document.write('<style>#loginOverlay{display:flex!important}</style>');
+        document.documentElement.classList.add('sem-sessao');
       }
     })();
   </script>
@@ -2097,6 +2098,7 @@ async function iniciarSessaoAutenticada(user) {
 
     document.getElementById('loginOverlay').classList.add('escondido');
     document.getElementById('loginOverlay').classList.remove('visivel');
+    document.documentElement.classList.remove('sem-sessao');
     document.getElementById('loginErro').textContent = '';
     document.body.classList.add('app-pronto');
     aplicarPermissoesUI();
