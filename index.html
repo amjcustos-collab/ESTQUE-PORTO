@@ -171,7 +171,7 @@ header {
 .perm-item-desabilitado input { cursor: not-allowed; }
 
 /* LISTA */
-.lista { padding: 16px 20px; max-width: 1200px; margin: 0 auto; }
+.lista { padding: 16px 20px; max-width: 1400px; margin: 0 auto; }
 .classe-grupo { margin-bottom: 28px; }
 .classe-header {
   display: flex; align-items: center; gap: 12px;
@@ -262,7 +262,7 @@ header {
 .export-preview strong { color: var(--texto); }
 
 /* ── MÓDULO IRRIGAÇÃO ─────────────────────────────────────────────────── */
-.tela-irrigacao { display: none; padding: 20px; max-width: 1100px; margin: 0 auto; }
+.tela-irrigacao { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-irrigacao.ativa { display: block; }
 .tela-estoque { display: none; padding: 0; }
 .tela-estoque.ativa { display: block; }
@@ -368,7 +368,7 @@ header {
 }
 
 /* ── DASHBOARD ────────────────────────────────────────────────────── */
-.tela-dash { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.tela-dash { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-dash.ativa { display: block; }
 
 .dash-saudacao { font-size: 20px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
@@ -425,7 +425,7 @@ header {
 }
 
 /* ── MÓDULO PLUVIOMETRIA ───────────────────────────────────────────── */
-.tela-pluv { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+.tela-pluv { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-pluv.ativa { display: block; }
 
 /* Barra de ações */
@@ -740,6 +740,21 @@ header {
 .det-campo .det-rotulo { font-size: 11px; color: var(--texto-suave); }
 .det-campo .det-valor { font-size: 14px; font-weight: 600; color: var(--texto); }
 @media (max-width: 480px) { .det-grid { grid-template-columns: 1fr; } }
+
+/* ── DESKTOP LARGO (≥1400px) ─────────────────────────────────────── */
+@media (min-width: 1400px) {
+  .tela-dash, .tela-irrigacao, .tela-pluv { padding: 28px 40px; }
+  .lista { padding: 20px 40px; }
+  .filtros { padding: 12px 40px; }
+  .modulos-nav { padding: 0 40px; }
+}
+@media (min-width: 1600px) {
+  .tela-dash, .tela-irrigacao, .tela-pluv { padding: 32px 60px; }
+  .lista { padding: 24px 60px; }
+  .filtros { padding: 12px 60px; }
+  .modulos-nav { padding: 0 60px; }
+  header { padding: 0 60px; }
+}
 </style>
   <!-- SheetJS para exportação XLS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
