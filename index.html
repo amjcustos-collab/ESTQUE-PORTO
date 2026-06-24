@@ -4889,7 +4889,7 @@ function exportarIrrigPDF() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Relatório de Irrigação</title>
   <style>
-    @page { margin: 18mm 14mm; }
+    @page { margin: 14mm 12mm; size: A4 landscape; }
     * { box-sizing: border-box; }
     body { font-family: Arial, sans-serif; color: #1a2535; font-size: 11px; margin: 0; }
 
@@ -4908,23 +4908,26 @@ function exportarIrrigPDF() {
     .resumo-label { font-size: 9px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
 
     /* Tabela principal */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; table-layout: fixed; }
     thead th {
-      background: #1a3a6b; color: white; padding: 7px 8px;
+      background: #1a3a6b; color: #ffffff; padding: 7px 8px;
       font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.3px; white-space: nowrap;
+      letter-spacing: 0.3px; white-space: nowrap; overflow: hidden;
     }
-    thead th.col-center, thead th.col-mm, thead th.col-safra { text-align: center; }
-    td { padding: 6px 8px; border-bottom: 1px solid #e8edf2; vertical-align: middle; }
+    td { padding: 6px 8px; border-bottom: 1px solid #e8edf2; vertical-align: middle; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     tr.par td { background: #f4f7fb; }
-    .col-data { white-space: nowrap; width: 72px; }
-    .col-faz  { width: 100px; }
-    .col-pivo { width: 90px; }
-    .col-center { text-align: center; width: 46px; }
-    .col-mm   { text-align: right; width: 56px; font-weight: 700; color: #1a5fb4; }
-    .col-cult { width: 80px; }
-    .col-safra { text-align: center; width: 50px; }
-    .col-obs  { color: #6a7a8a; font-size: 10px; }
+    /* Larguras fixas — soma deve caber em ~270mm (A4 landscape menos margens) */
+    .col-data   { width: 62px; white-space: nowrap; }
+    .col-faz    { width: 88px; }
+    .col-pivo   { width: 80px; }
+    .col-center { width: 38px; text-align: center; }
+    .col-mm     { width: 48px; text-align: right; font-weight: 700; color: #1a5fb4; }
+    .col-cult   { width: 70px; }
+    .col-safra  { width: 44px; text-align: center; }
+    .col-obs    { width: auto; color: #6a7a8a; font-size: 10px; white-space: normal; }
+    /* Alinhamento dos cabeçalhos de colunas centralizadas */
+    th.col-center, th.col-mm, th.col-safra { text-align: center; }
+    th.col-mm { color: #ffffff; }
 
     /* Totais por fazenda */
     .secao-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase;
