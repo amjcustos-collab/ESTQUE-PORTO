@@ -1851,6 +1851,20 @@ const Persistencia = {
     return { lista, ultimoDoc, temMais: snap.docs.length === limite };
   },
 
+  // Busca todas as movimentações de um produto específico (para o overlay por produto)
+  async carregarHistoricoPorProduto(produtoId) {
+    const pid = String(produtoId);
+    const snap = await getDocs(query(collection(db, 'historico'), orderBy('dataOrdenacao', 'desc'), limit(500)));
+    const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Filtra: movimentos diretos do produto ou itens de receita/compra
+    return todos.filter(m => {
+      if (m.tipo === 'receita' || m.tipo === 'compra') {
+        return Array.isArray(m.itens) && m.itens.some(it => String(it.produtoId) === pid);
+      }
+      return String(m.produtoId) === pid;
+    });
+  },
+
   // Listener leve: fica ativo APENAS enquanto o painel de histórico está
   // aberto. Escuta só o topo (limite 1) para detectar novos lançamentos e
   // avisar o app — sem baixar o histórico inteiro a cada movimentação.
@@ -3723,10 +3737,10 @@ const TIPOS_LABEL = {
 // que afetaram um produto específico (incluindo as que estão dentro de
 // receitas e notas fiscais, onde o produto é um item da lista).
 // =====================================================================
-function movimentosDoProduto(produtoId) {
+function montarLinhasProduto(produtoId, fonte) {
   const pid = String(produtoId);
   const linhas = [];
-  historico.forEach(m => {
+  (fonte || historico).forEach(m => {
     const dataMs = new Date(m.data).getTime();
     if (m.tipo === 'receita' || m.tipo === 'compra') {
       const itens = Array.isArray(m.itens) ? m.itens : [];
@@ -3758,19 +3772,39 @@ function movimentosDoProduto(produtoId) {
 }
 
 let hpProdutoIdAberto = null;
+let hpMovsProduto = []; // movimentações carregadas do Firestore para o overlay por produto
 
-function abrirHistoricoProduto(produtoId) {
+async function abrirHistoricoProduto(produtoId) {
   if (!exigirPermissao('verRelatorios', 'Você não tem permissão para ver o histórico.')) return;
   hpProdutoIdAberto = String(produtoId);
-  renderHistoricoProduto();
+
+  // Abre o overlay imediatamente com loading
   document.getElementById('overlayHistoricoProduto').classList.add('aberto');
+  const lista = document.getElementById('hpLista');
+  const total = document.getElementById('hpTotal');
+  if (lista) lista.innerHTML = '<div class="vazio" style="color:#aaa">Carregando…</div>';
+  if (total) total.textContent = '';
+
+  // Renderiza cabeçalho (produto já está em memória)
+  renderHistoricoProduto(true);
+
+  // Busca movimentações do produto direto do Firestore
+  try {
+    hpMovsProduto = await Persistencia.carregarHistoricoPorProduto(produtoId);
+  } catch(e) {
+    console.error(e);
+    if (lista) lista.innerHTML = '<div class="vazio">Erro ao carregar histórico. Verifique sua conexão.</div>';
+    return;
+  }
+  renderHistoricoProduto();
 }
 function fecharHistoricoProduto() {
   hpProdutoIdAberto = null;
+  hpMovsProduto = [];
   document.getElementById('overlayHistoricoProduto').classList.remove('aberto');
 }
 
-function renderHistoricoProduto() {
+function renderHistoricoProduto(apenasHeader = false) {
   if (hpProdutoIdAberto === null) return;
   const p = produtos.find(x => String(x.id) === hpProdutoIdAberto);
   const cab = document.getElementById('hpCabecalho');
@@ -3782,7 +3816,11 @@ function renderHistoricoProduto() {
        <div class="hp-saldo">estoque atual: <b>${fmt(p.estoque)} ${esc(p.unidade || '')}</b></div>`
     : `<div class="hp-nome">Produto não encontrado</div>`;
 
-  const linhas = movimentosDoProduto(hpProdutoIdAberto);
+  // Se só queremos o header (enquanto carrega), para aqui
+  if (apenasHeader) return;
+
+  // Usa os dados buscados do Firestore (hpMovsProduto) — completos e precisos
+  const linhas = montarLinhasProduto(hpProdutoIdAberto, hpMovsProduto);
   if (linhas.length === 0) {
     lista.innerHTML = '<div class="vazio">Nenhuma movimentação registrada para este produto ainda.</div>';
     total.textContent = '';
@@ -3818,7 +3856,9 @@ let detalheMovId = null;
 
 function abrirDetalheLancamento(movId) {
   if (!exigirPermissao('verRelatorios', 'Você não tem permissão para ver o histórico.')) return;
-  const m = historico.find(x => String(x.id) === String(movId));
+  // Busca em todas as fontes disponíveis: painel geral, histórico por produto, últimas movs do dashboard
+  const fontes = [...historico, ...hpMovsProduto, ...dashUltimasMov];
+  const m = fontes.find(x => String(x.id) === String(movId));
   if (!m) { mostrarToast('Lançamento não encontrado.', 'erro'); return; }
   detalheMovId = String(movId);
   const d = new Date(m.data);
