@@ -4884,61 +4884,41 @@ function exportarIrrigPDF() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Relatório de Irrigação</title>
   <style>
-    @page { size: A4 portrait; margin: 18mm 16mm; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; color: #1a2535; font-size: 13px; width: 178mm; }
-
-    /* ── CABEÇALHO ── */
-    .header { display: flex; align-items: center; gap: 18px; padding-bottom: 12px; border-bottom: 2.5px solid #1a3a6b; margin-bottom: 12px; }
-    .header img { height: 64px; }
-    .h-empresa  { font-size: 12px; font-weight: 700; color: #1a3a6b; margin-bottom: 2px; }
-    .h-fazenda  { font-size: 22px; font-weight: 900; color: #1a2535; line-height: 1; }
-    .h-sub      { font-size: 12px; color: #5a6472; margin-top: 4px; }
-    .filtros    { font-size: 11px; color: #6a7a8a; margin-bottom: 14px; }
-
-    /* ── CARDS RESUMO ── */
-    .resumo { display: flex; gap: 12px; margin-bottom: 18px; }
-    .r-card { border: 1.5px solid #c8d8ee; border-radius: 9px; padding: 12px 18px; min-width: 120px; }
-    .r-num  { font-size: 26px; font-weight: 800; color: #1a5fb4; line-height: 1; }
-    .r-lbl  { font-size: 10px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-
-    /* ── TABELA ── */
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
-    thead th {
-      background: #1a3a6b; color: #fff; padding: 9px 10px;
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.4px; text-align: left;
-    }
-    thead th.tc { text-align: center; }
-    tbody td { padding: 8px 10px; border-bottom: 1px solid #e4eaf2; vertical-align: middle; }
-    tr.par td { background: #f5f8fc; }
-    .tc      { text-align: center; }
-    .mm-val  { text-align: center; font-weight: 700; color: #1a5fb4; }
-    .obs     { color: #6a7a8a; font-size: 11px; }
-
-    /* ── TOTAIS POR FAZENDA ── */
-    .sec-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.6px; color: #1a3a6b; border-bottom: 2px solid #1a3a6b;
-      padding-bottom: 5px; margin-bottom: 12px; }
-    .faz-cards { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-    .faz-card  { border: 1.5px solid #aac4e0; border-radius: 9px; padding: 10px 16px;
-      min-width: 120px; background: #edf4fb; }
-    .faz-card-nome { font-size: 10px; font-weight: 700; color: #1a3a6b;
-      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .faz-card-mm   { font-size: 22px; font-weight: 800; color: #1a5fb4; line-height: 1; }
-    .faz-mm-unit   { font-size: 13px; font-weight: 400; color: #4a6a9a; }
-
-    /* ── RODAPÉ ── */
-    .rodape { font-size: 10px; color: #9aa5b0; text-align: center;
-      border-top: 1px solid #dde3ea; padding-top: 8px; margin-top: 4px; }
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .logo-wrap img { height:52px; }
+    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:18px; font-weight:900; }
+    .capa-titulo  { font-size:13px; color:#5a6472; }
+    .filtros      { font-size:11px; color:#6a7a8a; margin-bottom:12px; }
+    .resumo       { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .r-card       { border:1.5px solid #c8d8ee; border-radius:8px; padding:10px 16px; min-width:110px; }
+    .r-num        { font-size:22px; font-weight:800; color:#1a5fb4; }
+    .r-lbl        { font-size:10px; color:#6a7a8a; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; margin-bottom:20px; }
+    th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #2a5aaa; }
+    th.tc { text-align:center; }
+    td { padding:6px 10px; border:1px solid #d0d8e0; font-size:11px; }
+    tr:nth-child(even) td { background:#f7f9fc; }
+    .tc     { text-align:center; }
+    .mm-val { text-align:center; font-weight:700; color:#1a5fb4; }
+    .obs    { color:#6a7a8a; }
+    .sec-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+      color:#1a3a6b; border-bottom:2px solid #1a3a6b; padding-bottom:4px; margin-bottom:12px; }
+    .faz-cards { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .faz-card  { border:1.5px solid #aac4e0; border-radius:8px; padding:10px 14px; min-width:110px; background:#edf4fb; }
+    .faz-card-nome { font-size:10px; font-weight:700; color:#1a3a6b; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; }
+    .faz-card-mm   { font-size:20px; font-weight:800; color:#1a5fb4; }
+    .faz-mm-unit   { font-size:12px; font-weight:400; color:#4a6a9a; }
+    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
   </style></head><body>
 
-  <div class="header">
+  <div class="logo-wrap">
     <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
     <div>
-      <div class="h-empresa">${esc(configGlobal.empresa)}</div>
-      <div class="h-fazenda">${esc(configGlobal.fazenda)}</div>
-      <div class="h-sub">Relatório de Irrigação &middot; ${periodo} &middot; Emitido em ${dataEmit}</div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="capa-titulo">Relatório de Irrigação &middot; ${periodo} &middot; Emitido em ${dataEmit}</div>
     </div>
   </div>
 
@@ -4952,15 +4932,9 @@ function exportarIrrigPDF() {
 
   <table>
     <thead><tr>
-      <th>Data</th>
-      <th>Fazenda</th>
-      <th>Pivô</th>
-      <th class="tc">%</th>
-      <th class="tc">Volta</th>
-      <th class="tc">MM</th>
-      <th>Cultura</th>
-      <th class="tc">Safra</th>
-      <th>Obs.</th>
+      <th>Data</th><th>Fazenda</th><th>Pivô</th>
+      <th class="tc">%</th><th class="tc">Volta</th><th class="tc">MM</th>
+      <th>Cultura</th><th class="tc">Safra</th><th>Obs.</th>
     </tr></thead>
     <tbody>${linhas}</tbody>
   </table>
