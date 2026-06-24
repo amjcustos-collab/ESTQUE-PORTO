@@ -1859,6 +1859,17 @@ const Persistencia = {
     return onSnapshot(q, snap => { if (!snap.empty) callback(); });
   },
 
+  // Listener permanente das últimas 6 movimentações — usado pelo Dashboard.
+  // Diferente do escutarNovoHistorico (que só detecta "teve algo novo"),
+  // este já entrega os dados prontos para exibição.
+  escutarUltimasMovimentacoes(callback) {
+    const q = query(collection(db, 'historico'), orderBy('dataOrdenacao', 'desc'), limit(6));
+    return onSnapshot(q, snap => {
+      const lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      callback(lista);
+    });
+  },
+
   // ---- CONFIGURAÇÃO GLOBAL DA PLATAFORMA ----
   // Armazenada em configuracoes/plataforma. Compartilhada por todos os
   // módulos — irrigação, pluviometria, custos usarão os mesmos campos
@@ -1953,6 +1964,7 @@ const PERFIS_PADRAO_POR_EMAIL = {
 // =====================================================================
 let produtos = [];
 let historico = [];
+let dashUltimasMov = []; // últimas 6 movimentações — exclusivo do Dashboard (listener permanente)
 let proximoIdLocal = 0; // fallback apenas para uso interno antes do primeiro carregamento
 let painelAberto = null;
 let tipoPainelAberto = null;
@@ -1977,6 +1989,7 @@ let configGlobal = {   // carregada do Firestore em iniciarApp()
 let moduloAtivo = 'estoque'; // controla qual módulo está visível
 let unsubProdutos = null;
 let unsubHistorico = null;  // listener leve de "novo lançamento" (só ativo com painel aberto)
+let unsubDashHistorico = null;   // listener permanente das últimas 6 movs — alimenta o Dashboard
 
 // Paginação do histórico
 let histUltimoDoc  = null;  // último documento do Firestore carregado
@@ -2180,8 +2193,10 @@ function finalizarSessao() {
   sessaoAtual = null;
   if (unsubProdutos) { unsubProdutos(); unsubProdutos = null; }
   if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
+  if (unsubDashHistorico) { unsubDashHistorico(); unsubDashHistorico = null; }
   produtos = [];
   historico = [];
+  dashUltimasMov = [];
   try { localStorage.removeItem('amj_tem_sessao'); } catch(e) {}
   document.body.classList.remove('app-pronto');
   pararModuloIrrigacao();
@@ -2200,6 +2215,7 @@ function finalizarSessao() {
 async function iniciarListenersTempoReal() {
   if (unsubProdutos) unsubProdutos();
   if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
+  if (unsubDashHistorico) { unsubDashHistorico(); unsubDashHistorico = null; }
 
   unsubProdutos = Persistencia.escutarProdutos((lista) => {
     produtos = lista;
@@ -2208,7 +2224,13 @@ async function iniciarListenersTempoReal() {
     const overlayHistProd = document.getElementById('overlayHistoricoProduto');
     if (overlayHistProd && overlayHistProd.classList.contains('aberto')) renderHistoricoProduto();
   });
-  // O listener de histórico só é criado quando o painel abre (ver abrirHistorico).
+
+  // Listener permanente das últimas 6 movimentações — mantido ativo o tempo todo.
+  // Alimenta o Dashboard sem depender do painel de Histórico estar aberto.
+  unsubDashHistorico = Persistencia.escutarUltimasMovimentacoes((lista) => {
+    dashUltimasMov = lista;
+    if (moduloAtivo === 'dashboard') renderDashboard();
+  });
 
   // Inicia listeners de irrigação e pluviometria imediatamente para que
   // o Dashboard já tenha dados sem precisar abrir esses módulos.
@@ -5258,7 +5280,7 @@ function renderDashboard() {
   // ── ÚLTIMAS MOVIMENTAÇÕES ───────────────────────────────────────────
   const tipoIcn = { saida: '↓', entrada: '↑', receita: '📋', compra: '📦', edicao: '✎', exclusao: '🗑' };
   const tipoLabel = { saida: 'Retirada', entrada: 'Entrada', receita: 'Receita', compra: 'Compra NF', edicao: 'Edição', exclusao: 'Exclusão' };
-  const ultMov = historico.slice(0, 6);
+  const ultMov = dashUltimasMov.length > 0 ? dashUltimasMov : historico.slice(0, 6);
 
   if (el('dashUltimasMov')) {
     el('dashUltimasMov').innerHTML = ultMov.length === 0
