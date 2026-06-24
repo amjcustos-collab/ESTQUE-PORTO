@@ -4856,13 +4856,8 @@ function exportarIrrigPDF() {
   const fazFiltro = document.getElementById('irrigFiltroFazenda')?.value || 'Todas';
   const pivFiltro = document.getElementById('irrigFiltroPivo')?.value   || 'Todos';
 
-  // Data pt-BR
-  const fmtData = d => {
-    const [y, m, day] = d.split('-');
-    return `${day}/${m}/${y}`;
-  };
+  const fmtData = d => { const [y, m, day] = d.split('-'); return `${day}/${m}/${y}`; };
 
-  // Totais por fazenda
   const totaisFaz = {};
   items.forEach(m => { totaisFaz[m.fazenda] = (totaisFaz[m.fazenda] || 0) + (m.mm || 0); });
   const fazOrdem = Object.keys(totaisFaz).sort();
@@ -4870,119 +4865,110 @@ function exportarIrrigPDF() {
   const totaisFazCards = fazOrdem.map(f => `
     <div class="faz-card">
       <div class="faz-card-nome">${esc(f)}</div>
-      <div class="faz-card-mm">${totaisFaz[f].toFixed(2)} <span style="font-size:11px;font-weight:400">mm</span></div>
+      <div class="faz-card-mm">${totaisFaz[f].toFixed(2)}<span class="faz-mm-unit"> mm</span></div>
     </div>`).join('');
 
   const linhas = items.map((m, i) => `
     <tr class="${i % 2 === 1 ? 'par' : ''}">
-      <td class="col-data">${fmtData(m.data)}</td>
-      <td class="col-faz">${esc(m.fazenda)}</td>
-      <td class="col-pivo">${esc(m.pivo)}</td>
-      <td class="col-center">${m.percentimetro}%</td>
-      <td class="col-center">${m.volta}</td>
-      <td class="col-mm">${m.mm.toFixed(2)}</td>
-      <td class="col-cult">${esc(m.cultura || '—')}</td>
-      <td class="col-safra">${esc(m.safra || '—')}</td>
-      <td class="col-obs">${esc(m.obs || '')}</td>
+      <td>${fmtData(m.data)}</td>
+      <td>${esc(m.fazenda)}</td>
+      <td>${esc(m.pivo)}</td>
+      <td class="tc">${m.percentimetro}%</td>
+      <td class="tc">${m.volta}</td>
+      <td class="tc mm-val">${m.mm.toFixed(2)}</td>
+      <td>${esc(m.cultura || '—')}</td>
+      <td class="tc">${esc(m.safra || '—')}</td>
+      <td class="obs">${esc(m.obs || '')}</td>
     </tr>`).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Relatório de Irrigação</title>
   <style>
-    @page { margin: 15mm 20mm; }
-    * { box-sizing: border-box; }
-    body { font-family: Arial, sans-serif; color: #1a2535; font-size: 11px; margin: 0; }
+    @page { size: A4 portrait; margin: 18mm 16mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; color: #1a2535; font-size: 13px; width: 178mm; }
 
-    /* Cabeçalho */
-    .header { display: flex; align-items: center; gap: 16px; padding-bottom: 10px; border-bottom: 2px solid #1a3a6b; margin-bottom: 10px; }
-    .header img { height: 52px; }
-    .header-txt .empresa { font-size: 11px; font-weight: 700; color: #1a3a6b; }
-    .header-txt .fazenda { font-size: 17px; font-weight: 900; color: #1a2535; line-height: 1.1; }
-    .header-txt .subtitulo { font-size: 11px; color: #5a6472; margin-top: 2px; }
-    .filtros { font-size: 10px; color: #6a7a8a; margin-bottom: 10px; }
+    /* ── CABEÇALHO ── */
+    .header { display: flex; align-items: center; gap: 18px; padding-bottom: 12px; border-bottom: 2.5px solid #1a3a6b; margin-bottom: 12px; }
+    .header img { height: 64px; }
+    .h-empresa  { font-size: 12px; font-weight: 700; color: #1a3a6b; margin-bottom: 2px; }
+    .h-fazenda  { font-size: 22px; font-weight: 900; color: #1a2535; line-height: 1; }
+    .h-sub      { font-size: 12px; color: #5a6472; margin-top: 4px; }
+    .filtros    { font-size: 11px; color: #6a7a8a; margin-bottom: 14px; }
 
-    /* Cards de resumo */
-    .resumo { display: flex; gap: 10px; margin-bottom: 14px; }
-    .resumo-card { border: 1.5px solid #d0d8e0; border-radius: 7px; padding: 8px 14px; min-width: 110px; }
-    .resumo-num { font-size: 20px; font-weight: 800; color: #1a5fb4; }
-    .resumo-label { font-size: 9px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+    /* ── CARDS RESUMO ── */
+    .resumo { display: flex; gap: 12px; margin-bottom: 18px; }
+    .r-card { border: 1.5px solid #c8d8ee; border-radius: 9px; padding: 12px 18px; min-width: 120px; }
+    .r-num  { font-size: 26px; font-weight: 800; color: #1a5fb4; line-height: 1; }
+    .r-lbl  { font-size: 10px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
 
-    /* Tabela principal */
-    table { border-collapse: collapse; margin-bottom: 18px; width: 100%; }
+    /* ── TABELA ── */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px; }
     thead th {
-      background: #1a3a6b; color: #ffffff; padding: 8px 12px;
+      background: #1a3a6b; color: #fff; padding: 9px 10px;
       font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.3px; white-space: nowrap; text-align: left;
+      letter-spacing: 0.4px; text-align: left;
     }
-    td { padding: 7px 12px; border-bottom: 1px solid #e8edf2; vertical-align: middle; white-space: nowrap; font-size: 11px; }
-    tr.par td { background: #f4f7fb; }
-    .col-center { text-align: center; }
-    .col-mm     { text-align: right; font-weight: 700; color: #1a5fb4; }
-    .col-safra  { text-align: center; }
-    th.col-center, th.col-mm, th.col-safra { text-align: center; }
-    .col-obs    { color: #6a7a8a; white-space: normal; min-width: 80px; max-width: 180px; font-size: 10px; }
+    thead th.tc { text-align: center; }
+    tbody td { padding: 8px 10px; border-bottom: 1px solid #e4eaf2; vertical-align: middle; }
+    tr.par td { background: #f5f8fc; }
+    .tc      { text-align: center; }
+    .mm-val  { text-align: center; font-weight: 700; color: #1a5fb4; }
+    .obs     { color: #6a7a8a; font-size: 11px; }
 
-    /* Totais por fazenda */
-    .secao-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.5px; color: #1a3a6b; border-bottom: 1.5px solid #1a3a6b;
-      padding-bottom: 4px; margin-bottom: 10px; }
-    .faz-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
-    .faz-card { border: 1.5px solid #b0c8e8; border-radius: 8px; padding: 8px 14px;
-      min-width: 110px; background: #eef4fb; }
-    .faz-card-nome { font-size: 9px; font-weight: 700; color: #1a3a6b;
-      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
-    .faz-card-mm { font-size: 18px; font-weight: 800; color: #1a5fb4; }
+    /* ── TOTAIS POR FAZENDA ── */
+    .sec-titulo { font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.6px; color: #1a3a6b; border-bottom: 2px solid #1a3a6b;
+      padding-bottom: 5px; margin-bottom: 12px; }
+    .faz-cards { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+    .faz-card  { border: 1.5px solid #aac4e0; border-radius: 9px; padding: 10px 16px;
+      min-width: 120px; background: #edf4fb; }
+    .faz-card-nome { font-size: 10px; font-weight: 700; color: #1a3a6b;
+      text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .faz-card-mm   { font-size: 22px; font-weight: 800; color: #1a5fb4; line-height: 1; }
+    .faz-mm-unit   { font-size: 13px; font-weight: 400; color: #4a6a9a; }
 
-    /* Rodapé */
-    .rodape { font-size: 9px; color: #9aa5b0; text-align: center;
-      border-top: 1px solid #e0e4e8; padding-top: 6px; margin-top: 8px; }
+    /* ── RODAPÉ ── */
+    .rodape { font-size: 10px; color: #9aa5b0; text-align: center;
+      border-top: 1px solid #dde3ea; padding-top: 8px; margin-top: 4px; }
   </style></head><body>
 
   <div class="header">
     <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
-    <div class="header-txt">
-      <div class="empresa">${esc(configGlobal.empresa)}</div>
-      <div class="fazenda">${esc(configGlobal.fazenda)}</div>
-      <div class="subtitulo">Relatório de Irrigação · ${periodo} · Emitido em ${dataEmit}</div>
+    <div>
+      <div class="h-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="h-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="h-sub">Relatório de Irrigação &middot; ${periodo} &middot; Emitido em ${dataEmit}</div>
     </div>
   </div>
 
-  <div class="filtros">Fazenda: <strong>${esc(fazFiltro)}</strong> &nbsp;·&nbsp; Pivô: <strong>${esc(pivFiltro)}</strong></div>
+  <div class="filtros">Fazenda: <strong>${esc(fazFiltro)}</strong> &nbsp;&middot;&nbsp; Pivô: <strong>${esc(pivFiltro)}</strong></div>
 
   <div class="resumo">
-    <div class="resumo-card">
-      <div class="resumo-num">${totalMM.toFixed(2)} mm</div>
-      <div class="resumo-label">Total MM</div>
-    </div>
-    <div class="resumo-card">
-      <div class="resumo-num">${items.length}</div>
-      <div class="resumo-label">Lançamentos</div>
-    </div>
-    <div class="resumo-card">
-      <div class="resumo-num">${fazOrdem.length}</div>
-      <div class="resumo-label">Fazendas</div>
-    </div>
+    <div class="r-card"><div class="r-num">${totalMM.toFixed(2)} mm</div><div class="r-lbl">Total MM</div></div>
+    <div class="r-card"><div class="r-num">${items.length}</div><div class="r-lbl">Lançamentos</div></div>
+    <div class="r-card"><div class="r-num">${fazOrdem.length}</div><div class="r-lbl">Fazendas</div></div>
   </div>
 
   <table>
     <thead><tr>
-      <th class="col-data">Data</th>
-      <th class="col-faz">Fazenda</th>
-      <th class="col-pivo">Pivô</th>
-      <th class="col-center">%</th>
-      <th class="col-center">Volta</th>
-      <th class="col-mm">MM</th>
-      <th class="col-cult">Cultura</th>
-      <th class="col-safra">Safra</th>
+      <th>Data</th>
+      <th>Fazenda</th>
+      <th>Pivô</th>
+      <th class="tc">%</th>
+      <th class="tc">Volta</th>
+      <th class="tc">MM</th>
+      <th>Cultura</th>
+      <th class="tc">Safra</th>
       <th>Obs.</th>
     </tr></thead>
     <tbody>${linhas}</tbody>
   </table>
 
-  <div class="secao-titulo">Total por fazenda</div>
+  <div class="sec-titulo">Total por fazenda</div>
   <div class="faz-cards">${totaisFazCards}</div>
 
-  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Controle de Irrigação · Gerado automaticamente em ${dataEmit}</div>
+  <div class="rodape">${esc(configGlobal.empresa)} &middot; ${esc(configGlobal.fazenda)} &middot; Controle de Irrigação &middot; Gerado automaticamente em ${dataEmit}</div>
   <script>window.onload=()=>window.print()<\/script>
   </body></html>`;
 
