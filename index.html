@@ -1851,10 +1851,13 @@ const Persistencia = {
     return { lista, ultimoDoc, temMais: snap.docs.length === limite };
   },
 
-  // Busca todas as movimentações de um produto específico (para o overlay por produto)
+  // Busca todas as movimentações de um produto específico (para o overlay por produto).
+  // Não usa orderBy nem limit para evitar problema com serverTimestamp nulo no primeiro
+  // snapshot (Firestore retorna 0 docs quando o campo de ordenação ainda não chegou do servidor).
+  // A ordenação é feita no JS após receber os dados.
   async carregarHistoricoPorProduto(produtoId) {
     const pid = String(produtoId);
-    const snap = await getDocs(query(collection(db, 'historico'), orderBy('dataOrdenacao', 'desc'), limit(500)));
+    const snap = await getDocs(collection(db, 'historico'));
     const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     // Filtra: movimentos diretos do produto ou itens de receita/compra
     return todos.filter(m => {
