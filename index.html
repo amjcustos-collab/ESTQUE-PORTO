@@ -803,6 +803,7 @@ header {
     <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
     <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.abrirExportacaoXLS()">📊 <span>Excel</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
+    <button class="btn-sair" onclick="window.AppEstoque.solicitarRedefinicaoSenha()" title="Alterar minha senha" style="margin-right:2px">🔑</button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
 </header>
@@ -1674,7 +1675,7 @@ header {
 // =====================================================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut
+  getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
@@ -2101,6 +2102,22 @@ async function sair() {
     console.error(e);
   }
   // onAuthStateChanged cuida de mostrar a tela de login novamente.
+}
+
+async function solicitarRedefinicaoSenha() {
+  const s = getSessao();
+  if (!s || !s.email) { mostrarToast('Usuário não identificado.', 'erro'); return; }
+  if (!confirm(`Enviar e-mail de redefinição de senha para:
+${s.email}
+
+Deseja continuar?`)) return;
+  try {
+    await sendPasswordResetEmail(auth, s.email);
+    mostrarToast('E-mail enviado! Verifique sua caixa de entrada.', 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao enviar e-mail. Tente novamente.', 'erro');
+  }
 }
 
 // Disparado automaticamente pelo Firebase sempre que o estado de login muda
@@ -5856,7 +5873,7 @@ function mostrarToast(msg, tipo = '') {
 // atributos onclick="" no HTML não veem funções de módulo automaticamente).
 // =====================================================================
 window.AppEstoque = {
-  fazerLogin, sair, togglePainel, abrirPainel, fecharPainel, validarQtd,
+  fazerLogin, sair, solicitarRedefinicaoSenha, togglePainel, abrirPainel, fecharPainel, validarQtd,
   confirmarMovimento, confirmarEdicao, excluirProduto, confirmarExclusao, cancelarExclusao,
   abrirNovoProduto, fecharNovoProduto, confirmarNovoProduto,
   toggleMenuAcoes, fecharTodosMenus,
