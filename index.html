@@ -2215,13 +2215,19 @@ async function solicitarRedefinicaoSenha() {
 }
 
 async function sair() {
-  if (!confirm('Deseja sair do sistema?')) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Sair do sistema',
+    icone: '🔒',
+    mensagem: 'Deseja realmente sair do sistema?',
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🔒 Sair'
+  });
+  if (!ok) return;
   try {
     await signOut(auth);
   } catch (e) {
     console.error(e);
   }
-  // onAuthStateChanged cuida de mostrar a tela de login novamente.
 }
 
 // Disparado automaticamente pelo Firebase sempre que o estado de login muda
@@ -3555,7 +3561,14 @@ async function confirmarMudancaNivel(uid, email) {
   const novoNivel = select.value;
   const novoLabel = NIVEIS_DISPONIVEIS.find(n => n.valor === novoNivel)?.label || novoNivel;
 
-  if (!confirm(`Alterar o nível de acesso de "${email}" para "${novoLabel}"?`)) {
+  const _okNivel = await confirmarGenerico({
+    titulo: 'Alterar nível de acesso',
+    icone: '👤',
+    mensagem: `Alterar o nível de acesso de <strong>${email}</strong> para <strong>${novoLabel}</strong>?`,
+    corBtn: 'var(--azul)',
+    labelBtn: '✓ Confirmar'
+  });
+  if (!_okNivel) {
     // Reverte visualmente se cancelar — recarrega a lista
     abrirUsuarios();
     return;
@@ -3833,7 +3846,14 @@ function renderHistorico() {
 }
 async function limparHistorico() {
   if (!isAdmin()) { mostrarToast('Apenas o administrador pode limpar o histórico.', 'erro'); return; }
-  if (!confirm('Limpar todo o histórico?')) return;
+  const _okHist = await confirmarGenerico({
+    titulo: 'Limpar histórico',
+    icone: '⚠️',
+    mensagem: 'Tem certeza que deseja <strong>limpar todo o histórico</strong>? Esta ação é irreversível.',
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Limpar tudo'
+  });
+  if (!_okHist) return;
   try {
     await Persistencia.limparHistorico();
     renderHistorico();
@@ -4779,7 +4799,14 @@ async function salvarPivo() {
 async function excluirPivo(id) {
   const p = irrigPivotos.find(x => x.id === id);
   if (!p) return;
-  if (!confirm(`Excluir o pivô "${p.pivo}" (${p.fazenda})? Esta ação não afeta lançamentos já registrados.`)) return;
+  const _okPivo = await confirmarGenerico({
+    titulo: 'Excluir pivô',
+    icone: '🗑',
+    mensagem: `Excluir o pivô <strong>${p.pivo}</strong> (${p.fazenda})?<br><br>Esta ação não afeta lançamentos já registrados.`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!_okPivo) return;
   try {
     await deleteDoc(doc(db, 'irrigacao_pivotos', id));
     await recarregarPivotos();
@@ -4823,67 +4850,143 @@ function exportarIrrigPDF() {
   const items = getLancamentosFiltrados();
   if (items.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
 
-  const totalMM = items.reduce((s, m) => s + (m.mm || 0), 0);
-  const data    = new Date().toLocaleString('pt-BR');
-  const periodo = document.getElementById('irrigFiltroPeriodo')?.selectedOptions[0]?.text || '';
+  const totalMM   = items.reduce((s, m) => s + (m.mm || 0), 0);
+  const dataEmit  = new Date().toLocaleString('pt-BR');
+  const periodo   = document.getElementById('irrigFiltroPeriodo')?.selectedOptions[0]?.text || '';
   const fazFiltro = document.getElementById('irrigFiltroFazenda')?.value || 'Todas';
   const pivFiltro = document.getElementById('irrigFiltroPivo')?.value   || 'Todos';
 
-  const linhas = items.map(m => `
-    <tr>
-      <td>${m.data}</td>
-      <td>${esc(m.fazenda)}</td>
-      <td>${esc(m.pivo)}</td>
-      <td style="text-align:center">${m.percentimetro}%</td>
-      <td style="text-align:center">${m.volta}</td>
-      <td style="text-align:right;font-weight:700;color:#1a5fb4">${m.mm.toFixed(2)}</td>
-      <td>${esc(m.cultura || '—')}</td>
-      <td>${esc(m.safra   || '—')}</td>
-      <td>${esc(m.obs     || '')}</td>
+  // Data pt-BR
+  const fmtData = d => {
+    const [y, m, day] = d.split('-');
+    return `${day}/${m}/${y}`;
+  };
+
+  // Totais por fazenda
+  const totaisFaz = {};
+  items.forEach(m => { totaisFaz[m.fazenda] = (totaisFaz[m.fazenda] || 0) + (m.mm || 0); });
+  const fazOrdem = Object.keys(totaisFaz).sort();
+
+  const totaisFazCards = fazOrdem.map(f => `
+    <div class="faz-card">
+      <div class="faz-card-nome">${esc(f)}</div>
+      <div class="faz-card-mm">${totaisFaz[f].toFixed(2)} <span style="font-size:11px;font-weight:400">mm</span></div>
+    </div>`).join('');
+
+  const linhas = items.map((m, i) => `
+    <tr class="${i % 2 === 1 ? 'par' : ''}">
+      <td class="col-data">${fmtData(m.data)}</td>
+      <td class="col-faz">${esc(m.fazenda)}</td>
+      <td class="col-pivo">${esc(m.pivo)}</td>
+      <td class="col-center">${m.percentimetro}%</td>
+      <td class="col-center">${m.volta}</td>
+      <td class="col-mm">${m.mm.toFixed(2)}</td>
+      <td class="col-cult">${esc(m.cultura || '—')}</td>
+      <td class="col-safra">${esc(m.safra || '—')}</td>
+      <td class="col-obs">${esc(m.obs || '')}</td>
     </tr>`).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Relatório de Irrigação</title>
   <style>
-    body{font-family:Arial,sans-serif;margin:24px;color:#1a2535;font-size:12px}
-    .logo-wrap{display:flex;align-items:center;gap:16px;margin-bottom:8px}
-    .logo-wrap img{height:56px}
-    .capa-empresa{font-size:13px;font-weight:700;color:#1a3a6b}
-    .capa-fazenda{font-size:18px;font-weight:900;color:#1a2535}
-    .capa-titulo{font-size:14px;color:#5a6472;margin-top:2px}
-    .resumo{display:flex;gap:16px;margin:16px 0;flex-wrap:wrap}
-    .resumo-card{border:1.5px solid #d0d8e0;border-radius:8px;padding:10px 14px;min-width:120px}
-    .resumo-num{font-size:22px;font-weight:800;color:#1a5fb4}
-    .resumo-label{font-size:10px;color:#6a7a8a;text-transform:uppercase;letter-spacing:0.5px}
-    table{width:100%;border-collapse:collapse;margin-top:12px}
-    th{background:#1a3a6b;color:white;padding:8px 10px;font-size:11px;text-align:left}
-    td{padding:7px 10px;border-bottom:1px solid #e8edf2;font-size:11px}
-    tr:nth-child(even) td{background:#f7f9fc}
-    .rodape{margin-top:24px;font-size:10px;color:#9aa5b0;text-align:center;border-top:1px solid #e0e4e8;padding-top:8px}
+    @page { margin: 18mm 14mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #1a2535; font-size: 11px; margin: 0; }
+
+    /* Cabeçalho */
+    .header { display: flex; align-items: center; gap: 16px; padding-bottom: 10px; border-bottom: 2px solid #1a3a6b; margin-bottom: 10px; }
+    .header img { height: 52px; }
+    .header-txt .empresa { font-size: 11px; font-weight: 700; color: #1a3a6b; }
+    .header-txt .fazenda { font-size: 17px; font-weight: 900; color: #1a2535; line-height: 1.1; }
+    .header-txt .subtitulo { font-size: 11px; color: #5a6472; margin-top: 2px; }
+    .filtros { font-size: 10px; color: #6a7a8a; margin-bottom: 10px; }
+
+    /* Cards de resumo */
+    .resumo { display: flex; gap: 10px; margin-bottom: 14px; }
+    .resumo-card { border: 1.5px solid #d0d8e0; border-radius: 7px; padding: 8px 14px; min-width: 110px; }
+    .resumo-num { font-size: 20px; font-weight: 800; color: #1a5fb4; }
+    .resumo-label { font-size: 9px; color: #6a7a8a; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    /* Tabela principal */
+    table { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    thead th {
+      background: #1a3a6b; color: white; padding: 7px 8px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.3px; white-space: nowrap;
+    }
+    thead th.col-center, thead th.col-mm, thead th.col-safra { text-align: center; }
+    td { padding: 6px 8px; border-bottom: 1px solid #e8edf2; vertical-align: middle; }
+    tr.par td { background: #f4f7fb; }
+    .col-data { white-space: nowrap; width: 72px; }
+    .col-faz  { width: 100px; }
+    .col-pivo { width: 90px; }
+    .col-center { text-align: center; width: 46px; }
+    .col-mm   { text-align: right; width: 56px; font-weight: 700; color: #1a5fb4; }
+    .col-cult { width: 80px; }
+    .col-safra { text-align: center; width: 50px; }
+    .col-obs  { color: #6a7a8a; font-size: 10px; }
+
+    /* Totais por fazenda */
+    .secao-titulo { font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: #1a3a6b; border-bottom: 1.5px solid #1a3a6b;
+      padding-bottom: 4px; margin-bottom: 10px; }
+    .faz-cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+    .faz-card { border: 1.5px solid #b0c8e8; border-radius: 8px; padding: 8px 14px;
+      min-width: 110px; background: #eef4fb; }
+    .faz-card-nome { font-size: 9px; font-weight: 700; color: #1a3a6b;
+      text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+    .faz-card-mm { font-size: 18px; font-weight: 800; color: #1a5fb4; }
+
+    /* Rodapé */
+    .rodape { font-size: 9px; color: #9aa5b0; text-align: center;
+      border-top: 1px solid #e0e4e8; padding-top: 6px; margin-top: 8px; }
   </style></head><body>
-  <div class="logo-wrap">
+
+  <div class="header">
     <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
-    <div>
-      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
-      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
-      <div class="capa-titulo">Relatório de Irrigação · ${periodo} · Emitido em ${data}</div>
+    <div class="header-txt">
+      <div class="empresa">${esc(configGlobal.empresa)}</div>
+      <div class="fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="subtitulo">Relatório de Irrigação · ${periodo} · Emitido em ${dataEmit}</div>
     </div>
   </div>
-  <div style="font-size:11px;color:#6a7a8a;margin-bottom:8px">
-    Fazenda: <strong>${esc(fazFiltro)}</strong> · Pivô: <strong>${esc(pivFiltro)}</strong>
-  </div>
+
+  <div class="filtros">Fazenda: <strong>${esc(fazFiltro)}</strong> &nbsp;·&nbsp; Pivô: <strong>${esc(pivFiltro)}</strong></div>
+
   <div class="resumo">
-    <div class="resumo-card"><div class="resumo-num">${totalMM.toFixed(2)} mm</div><div class="resumo-label">Total MM</div></div>
-    <div class="resumo-card"><div class="resumo-num">${items.length}</div><div class="resumo-label">Lançamentos</div></div>
+    <div class="resumo-card">
+      <div class="resumo-num">${totalMM.toFixed(2)} mm</div>
+      <div class="resumo-label">Total MM</div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-num">${items.length}</div>
+      <div class="resumo-label">Lançamentos</div>
+    </div>
+    <div class="resumo-card">
+      <div class="resumo-num">${fazOrdem.length}</div>
+      <div class="resumo-label">Fazendas</div>
+    </div>
   </div>
+
   <table>
     <thead><tr>
-      <th>Data</th><th>Fazenda</th><th>Pivô</th><th>%</th>
-      <th>Volta</th><th>MM</th><th>Cultura</th><th>Safra</th><th>Obs.</th>
+      <th class="col-data">Data</th>
+      <th class="col-faz">Fazenda</th>
+      <th class="col-pivo">Pivô</th>
+      <th class="col-center">%</th>
+      <th class="col-center">Volta</th>
+      <th class="col-mm">MM</th>
+      <th class="col-cult">Cultura</th>
+      <th class="col-safra">Safra</th>
+      <th>Obs.</th>
     </tr></thead>
     <tbody>${linhas}</tbody>
   </table>
-  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Controle de Irrigação · Gerado automaticamente em ${data}</div>
+
+  <div class="secao-titulo">Total por fazenda</div>
+  <div class="faz-cards">${totaisFazCards}</div>
+
+  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Controle de Irrigação · Gerado automaticamente em ${dataEmit}</div>
   <script>window.onload=()=>window.print()<\/script>
   </body></html>`;
 
@@ -5339,7 +5442,14 @@ async function salvarPluviometro() {
 async function excluirPluviometro(id) {
   const p = pluvPluviometros.find(x => x.id === id);
   if (!p) return;
-  if (!confirm(`Excluir o pluviômetro "${p.nome}" (${p.fazenda})?`)) return;
+  const _okPluv = await confirmarGenerico({
+    titulo: 'Excluir pluviômetro',
+    icone: '🗑',
+    mensagem: `Excluir o pluviômetro <strong>${p.nome}</strong> (${p.fazenda})?`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!_okPluv) return;
   try {
     await deleteDoc(doc(db, 'pluv_pluviometros', id));
     await recarregarPluviometros();
