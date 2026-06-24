@@ -1422,19 +1422,19 @@ header {
 
 <!-- MODAL CONFIRMAÇÃO DE EXCLUSÃO -->
 <!-- MODAL GENÉRICO DE CONFIRMAÇÃO -->
-<div class="overlay" id="overlayConfirmacaoGenerica" onclick="if(event.target===this)_confirmarGenericoRejeitar()">
+<div class="overlay" id="overlayConfirmacaoGenerica" onclick="if(event.target===this)window.AppEstoque._confirmarGenericoRejeitar()">
   <div class="modal estreito">
     <div class="modal-header" id="confirmGenericoHeader" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
       <h2 id="confirmGenericoTitulo">Confirmar</h2>
-      <button class="btn-fechar" onclick="_confirmarGenericoRejeitar()">×</button>
+      <button class="btn-fechar" onclick="window.AppEstoque._confirmarGenericoRejeitar()">×</button>
     </div>
     <div class="modal-body" style="text-align:center;padding:28px 24px">
       <div style="font-size:40px;margin-bottom:12px" id="confirmGenericoIcone">❓</div>
       <div style="font-size:15px;color:var(--texto);line-height:1.6" id="confirmGenericoMensagem"></div>
     </div>
     <div class="modal-footer" style="justify-content:center;gap:12px">
-      <button class="btn-cancelar" style="min-width:120px" onclick="_confirmarGenericoRejeitar()">Cancelar</button>
-      <button id="btnConfirmarGenerico" style="min-width:140px;color:white;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer" onclick="_confirmarGenericoAceitar()">Confirmar</button>
+      <button class="btn-cancelar" style="min-width:120px" onclick="window.AppEstoque._confirmarGenericoRejeitar()">Cancelar</button>
+      <button id="btnConfirmarGenerico" style="min-width:140px;color:white;border:none;border-radius:8px;padding:11px 20px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque._confirmarGenericoAceitar()">Confirmar</button>
     </div>
   </div>
 </div>
