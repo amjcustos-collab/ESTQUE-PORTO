@@ -457,6 +457,19 @@ header {
 }
 .pluv-tabela tfoot td:first-child { text-align: left; }
 
+
+/* Modal detalhe lançamentos pluv */
+.pluv-lanc-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--borda); }
+.pluv-lanc-item:last-child { border-bottom:none; }
+.pluv-lanc-pluvnome { flex:1; font-size:13px; font-weight:600; color:var(--texto); }
+.pluv-lanc-mm { font-size:18px; font-weight:800; color:#1a5fb4; min-width:60px; text-align:right; }
+.pluv-lanc-meta { font-size:11px; color:var(--texto-suave); margin-top:2px; }
+.pluv-lanc-acoes { display:flex; gap:6px; }
+.pluv-lanc-btn { border:none; border-radius:7px; padding:6px 10px; font-size:12px; font-weight:700; cursor:pointer; }
+.pluv-lanc-btn.editar { background:var(--azul-fundo); color:var(--azul); }
+.pluv-lanc-btn.editar:hover { background:#c8d8f0; }
+.pluv-lanc-btn.excluir { background:var(--vermelho-fundo); color:var(--vermelho); }
+.pluv-lanc-btn.excluir:hover { background:#f8d0d0; }
 /* Célula clicável */
 .pluv-cell-btn { cursor: pointer; border-radius: 6px; padding: 4px 8px; transition: background 0.12s; display: inline-block; min-width: 32px; }
 .pluv-cell-btn:hover { background: #d0e4ff; }
@@ -1290,6 +1303,52 @@ header {
       <button id="btnConfirmarPluv" style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarLancamentoPluv()">
         🌧️ Confirmar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES LANÇAMENTOS PLUV (editar/excluir) -->
+<div class="overlay" id="overlayDetPluv" onclick="if(event.target===this)window.AppEstoque.fecharDetPluv()">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a5b)">
+      <h2 id="detPluvTitulo">🌧️ Lançamentos</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharDetPluv()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px">
+      <div id="detPluvLista"></div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1.5px solid var(--borda)">
+        <button style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;width:100%" onclick="window.AppEstoque.abrirNovoLancDia()">🌧️ + Adicionar novo lançamento neste dia</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancelar" onclick="window.AppEstoque.fecharDetPluv()">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR LANÇAMENTO PLUV -->
+<div class="overlay" id="overlayEditarPluv" onclick="if(event.target===this)window.AppEstoque.fecharEditarPluv()">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a5b)">
+      <h2>✏️ Editar lançamento</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarPluv()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px">
+      <div style="margin-bottom:12px;padding:10px 14px;background:var(--cinza-claro);border-radius:8px;font-size:13px">
+        <strong id="editPluvInfo"></strong>
+      </div>
+      <div class="campo-group">
+        <label class="label-campo">Milímetros (mm)</label>
+        <input type="number" id="editPluvMM" min="0" step="0.1" placeholder="Ex: 25.5"
+          style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:15px;box-sizing:border-box;font-weight:700">
+      </div>
+      <div class="campo-group" style="margin-top:10px">
+        <label class="label-campo">Observação (opcional)</label>
+        <input type="text" id="editPluvObs" placeholder="Ex: Chuva forte à tarde"
+          style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarPluv()">Cancelar</button>
+      <button id="btnSalvarEditPluv" style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarEdicaoPluv()">✓ Salvar</button>
     </div>
   </div>
 </div>
@@ -5004,10 +5063,12 @@ function renderTabelaPluv() {
       const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       const cels = fazendas.map(f => {
         const val = agr[f]?.[data];
-        if (val === undefined || val === null) return `<td class="pluv-zero">—</td>`;
+        if (val === undefined || val === null) {
+          return `<td class="pluv-zero"><span class="pluv-cell-btn" onclick="window.AppEstoque.abrirLancamentoPluv('${data}','${f}')" title="Registrar chuva">—</span></td>`;
+        }
         const cl = val > 0 ? 'pluv-tem' : 'pluv-zero';
         return `<td class="${cl}">
-          <span class="pluv-cell-btn" onclick="window.AppEstoque.abrirLancamentoPluv('${data}','${f}')" title="Editar / ver lançamento">
+          <span class="pluv-cell-btn" onclick="window.AppEstoque.abrirDetPluv('${data}','${f}')" title="Ver / editar lançamentos">
             ${val > 0 ? val.toFixed(1) : '—'}
           </span>
         </td>`;
@@ -5094,6 +5155,116 @@ async function confirmarLancamentoPluv() {
     mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '🌧️ Confirmar';
+  }
+}
+
+
+// =====================================================================
+// DETALHE / EDIÇÃO / EXCLUSÃO DE LANÇAMENTOS DE PLUVIOMETRIA
+// =====================================================================
+let _detPluvData    = null;   // data selecionada no modal de detalhe
+let _detPluvFazenda = null;   // fazenda selecionada
+let _editPluvId     = null;   // id do lançamento em edição
+
+function abrirDetPluv(data, fazenda) {
+  _detPluvData    = data;
+  _detPluvFazenda = fazenda;
+  const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  document.getElementById('detPluvTitulo').textContent = `🌧️ ${fazenda} — ${dataFmt}`;
+  renderDetPluvLista();
+  document.getElementById('overlayDetPluv').classList.add('aberto');
+}
+
+function fecharDetPluv() {
+  document.getElementById('overlayDetPluv').classList.remove('aberto');
+  _detPluvData = null; _detPluvFazenda = null;
+}
+
+function renderDetPluvLista() {
+  const lista = document.getElementById('detPluvLista');
+  // Lançamentos desse dia/fazenda
+  const lancs = pluvLancamentos.filter(m => m.data === _detPluvData && m.fazenda === _detPluvFazenda);
+  if (lancs.length === 0) {
+    lista.innerHTML = '<div class="vazio" style="padding:16px 0">Nenhum lançamento para este dia.</div>';
+    return;
+  }
+  lista.innerHTML = lancs.map(m => `
+    <div class="pluv-lanc-item">
+      <div style="flex:1">
+        <div class="pluv-lanc-pluvnome">📍 ${esc(m.pluviometroNome || m.pluviometroId || '—')}</div>
+        <div class="pluv-lanc-meta">${esc(m.nomeUsuario || m.usuario || '—')}${m.obs ? ' · ' + esc(m.obs) : ''}</div>
+      </div>
+      <div class="pluv-lanc-mm">${(m.mm || 0).toFixed(1)} mm</div>
+      <div class="pluv-lanc-acoes">
+        <button class="pluv-lanc-btn editar" onclick="window.AppEstoque.abrirEditarPluv('${m.id}')">✏️ Editar</button>
+        <button class="pluv-lanc-btn excluir" onclick="window.AppEstoque.pedirExclusaoPluv('${m.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function abrirNovoLancDia() {
+  // Fecha o detalhe e abre o modal de novo lançamento com data/fazenda pré-preenchidos
+  fecharDetPluv();
+  abrirLancamentoPluv(_detPluvData || null, _detPluvFazenda || null);
+}
+
+function abrirEditarPluv(id) {
+  const m = pluvLancamentos.find(x => x.id === id);
+  if (!m) { mostrarToast('Lançamento não encontrado.', 'erro'); return; }
+  _editPluvId = id;
+  document.getElementById('editPluvInfo').textContent =
+    `${m.pluviometroNome || m.pluviometroId} · ${new Date(m.data + 'T12:00:00').toLocaleDateString('pt-BR')} · ${m.fazenda}`;
+  document.getElementById('editPluvMM').value  = m.mm || '';
+  document.getElementById('editPluvObs').value = m.obs || '';
+  document.getElementById('overlayEditarPluv').classList.add('aberto');
+}
+
+function fecharEditarPluv() {
+  document.getElementById('overlayEditarPluv').classList.remove('aberto');
+  _editPluvId = null;
+}
+
+async function salvarEdicaoPluv() {
+  if (!_editPluvId) return;
+  const mmRaw = document.getElementById('editPluvMM').value;
+  const obs   = document.getElementById('editPluvObs').value.trim();
+  const mm    = parseQtd(mmRaw);
+  if (isNaN(mm) || mm < 0) { mostrarToast('Informe os mm corretamente.', 'erro'); return; }
+
+  const btn = document.getElementById('btnSalvarEditPluv');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  try {
+    await updateDoc(doc(db, 'pluv_lancamentos', _editPluvId), { mm, obs });
+    mostrarToast('✓ Lançamento atualizado!', 'sucesso');
+    fecharEditarPluv();
+    // Re-renderiza lista de detalhe se ainda estiver aberta
+    if (document.getElementById('overlayDetPluv').classList.contains('aberto')) renderDetPluvLista();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Salvar';
+  }
+}
+
+async function pedirExclusaoPluv(id) {
+  const m = pluvLancamentos.find(x => x.id === id);
+  if (!m) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Excluir lançamento',
+    icone: '🗑',
+    mensagem: `Excluir o lançamento de <strong>${(m.mm||0).toFixed(1)} mm</strong> do pluviômetro <strong>${esc(m.pluviometroNome||'—')}</strong> em ${new Date(m.data+'T12:00:00').toLocaleDateString('pt-BR')}?<br><br>Esta ação é irreversível.`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'pluv_lancamentos', id));
+    mostrarToast('Lançamento excluído.', 'sucesso');
+    if (document.getElementById('overlayDetPluv').classList.contains('aberto')) renderDetPluvLista();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao excluir. Verifique a conexão.', 'erro');
   }
 }
 
@@ -5923,6 +6094,7 @@ window.AppEstoque = {
   navegarModulo, renderDashboard,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
   renderTabelaPluv,
+  abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
   abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
   exportarPluvPDF, exportarPluvXLS,
