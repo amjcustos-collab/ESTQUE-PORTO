@@ -5439,6 +5439,12 @@ function exportarPluvPDF() {
     totais[f] = Object.values(agr[f] || {}).reduce((a, b) => a + b, 0);
   });
 
+  // Resumo geral
+  const totalGeralMM  = Object.values(totais).reduce((a, b) => a + b, 0);
+  const mediaMM       = fazendas.length ? Math.round(totalGeralMM / fazendas.length * 10) / 10 : 0;
+  const diasComChuva  = new Set(lancs.filter(m => m.mm > 0).map(m => m.data)).size;
+  const maiorFaz      = fazendas.reduce((a, f) => totais[f] > (totais[a] || 0) ? f : a, fazendas[0] || '');
+
   const linhas = dias.map(data => {
     const dataFmt = new Date(data + 'T12:00:00').toLocaleDateString('pt-BR');
     const cels = fazendas.map(f => {
@@ -5448,8 +5454,22 @@ function exportarPluvPDF() {
     return `<tr><td>${dataFmt}</td>${cels}</tr>`;
   }).join('');
 
-  const totalRow = fazendas.map(f => `<td>${totais[f] > 0 ? totais[f].toFixed(1) : '—'}</td>`).join('');
-  const emitido  = new Date().toLocaleString('pt-BR');
+  const totalRow  = fazendas.map(f => `<td>${totais[f] > 0 ? totais[f].toFixed(1) : '—'}</td>`).join('');
+  const emitido   = new Date().toLocaleString('pt-BR');
+
+  const cardsResumo = `
+    <div class="r-card"><div class="r-num">${totalGeralMM.toFixed(1)} mm</div><div class="r-lbl">Total geral</div></div>
+    <div class="r-card"><div class="r-num">${mediaMM.toFixed(1)} mm</div><div class="r-lbl">Média por fazenda</div></div>
+    <div class="r-card"><div class="r-num">${fazendas.length}</div><div class="r-lbl">Fazendas</div></div>
+    <div class="r-card"><div class="r-num">${diasComChuva}</div><div class="r-lbl">Dias com chuva</div></div>
+    <div class="r-card"><div class="r-num" style="font-size:14px">${esc(maiorFaz)}<br><span style="font-size:18px">${(totais[maiorFaz]||0).toFixed(1)} mm</span></div><div class="r-lbl">Maior acumulado</div></div>
+  `;
+
+  const cardsFazenda = fazendas.map(f => `
+    <div class="faz-card">
+      <div class="faz-card-nome">${esc(f)}</div>
+      <div class="faz-card-mm">${totais[f].toFixed(1)}<span class="faz-mm-unit"> mm</span></div>
+    </div>`).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Pluviometria ${mesNome}</title>
@@ -5460,14 +5480,25 @@ function exportarPluvPDF() {
     .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
     .capa-fazenda { font-size:18px; font-weight:900; }
     .capa-titulo  { font-size:13px; color:#5a6472; }
+    .resumo       { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .r-card       { border:1.5px solid #c8d8ee; border-radius:8px; padding:10px 16px; min-width:110px; }
+    .r-num        { font-size:22px; font-weight:800; color:#1a5fb4; line-height:1.2; }
+    .r-lbl        { font-size:10px; color:#6a7a8a; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
     h2 { text-align:center; background:#1a3a6b; color:white; padding:10px; border-radius:6px; font-size:14px; margin:12px 0; }
-    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; margin-bottom:20px; }
     th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:center; border:1px solid #2a5aaa; }
     th:first-child { text-align:left; min-width:80px; }
     td { padding:6px 10px; text-align:center; border:1px solid #d0d8e0; font-size:11px; }
     td:first-child { text-align:left; font-weight:600; }
     tr:nth-child(even) td { background:#f7f9fc; }
     .total-row td { background:#fef3cd; font-weight:800; font-size:12px; border-top:2px solid #f0d080; color:#7a5000; }
+    .sec-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+      color:#1a3a6b; border-bottom:2px solid #1a3a6b; padding-bottom:4px; margin-bottom:12px; }
+    .faz-cards  { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .faz-card   { border:1.5px solid #aac4e0; border-radius:8px; padding:10px 14px; min-width:110px; background:#edf4fb; }
+    .faz-card-nome { font-size:10px; font-weight:700; color:#1a3a6b; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; }
+    .faz-card-mm   { font-size:20px; font-weight:800; color:#1a5fb4; }
+    .faz-mm-unit   { font-size:12px; font-weight:400; color:#4a6a9a; }
     .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
   </style></head><body>
   <div class="logo-wrap">
@@ -5475,9 +5506,10 @@ function exportarPluvPDF() {
     <div>
       <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
       <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
-      <div class="capa-titulo">Emitido em: ${emitido}</div>
+      <div class="capa-titulo">Regime Pluviométrico &middot; ${mesNome} &middot; Emitido em ${emitido}</div>
     </div>
   </div>
+  <div class="resumo">${cardsResumo}</div>
   <h2>🌧️ REGIME PLUVIOMÉTRICO — ${mesNome.toUpperCase()} (milímetros)</h2>
   <table>
     <thead><tr>
@@ -5487,7 +5519,9 @@ function exportarPluvPDF() {
     <tbody>${linhas}</tbody>
     <tfoot><tr class="total-row"><td>TOTAL</td>${totalRow}</tr></tfoot>
   </table>
-  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Regime Pluviométrico · Gerado em ${emitido}</div>
+  <div class="sec-titulo">Total por fazenda</div>
+  <div class="faz-cards">${cardsFazenda}</div>
+  <div class="rodape">${esc(configGlobal.empresa)} &middot; ${esc(configGlobal.fazenda)} &middot; Regime Pluviométrico &middot; Gerado em ${emitido}</div>
   <script>window.onload = () => window.print()<\/script>
   </body></html>`;
 
