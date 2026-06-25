@@ -2109,7 +2109,7 @@ let configGlobal = {   // carregada do Firestore em iniciarApp()
   fazenda: 'Fazenda Porto', empresa: 'AMJ Agropecuária',
   centrosCusto: [], talhoes: [], safras: []
 };
-let moduloAtivo = 'estoque'; // controla qual módulo está visível
+let moduloAtivo = 'dashboard'; // controla qual módulo está visível
 let unsubProdutos = null;
 let unsubHistorico = null;
 let unsubDashHistorico = null;  // listener leve de "novo lançamento" (só ativo com painel aberto)
@@ -2354,8 +2354,11 @@ async function iniciarSessaoAutenticada(user) {
       popularSelectsCulturasSafras();
     } catch (_) { /* offline — usa valores padrão */ }
 
-    // Navega para o Dashboard como tela inicial
-    navegarModulo('dashboard');
+    // Restaura o último módulo visitado (persiste no F5), ou vai ao Dashboard
+    const moduloSalvo = (() => {
+      try { return sessionStorage.getItem('amj_modulo_ativo'); } catch(_) { return null; }
+    })();
+    navegarModulo(moduloSalvo || 'dashboard');
 
   } catch (e) {
     console.error('Erro ao iniciar sessão:', e);
@@ -2373,6 +2376,7 @@ function finalizarSessao() {
   dashUltimasMov = [];
   hpMovsProduto = [];
   try { localStorage.removeItem('amj_tem_sessao'); } catch(e) {}
+  try { sessionStorage.removeItem('amj_modulo_ativo'); } catch(e) {}
   document.body.classList.remove('app-pronto');
   pararModuloIrrigacao();
   pararModuloPluv();
@@ -5830,6 +5834,7 @@ function renderDashboard() {
 
 function navegarModulo(modulo) {
   moduloAtivo = modulo;
+  try { sessionStorage.setItem('amj_modulo_ativo', modulo); } catch(_) {}
 
   const telaEst  = document.getElementById('telaEstoque');
   const telaIrr  = document.getElementById('telaIrrigacao');
