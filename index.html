@@ -1165,7 +1165,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
         </div>
         <div class="campo-group">
           <label class="label-campo">Vazão por hectare (L/ha) *</label>
-          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
+          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1"
+            oninput="window.AppEstoque.recalcularTodasQdes()">
         </div>
         <div class="campo-group" id="recTanqueGrupo" style="display:none">
           <label class="label-campo">Tamanho do tanque (L) — Drone</label>
@@ -6138,6 +6139,7 @@ function toggleTalhao(id, nome, area, fazenda) {
   if (idx >= 0) _recTalhoesSel.splice(idx, 1);
   else _recTalhoesSel.push({ id, nome, area, fazenda });
   renderTalhoesSel();
+  recalcularTodasQdes(); // atualiza QDE TOTAL ao mudar talhões
 }
 
 // ── Itens (produtos) da receita ─────────────────────────────────────
@@ -6196,7 +6198,7 @@ function renderItensReceita() {
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">UNID.</label>
           <select id="recProdUnid_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
             onchange="window.AppEstoque.updateItemReceita(${i},'unidade',this.value)">
-            ${['L','Kg','Un'].map(u => `<option value="${u}" ${(it.unidade||'L')===u?'selected':''}>${u}</option>`).join('')}
+            ${['L','Kg'].map(u => `<option value="${u}" ${(it.unidade||'L')===u?'selected':''}>${u}</option>`).join('')}
           </select>
         </div>
         <div>
@@ -6250,17 +6252,19 @@ function onProdutoReceitaInput(i, valor) {
 function selecionarProdutoReceita(i, nome, unidade, classe) {
   if (!_recItens[i]) return;
   const prod = produtos.find(p => p.nome === nome);
+  // Mapear classe do estoque para tipo da receita
+  const classeParaTipo = {
+    'ADJUVANTE': 'Adjuvante', 'INSETICIDA': 'Inseticida', 'FUNGICIDA': 'Fungicida',
+    'HERBICIDA': 'Herbicida', 'BIOLÓGICO': 'Biológico', 'BIOLOGICO': 'Biológico',
+    'NUTRIÇÃO FOLIAR': 'Nutrição Foliar', 'NUTRICAO FOLIAR': 'Nutrição Foliar',
+    'BIOESTIMULANTE': 'Bioestimulante', 'FERTILIZANTE': 'Nutrição Foliar',
+  };
+  const tipoMapeado = classeParaTipo[(classe||'').toUpperCase()] || '';
   _recItens[i].nome = nome;
   _recItens[i].unidade = unidade;
+  _recItens[i].tipo = tipoMapeado;
+  _recItens[i].biologico = tipoMapeado === 'Biológico';
   _recItens[i].estoqueDisp = prod ? prod.estoque : null;
-  // Atualizar campos no DOM sem re-renderizar tudo
-  const nomeEl = document.getElementById(`recProdNome_${i}`);
-  const unidEl = document.getElementById(`recProdUnid_${i}`);
-  const sugsEl = document.getElementById(`recProdSugs_${i}`);
-  if (nomeEl) nomeEl.value = nome;
-  if (unidEl) unidEl.value = unidade;
-  if (sugsEl) sugsEl.innerHTML = '';
-  // Re-renderiza para mostrar badge de estoque
   renderItensReceita();
 }
 
@@ -6273,6 +6277,18 @@ function updateItemReceita(i, campo, valor) {
   if (!_recItens[i]) return;
   _recItens[i][campo] = valor;
   if (campo === 'tipo') _recItens[i].biologico = TIPOS_BIOLOGICOS.some(t => valor.toLowerCase().includes(t));
+}
+
+function recalcularTodasQdes() {
+  // Recalcula QDE TOTAL de todos os itens quando área ou vazão mudam
+  const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+  _recItens.forEach((it, i) => {
+    if (it.qdeTotalManual != null) return; // manual não recalcula
+    const qdeAuto = Math.round((it.doseHa||0) * areaTotal * 1000) / 1000;
+    it.qdeTotalArea = qdeAuto;
+    const el = document.getElementById('recQdeTotal_' + i);
+    if (el) el.value = qdeAuto || '';
+  });
 }
 
 function updateDoseHa(i, doseHa) {
@@ -7982,7 +7998,7 @@ window.AppEstoque = {
   abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
   onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita,
   toggleTalhao, renderTalhoesSel,
-  adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa,
+  adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa, recalcularTodasQdes,
   onProdutoReceitaInput, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
