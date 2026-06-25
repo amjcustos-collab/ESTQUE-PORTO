@@ -6113,50 +6113,120 @@ function renderItensReceita() {
     cont.innerHTML = '<div style="text-align:center;color:var(--texto-suave);font-size:13px;padding:16px">Nenhum produto adicionado</div>';
     return;
   }
-  cont.innerHTML = _recItens.map((it, i) => `
-    <div style="display:grid;grid-template-columns:2fr 1fr 60px 80px 80px auto;gap:8px;align-items:end;
-      margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--borda)">
-      <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">PRODUTO</label>
-        <input type="text" value="${esc(it.nome)}" placeholder="Nome do produto"
-          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
-          onchange="window.AppEstoque.updateItemReceita(${i},'nome',this.value)">
+  const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+  cont.innerHTML = _recItens.map((it, i) => {
+    const qdeAuto = it.doseHa && areaTotal ? Math.round(it.doseHa * areaTotal * 1000)/1000 : '';
+    const qdeVal  = it.qdeTotalManual != null ? it.qdeTotalManual : qdeAuto;
+    // Sugestões do estoque baseadas no nome digitado
+    const sugs = it.nome && it.nome.length >= 2
+      ? produtos.filter(p => p.nome.toLowerCase().includes(it.nome.toLowerCase())).slice(0,5)
+      : [];
+    const sugHTML = sugs.length ? `<div style="position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--azul);
+      border-radius:0 0 8px 8px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:160px;overflow-y:auto">
+      ${sugs.map(p => `<div onclick="window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
+        style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
+        onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
+        <span><strong>${esc(p.nome)}</strong> <span style="color:var(--texto-suave);font-size:11px">${esc(p.classe||'')}</span></span>
+        <span style="font-size:11px;color:${p.estoque>0?'var(--verde)':'var(--vermelho)'}">
+          ${p.estoque>0?fmt(p.estoque)+' '+esc(p.unidade):'Zerado'}
+        </span>
+      </div>`).join('')}
+    </div>` : '';
+    return `
+    <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--borda)">
+      <div style="display:grid;grid-template-columns:2fr 1fr 60px 80px 80px auto;gap:8px;align-items:end">
+        <div style="position:relative">
+          <label style="font-size:11px;color:var(--texto-suave);font-weight:600">PRODUTO</label>
+          <input type="text" id="recProdNome_${i}" value="${esc(it.nome)}" placeholder="Digite para buscar no estoque..."
+            style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
+            oninput="window.AppEstoque.onProdutoReceitaInput(${i},this.value)"
+            onblur="setTimeout(()=>window.AppEstoque.fecharSugsReceita(${i}),200)">
+          <div id="recProdSugs_${i}">${sugHTML}</div>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--texto-suave);font-weight:600">TIPO</label>
+          <select id="recProdTipo_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
+            onchange="window.AppEstoque.updateItemReceita(${i},'tipo',this.value)">
+            <option value="">Tipo...</option>
+            ${['Adjuvante','Inseticida','Fungicida','Herbicida','Biológico','Nutrição Foliar','Bioestimulante'].map(t =>
+              `<option value="${t}" ${it.tipo===t?'selected':''}>${t}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--texto-suave);font-weight:600">UNID.</label>
+          <select id="recProdUnid_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
+            onchange="window.AppEstoque.updateItemReceita(${i},'unidade',this.value)">
+            ${['L','Kg','Un'].map(u => `<option value="${u}" ${(it.unidade||'L')===u?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
+          <input type="number" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
+            style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
+            oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL <span style="font-size:10px;color:#888">(auto)</span></label>
+          <input type="number" id="recQdeTotal_${i}" value="${qdeVal}" min="0" step="0.001" placeholder="Auto"
+            style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;
+            box-sizing:border-box;background:#f0f8f0;font-weight:700;color:#1a5fb4"
+            oninput="window.AppEstoque.updateItemReceita(${i},'qdeTotalManual',parseFloat(this.value)||null)">
+        </div>
+        <button onclick="window.AppEstoque.removerItemReceita(${i})"
+          style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
+          padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;align-self:end">🗑</button>
       </div>
-      <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">TIPO</label>
-        <select style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
-          onchange="window.AppEstoque.updateItemReceita(${i},'tipo',this.value)">
-          <option value="">Tipo...</option>
-          ${['Adjuvante','Inseticida','Fungicida','Herbicida','Biológico','Nutrição Foliar','Bioestimulante'].map(t =>
-            `<option value="${t}" ${it.tipo===t?'selected':''}>${t}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">UNID.</label>
-        <select style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
-          onchange="window.AppEstoque.updateItemReceita(${i},'unidade',this.value)">
-          ${['L','Kg','Un'].map(u => `<option value="${u}" ${it.unidade===u?'selected':''}>${u}</option>`).join('')}
-        </select>
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
-        <input type="number" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
-          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
-          oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
-      </div>
-      <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL <span style="font-size:10px;color:#888">(auto)</span></label>
-        <input type="number" id="recQdeTotal_${i}" value="${
-          it.qdeTotalManual != null ? it.qdeTotalManual :
-          (it.doseHa && _recTalhoesSel.length ? Math.round(it.doseHa * _recTalhoesSel.reduce((s,t)=>s+(t.area||0),0) * 1000)/1000 : '')
-        }" min="0" step="0.001" placeholder="Auto"
-          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box;background:#f0f8f0;font-weight:700;color:#1a5fb4"
-          oninput="window.AppEstoque.updateItemReceita(${i},'qdeTotalManual',parseFloat(this.value)||null)">
-      </div>
-      <button onclick="window.AppEstoque.removerItemReceita(${i})"
-        style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
-        padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;align-self:end">🗑</button>
-    </div>`).join('');
+      ${it.estoqueDisp != null ? `<div style="font-size:11px;margin-top:4px;color:${it.estoqueDisp>0?'var(--verde)':'var(--vermelho)'}">
+        📦 Estoque atual: <strong>${fmt(it.estoqueDisp)} ${esc(it.unidade||'')}</strong>
+        ${it.estoqueDisp < (qdeVal||0) ? '<span style="color:var(--vermelho);font-weight:700"> ⚠️ Insuficiente</span>' : ''}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function onProdutoReceitaInput(i, valor) {
+  if (!_recItens[i]) return;
+  _recItens[i].nome = valor;
+  // Re-renderiza só o dropdown de sugestões, sem re-renderizar tudo
+  const sugs = valor && valor.length >= 2
+    ? produtos.filter(p => p.nome.toLowerCase().includes(valor.toLowerCase())).slice(0,5)
+    : [];
+  const cont = document.getElementById(`recProdSugs_${i}`);
+  if (!cont) return;
+  if (!sugs.length) { cont.innerHTML = ''; return; }
+  cont.innerHTML = `<div style="position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--azul);
+    border-radius:0 0 8px 8px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:160px;overflow-y:auto">
+    ${sugs.map(p => `<div onclick="window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
+      style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
+      <span><strong>${esc(p.nome)}</strong> <span style="color:var(--texto-suave);font-size:11px">${esc(p.classe||'')}</span></span>
+      <span style="font-size:11px;color:${p.estoque>0?'var(--verde)':'var(--vermelho)'}">
+        ${p.estoque>0?fmt(p.estoque)+' '+esc(p.unidade):'Zerado'}
+      </span>
+    </div>`).join('')}
+  </div>`;
+}
+
+function selecionarProdutoReceita(i, nome, unidade, classe) {
+  if (!_recItens[i]) return;
+  const prod = produtos.find(p => p.nome === nome);
+  _recItens[i].nome = nome;
+  _recItens[i].unidade = unidade;
+  _recItens[i].estoqueDisp = prod ? prod.estoque : null;
+  // Atualizar campos no DOM sem re-renderizar tudo
+  const nomeEl = document.getElementById(`recProdNome_${i}`);
+  const unidEl = document.getElementById(`recProdUnid_${i}`);
+  const sugsEl = document.getElementById(`recProdSugs_${i}`);
+  if (nomeEl) nomeEl.value = nome;
+  if (unidEl) unidEl.value = unidade;
+  if (sugsEl) sugsEl.innerHTML = '';
+  // Re-renderiza para mostrar badge de estoque
+  renderItensReceita();
+}
+
+function fecharSugsReceita(i) {
+  const el = document.getElementById(`recProdSugs_${i}`);
+  if (el) el.innerHTML = '';
 }
 
 function updateItemReceita(i, campo, valor) {
@@ -7845,7 +7915,8 @@ window.AppEstoque = {
   // Receitas
   abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
   onRecFazendaChange, onRecOperacaoChange, toggleTalhao, renderTalhoesSel,
-  adicionarItemReceita, removerItemReceita, updateItemReceita,
+  adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa,
+  onProdutoReceitaInput, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
   abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, abrirSubstituirProduto,
