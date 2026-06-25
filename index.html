@@ -2310,11 +2310,28 @@ async function iniciarSessaoAutenticada(user) {
 
     sessaoAtual = { uid: user.uid, email: user.email, nivel: perfil.nivel, label: perfil.label, permissoes };
 
+    // Define o módulo ativo ANTES de revelar o app, para evitar flash do estoque
+    const _moduloInicial = (() => {
+      try { return sessionStorage.getItem('amj_modulo_ativo') || 'dashboard'; } catch(_) { return 'dashboard'; }
+    })();
+    moduloAtivo = _moduloInicial;
+
     document.getElementById('loginOverlay').classList.add('escondido');
     document.getElementById('loginOverlay').classList.remove('visivel');
     document.documentElement.classList.remove('sem-sessao');
     try { localStorage.setItem('amj_tem_sessao', '1'); } catch(e) {}
     document.getElementById('loginErro').textContent = '';
+
+    // Ativa a tela correta no DOM antes de revelar (evita flash)
+    ['telaEstoque','telaIrrigacao','telaPluv','telaDash'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('ativa');
+    });
+    const telaMap = { estoque:'telaEstoque', irrigacao:'telaIrrigacao', pluviometria:'telaPluv', dashboard:'telaDash' };
+    const telaAlvo = document.getElementById(telaMap[_moduloInicial]);
+    if (telaAlvo) telaAlvo.classList.add('ativa');
+
+    // Agora revela o app — já está no módulo certo, sem flash
     document.body.classList.add('app-pronto');
     aplicarPermissoesUI();
 
@@ -2354,11 +2371,9 @@ async function iniciarSessaoAutenticada(user) {
       popularSelectsCulturasSafras();
     } catch (_) { /* offline — usa valores padrão */ }
 
-    // Restaura o último módulo visitado (persiste no F5), ou vai ao Dashboard
-    const moduloSalvo = (() => {
-      try { return sessionStorage.getItem('amj_modulo_ativo'); } catch(_) { return null; }
-    })();
-    navegarModulo(moduloSalvo || 'dashboard');
+    // Finaliza a navegação para o módulo inicial (inicia listeners do módulo,
+    // renderiza dashboard, atualiza botões do header etc.)
+    navegarModulo(_moduloInicial);
 
   } catch (e) {
     console.error('Erro ao iniciar sessão:', e);
