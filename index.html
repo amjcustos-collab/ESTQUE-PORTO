@@ -595,6 +595,9 @@ header {
 /* Remove tooltip nativo do browser nas sugestões de produto */
 #recItensLista [onmousedown] { -webkit-user-select:none; user-select:none; }
 
+.rec-sug-item { padding:9px 12px; cursor:pointer; font-size:13px; border-bottom:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center; }
+.rec-sug-item:hover { background:#f0f6ff; }
+
 /* MODAIS */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
 .overlay.aberto { display: flex; }
@@ -6227,17 +6230,35 @@ function onProdutoReceitaInput(i, valor) {
   const cont = document.getElementById('recProdSugs_' + i);
   if (!cont) return;
   if (!valor || valor.length < 2) { cont.innerHTML = ''; return; }
-  const sugs = produtos.filter(p => p.nome.toLowerCase().includes(valor.toLowerCase())).slice(0,6);
+  const sugs = produtos.filter(p => p.nome.toLowerCase().includes(valor.toLowerCase())).slice(0, 6);
   if (!sugs.length) { cont.innerHTML = ''; return; }
-  const itens = sugs.map(p => {
-    const cor = (p.estoque||0) > 0 ? 'var(--verde)' : 'var(--vermelho)';
-    const saldo = (p.estoque||0) > 0 ? fmt(p.estoque)+' '+esc(p.unidade) : 'Zerado';
-    const nm  = p.nome.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    const cl  = (p.classe||'').replace(/'/g,"\\'");
-    return '<div onmousedown="event.preventDefault();window.AppEstoque.selecionarProdutoReceita('+i+',\''+nm+'\',\''+esc(p.unidade)+'\',\''+cl+'\')"\''+esc(p.unidade)+'\',\''+cl+'\')" style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background=\'#f0f6ff\'" onmouseout="this.style.background=\'white\'"><span><strong>'+esc(p.nome)+'</strong><span style="color:var(--texto-suave);font-size:11px;margin-left:6px">'+esc(p.classe||'')+'</span></span><span style="font-size:11px;font-weight:700;color:'+cor+'">'+saldo+'</span></div>';
-  }).join('');
-  cont.innerHTML = '<div style="background:white;border:1.5px solid var(--azul);border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto">'+itens+'</div>';
+  let rows = '';
+  sugs.forEach(function(p) {
+    const cor   = (p.estoque || 0) > 0 ? 'var(--verde)' : 'var(--vermelho)';
+    const saldo = (p.estoque || 0) > 0 ? fmt(p.estoque) + ' ' + esc(p.unidade) : 'Zerado';
+    rows += '<div'
+      + ' onmousedown="event.preventDefault();window.AppEstoque._selProdRec(' + i + ',this)"'
+      + ' data-nome="' + esc(p.nome) + '"'
+      + ' data-unidade="' + esc(p.unidade) + '"'
+      + ' data-classe="' + esc(p.classe || '') + '"'
+      + ' class="rec-sug-item">'
+      + '<span><strong>' + esc(p.nome) + '</strong>'
+      + '<span style="color:var(--texto-suave);font-size:11px;margin-left:6px">' + esc(p.classe || '') + '</span></span>'
+      + '<span style="font-size:11px;font-weight:700;color:' + cor + '">' + saldo + '</span>'
+      + '</div>';
+  });
+  cont.innerHTML = '<div style="background:white;border:1.5px solid var(--azul);border-radius:0 0 8px 8px;'
+    + 'box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:180px;overflow-y:auto">' + rows + '</div>';
 }
+
+// Helper usado pelo onmousedown das sugestões — evita aspas aninhadas
+function _selProdRec(i, el) {
+  var nome    = el.getAttribute('data-nome');
+  var unidade = el.getAttribute('data-unidade');
+  var classe  = el.getAttribute('data-classe');
+  selecionarProdutoReceita(i, nome, unidade, classe);
+}
+
 
 
 function fecharSugsReceita(i) {
@@ -7972,7 +7993,7 @@ window.AppEstoque = {
   onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita,
   toggleTalhao, renderTalhoesSel,
   adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa, recalcularTodasQdes,
-  onProdutoReceitaInput, selecionarProdutoReceita, fecharSugsReceita,
+  onProdutoReceitaInput, _selProdRec, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
   abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto,
