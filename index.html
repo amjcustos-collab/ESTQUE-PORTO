@@ -7207,12 +7207,14 @@ function navegarModulo(modulo) {
   const telaIrr  = document.getElementById('telaIrrigacao');
   const telaPluv = document.getElementById('telaPluv');
   const telaDash = document.getElementById('telaDash');
+  const telaRec  = document.getElementById('telaReceitas');
   const filtros  = document.querySelector('.filtros');
 
   if (telaEst)   telaEst.classList.toggle('ativa',   modulo === 'estoque');
   if (telaIrr)   telaIrr.classList.toggle('ativa',   modulo === 'irrigacao');
   if (telaPluv)  telaPluv.classList.toggle('ativa',  modulo === 'pluviometria');
   if (telaDash)  telaDash.classList.toggle('ativa',  modulo === 'dashboard');
+  if (telaRec)   telaRec.classList.toggle('ativa',   modulo === 'receitas');
   if (filtros)   filtros.style.display = modulo === 'estoque' ? '' : 'none';
 
   document.querySelectorAll('.modulo-tab:not(.futuro)').forEach(btn => {
@@ -7224,6 +7226,7 @@ function navegarModulo(modulo) {
     estoque:      `${configGlobal.fazenda} — Estoque`,
     irrigacao:    `AMJ Agro Gestão — Irrigação`,
     pluviometria: `AMJ Agro Gestão — Pluviometria`,
+    receitas:     `AMJ Agro Gestão — Receitas`,
   };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
