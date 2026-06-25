@@ -1186,8 +1186,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
         </div>
         <div class="campo-group">
           <label class="label-campo">Vazão por hectare (L/ha) *</label>
-          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1"
-            oninput="window.AppEstoque.recalcularTodasQdes()">
+          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
         </div>
         <div class="campo-group" id="recTanqueGrupo" style="display:none">
           <label class="label-campo">Tamanho do tanque (L) — Drone</label>
@@ -6014,9 +6013,11 @@ function renderReceitas() {
       <div class="rec-card-header">
         <div style="flex:1">
           <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda}</div>
-          <div class="rec-card-titulo">${esc(r.cultura || '—')}</div>
+          <div class="rec-card-titulo">${esc(r.descricao || r.cultura || '—')}</div>
+          <div style="font-size:12px;color:var(--texto-suave);margin-bottom:3px">
+            ${CULTURAS_EMOJI[r.cultura] ? CULTURAS_EMOJI[r.cultura]+' ' : ''}${esc(r.cultura || '')}
+          </div>
           <div class="rec-card-sub">${talhoesTxt}${impresso}</div>
-          ${r.descricao ? `<div style="margin-top:4px;font-size:12px;font-weight:600;color:#1a5fb4">📋 \${esc(r.descricao)}</div>` : ''}
         </div>
         <div class="rec-card-right">
           <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
@@ -6179,7 +6180,7 @@ function renderItensReceita() {
       <div style="display:grid;grid-template-columns:2fr 1fr 60px 80px 80px auto;gap:8px;align-items:end">
         <div style="position:relative">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">PRODUTO</label>
-          <input type="text" id="recProdNome_${i}" value="${esc(it.nome)}" placeholder="Digite para buscar no estoque..."
+          <input type="text" id="recProdNome_${i}" value="${esc(it.nome)}" placeholder=""
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
             oninput="window.AppEstoque.onProdutoReceitaInput(${i},this.value)"
             onblur="setTimeout(()=>window.AppEstoque.fecharSugsReceita(${i}),150)">
@@ -6478,13 +6479,13 @@ function abrirDetReceita(id) {
   let btns = `<button class="btn-cancelar" onclick="window.AppEstoque.fecharDetReceita()">Fechar</button>`;
 
   if (s === 'pendente') {
-    if (isAgro) btns += `<button onclick="window.AppEstoque.abrirNovaReceita('${id}')" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✏️ Editar</button>`;
+    if (isAgro) btns += `<button onclick="window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirNovaReceita('${id}'),150)" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✏️ Editar</button>`;
     if (isAgro) btns += `<button onclick="window.AppEstoque.cancelarReceita('${id}')" style="background:var(--vermelho);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✕ Cancelar receita</button>`;
-    btns += `<button onclick="window.AppEstoque.abrirAceiteReceita('${id}')" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✅ Aceitar receita</button>`;
+    btns += `<button onclick="window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${id}'),150)" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✅ Aceitar receita</button>`;
   }
   if (s === 'em_aberto') {
     btns += `<button onclick="window.AppEstoque.imprimirReceita('${id}')" style="background:#c8860a;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Imprimir PDF</button>`;
-    btns += `<button onclick="window.AppEstoque.abrirFinalizarReceita('${id}')" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✔ Finalizar</button>`;
+    btns += `<button onclick="window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirFinalizarReceita('${id}'),150)" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✔ Finalizar</button>`;
   }
   if (s === 'finalizado') {
     btns += `<button onclick="window.AppEstoque.imprimirReceita('${id}')" style="background:#c8860a;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Imprimir PDF</button>`;
