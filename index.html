@@ -565,11 +565,19 @@ header {
 .rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:2px 0 4px; }
 .rec-card-sub { font-size:12px; color:var(--texto-suave); }
 .rec-card-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-.rec-status { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-.rec-status.pendente   { background:#fff3cd; color:#856404; }
-.rec-status.em_aberto  { background:#cfe2ff; color:#084298; }
-.rec-status.finalizado { background:#d1e7dd; color:#0a3622; }
-.rec-status.cancelado  { background:#f8d7da; color:#842029; }
+.rec-status { display:inline-block; padding:7px 18px; border-radius:20px; font-size:13px; font-weight:800; letter-spacing:.3px; }
+.rec-status.pendente   { background:#fff3cd; color:#856404; border:1.5px solid #ffd700; }
+.rec-status.em_aberto  { background:#cfe2ff; color:#084298; border:1.5px solid #84b4f0; }
+.rec-status.finalizado { background:#d1e7dd; color:#0a3622; border:1.5px solid #86c9a0; }
+.rec-status.cancelado  { background:#f8d7da; color:#842029; border:1.5px solid #f0a0a8; }
+
+/* Chips de cultura no formulário */
+.rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
+  border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
+  border:1.5px solid var(--borda); background:white; color:var(--texto);
+  transition:all .15s; user-select:none; }
+.rec-cultura-chip:hover { border-color:var(--verde); background:#f0faf4; }
+.rec-cultura-chip.selecionado { border-color:var(--verde); background:#e8f5e9; color:#1b5e20; font-weight:700; }
 .rec-card-meta { font-size:11px; color:var(--texto-suave); text-align:right; }
 .rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
   display:flex; flex-wrap:wrap; gap:6px; }
@@ -1129,9 +1137,15 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
             <option value="">Selecione...</option>
           </select>
         </div>
-        <div class="campo-group">
+        <div class="campo-group" style="grid-column:1/-1">
           <label class="label-campo">Cultura *</label>
-          <input type="text" id="recCultura" class="campo-input" placeholder="Ex: Feijão | SF 2026">
+          <div id="recCulturaChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
+          <input type="hidden" id="recCultura">
+        </div>
+        <div class="campo-group" style="grid-column:1/-1">
+          <label class="label-campo">Descrição da aplicação *</label>
+          <input type="text" id="recDescricao" class="campo-input"
+            placeholder="Ex: Aplicação de Fungicida / Inseticida — 1ª aplicação">
         </div>
         <div class="campo-group">
           <label class="label-campo">Tipo de operação *</label>
@@ -5992,6 +6006,7 @@ function renderReceitas() {
           <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda}</div>
           <div class="rec-card-titulo">${esc(r.cultura || '—')}</div>
           <div class="rec-card-sub">${talhoesTxt}${impresso}</div>
+          ${r.descricao ? `<div style="margin-top:4px;font-size:12px;font-weight:600;color:#1a5fb4">📋 \${esc(r.descricao)}</div>` : ''}
         </div>
         <div class="rec-card-right">
           <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
@@ -6022,6 +6037,7 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recTanque').value     = r.tanque || '';
     document.getElementById('recTecnico').value    = r.tecnico || '';
     document.getElementById('recObs').value        = r.obs || '';
+    document.getElementById('recDescricao').value = r.descricao || '';
     document.getElementById('recDataInicio').value = r.dataInicio || '';
     document.getElementById('recDataFim').value    = r.dataFim || '';
     _recTalhoesSel = (r.talhoes || []).map(t => ({...t}));
@@ -6036,6 +6052,7 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recTanque').value     = '';
     document.getElementById('recTecnico').value    = sessaoAtual?.label || '';
     document.getElementById('recObs').value        = '';
+    document.getElementById('recDescricao').value = '';
     document.getElementById('recDataInicio').value = '';
     document.getElementById('recDataFim').value    = '';
     renderTalhoesSel();
@@ -6053,6 +6070,27 @@ function onRecFazendaChange() {
   const fazenda = document.getElementById('recFazenda').value;
   _recTalhoesSel = _recTalhoesSel.filter(t => t.fazenda === fazenda);
   renderTalhoesSel();
+}
+
+function renderCulturaChips() {
+  const cont = document.getElementById('recCulturaChips');
+  if (!cont) return;
+  const atual = document.getElementById('recCultura')?.value || '';
+  const culturas = irrigConfig?.culturas?.length ? irrigConfig.culturas : CULTURAS_PADRAO;
+  cont.innerHTML = culturas.map(c => {
+    const emoji = CULTURAS_EMOJI[c] || '•';
+    const sel   = atual === c;
+    return `<span class="rec-cultura-chip ${sel?'selecionado':''}"
+      onclick="window.AppEstoque.selecionarCulturaReceita('${c.replace(/'/g,"\'")}')">
+      ${emoji} ${c}
+    </span>`;
+  }).join('');
+}
+
+function selecionarCulturaReceita(cultura) {
+  const el = document.getElementById('recCultura');
+  if (el) el.value = cultura;
+  renderCulturaChips();
 }
 
 function onRecOperacaoChange() {
@@ -6196,7 +6234,7 @@ function onProdutoReceitaInput(i, valor) {
   if (!sugs.length) { cont.innerHTML = ''; return; }
   cont.innerHTML = `<div style="position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--azul);
     border-radius:0 0 8px 8px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:160px;overflow-y:auto">
-    ${sugs.map(p => `<div onclick="window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
+    ${sugs.map(p => `<div onmousedown="event.preventDefault();window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
       style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
       onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
       <span><strong>${esc(p.nome)}</strong> <span style="color:var(--texto-suave);font-size:11px">${esc(p.classe||'')}</span></span>
@@ -6262,10 +6300,11 @@ async function salvarReceita() {
   const tanque   = parseFloat(document.getElementById('recTanque').value) || 0;
   const tecnico  = document.getElementById('recTecnico').value.trim();
   const obs      = document.getElementById('recObs').value.trim();
+  const descricao = document.getElementById('recDescricao').value.trim();
   const dataInicio = document.getElementById('recDataInicio').value;
   const dataFim    = document.getElementById('recDataFim').value;
 
-  if (!fazenda || !cultura || !operacao || !vazao || !tecnico) {
+  if (!fazenda || !cultura || !operacao || !vazao || !tecnico || !descricao) {
     mostrarToast('Preencha todos os campos obrigatórios.', 'erro'); return;
   }
   if (!_recTalhoesSel.length) {
@@ -6288,7 +6327,7 @@ async function salvarReceita() {
 
   try {
     const dados = {
-      fazenda, cultura, operacao, vazao, tecnico, obs, dataInicio, dataFim,
+      fazenda, cultura, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
       talhoes: _recTalhoesSel, itens, areaTotal,
       ...(operacao === 'drone' ? { tanque } : {}),
       status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
@@ -6522,21 +6561,29 @@ function abrirAceiteReceita(id) {
   const linhasProd = itensComSaldo.map((it, i) => {
     const semSaldo = it.saldoOk === false;
     const semCad   = it.saldoEstoque === null;
+    const faltam = ((it.qdeTotalArea||0)-(it.saldoEstoque||0)).toFixed(2);
     return `<tr style="${semSaldo?'background:#fff3cd':''}">
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2">
         ${esc(it.nome)}
         ${semCad ? '<span style="font-size:10px;color:#856404;margin-left:4px">⚠️ não cadastrado</span>' : ''}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.tipo||'—')}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right;font-weight:700;color:#1a5fb4">${(it.qdeTotalArea||0).toFixed(3)} ${esc(it.unidade||'L')}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right">${it.saldoEstoque !== null ? it.saldoEstoque.toFixed(2) : '—'}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
+        <input type="number" value="${(it.qdeTotalArea||0).toFixed(3)}" min="0" step="0.001"
+          id="aceiteQde_${i}"
+          style="width:80px;padding:4px 6px;border:1.5px solid #b0c8e8;border-radius:6px;
+          font-size:12px;font-weight:700;color:#1a5fb4;text-align:right;box-sizing:border-box"
+          oninput="window.AppEstoque.updateQdeAceite(${i},parseFloat(this.value)||0)">
+        <span style="font-size:11px;color:var(--texto-suave)">${esc(it.unidade||'L')}</span>
+      </td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right">${it.saldoEstoque !== null ? it.saldoEstoque.toFixed(2) : '—'}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center" id="aceiteStatus_${i}">
         ${semCad ? '<span style="color:#856404;font-size:12px">Não cadastrado</span>'
-          : semSaldo ? `<span style="color:#c00;font-size:11px;font-weight:700">⚠️ Insuficiente<br>(faltam ${((it.qdeTotalArea||0)-(it.saldoEstoque||0)).toFixed(2)} ${esc(it.unidade||'L')})</span>`
+          : semSaldo ? `<span style="color:#c00;font-size:11px;font-weight:700">⚠️ Faltam ${faltam} ${esc(it.unidade||'L')}</span>`
           : '<span style="color:#2a7a2a;font-weight:700">✓ OK</span>'}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
-        <button onclick="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
+        <button onmousedown="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
           style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:6px;
           padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">↔ Substituir</button>
       </td>
@@ -6557,7 +6604,7 @@ function abrirAceiteReceita(id) {
       <thead><tr style="background:#1a3a6b;color:white">
         <th style="padding:8px 10px;text-align:left">Produto</th>
         <th style="padding:8px 10px;text-align:center">Tipo</th>
-        <th style="padding:8px 10px;text-align:right">Necessário</th>
+        <th style="padding:8px 10px;text-align:center">Necessário <span style="font-size:10px;font-weight:400;opacity:.8">(editável)</span></th>
         <th style="padding:8px 10px;text-align:right">Saldo</th>
         <th style="padding:8px 10px;text-align:center">Status</th>
         <th style="padding:8px 10px;text-align:center">Ação</th>
@@ -6572,6 +6619,23 @@ function abrirAceiteReceita(id) {
 
 // Guardamos os itens com saldo calculado para uso no confirmarAceite
 let _aceiteItensCache = [];
+
+function updateQdeAceite(i, novaQde) {
+  // Atualiza qdeTotalArea do item no cache da receita em memória
+  const r = recReceitas.find(x => x.id === _recAceitandoId);
+  if (!r || !r.itens[i]) return;
+  r.itens[i].qdeTotalArea = novaQde;
+  // Atualizar status visual em tempo real
+  const saldo = r.itens[i].saldoEstoque;
+  const statusEl = document.getElementById(`aceiteStatus_${i}`);
+  if (!statusEl || saldo === null) return;
+  const faltam = (novaQde - saldo).toFixed(2);
+  if (novaQde <= saldo) {
+    statusEl.innerHTML = '<span style="color:#2a7a2a;font-weight:700">✓ OK</span>';
+  } else {
+    statusEl.innerHTML = `<span style="color:#c00;font-size:11px;font-weight:700">⚠️ Faltam ${faltam} ${r.itens[i].unidade||'L'}</span>`;
+  }
+}
 
 function fecharAceiteReceita() {
   document.getElementById('overlayAceiteReceita').classList.remove('aberto');
@@ -7914,12 +7978,13 @@ window.AppEstoque = {
   confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
   // Receitas
   abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
-  onRecFazendaChange, onRecOperacaoChange, toggleTalhao, renderTalhoesSel,
+  onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita,
+  toggleTalhao, renderTalhoesSel,
   adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa,
   onProdutoReceitaInput, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
-  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, abrirSubstituirProduto,
+  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto,
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
