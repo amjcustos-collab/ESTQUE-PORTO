@@ -813,9 +813,16 @@ header {
     <span class="badge-offline" id="badgeOffline"><span class="ponto-off"></span>Offline — sincronizando ao reconectar</span>
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
+    <!-- Botões do Estoque -->
     <button class="btn-header" id="btnHistoricoHeader" onclick="window.AppEstoque.abrirHistorico()">📋 <span>Histórico</span></button>
     <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.abrirExportacaoXLS()">📊 <span>Excel</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
+    <!-- Botões da Irrigação -->
+    <button class="btn-header verde" id="btnIrrigExcelHeader" onclick="window.AppEstoque.exportarIrrigXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnIrrigPDFHeader" onclick="window.AppEstoque.exportarIrrigPDF()" style="display:none">🖨️ <span>PDF</span></button>
+    <!-- Botões da Pluviometria -->
+    <button class="btn-header verde" id="btnPluvExcelHeader" onclick="window.AppEstoque.exportarPluvXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnPluvPDFHeader" onclick="window.AppEstoque.exportarPluvPDF()" style="display:none">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.solicitarRedefinicaoSenha()" title="Alterar minha senha" style="margin-right:2px">🔑</button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -967,8 +974,7 @@ header {
       <option value="30d">Últimos 30 dias</option>
       <option value="todos">Todos</option>
     </select>
-    <button class="irrig-filtro-select" style="background:white;cursor:pointer;font-size:13px;color:var(--azul);font-weight:600;border-color:var(--azul)" onclick="window.AppEstoque.exportarIrrigXLS()">📊 XLS</button>
-    <button class="irrig-filtro-select" style="background:white;cursor:pointer;font-size:13px;color:#c47a00;font-weight:600;border-color:#c47a00" onclick="window.AppEstoque.exportarIrrigPDF()">📄 PDF</button>
+
     <button id="btnGestaoIrrig" class="irrig-filtro-select" style="display:none;background:white;cursor:pointer;font-size:13px;color:var(--texto-suave);font-weight:600" onclick="window.AppEstoque.abrirGestaoIrrig()">⚙️ Gestão</button>
   </div>
 
@@ -1008,8 +1014,7 @@ header {
     <select class="pluv-select" id="pluvFiltroMes" onchange="window.AppEstoque.renderTabelaPluv()">
       <!-- meses populados dinamicamente -->
     </select>
-    <button class="pluv-select" style="cursor:pointer;font-weight:600;color:var(--azul);border-color:var(--azul)" onclick="window.AppEstoque.exportarPluvPDF()">📄 PDF Mensal</button>
-    <button class="pluv-select" style="cursor:pointer;font-weight:600;color:#2a7a2a;border-color:#2a7a2a" onclick="window.AppEstoque.exportarPluvXLS()">📊 XLS</button>
+
     <button id="btnGestaoPluv" style="display:none" class="pluv-select" onclick="window.AppEstoque.abrirGestaoPluv()">⚙️ Gestão</button>
   </div>
 
@@ -2127,10 +2132,9 @@ function aplicarPermissoesUI() {
 
   const btnHistorico = document.getElementById('btnHistoricoHeader');
   if (btnHistorico) btnHistorico.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
-  const btnExcel = document.getElementById('btnExcelHeader');
-  if (btnExcel) btnExcel.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
-  const btnPDF = document.getElementById('btnPDFHeader');
-  if (btnPDF) btnPDF.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
+  // Visibilidade inicial dos botões é controlada por navegarModulo()
+  // Dispara uma atualização para o módulo ativo atual
+  navegarModulo(moduloAtivo || 'dashboard');
 }
 
 // =====================================================================
@@ -5739,6 +5743,20 @@ function navegarModulo(modulo) {
   };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
+
+  // Botões contextuais do header — cada módulo tem os seus
+  const temRelat = temPermissao('verRelatorios');
+  const show = (id, vis) => { const b = document.getElementById(id); if (b) b.style.display = vis ? 'inline-flex' : 'none'; };
+  // Estoque
+  show('btnHistoricoHeader', modulo === 'estoque');
+  show('btnExcelHeader',     modulo === 'estoque' && temRelat);
+  show('btnPDFHeader',       modulo === 'estoque' && temRelat);
+  // Irrigação
+  show('btnIrrigExcelHeader', modulo === 'irrigacao' && temRelat);
+  show('btnIrrigPDFHeader',   modulo === 'irrigacao' && temRelat);
+  // Pluviometria
+  show('btnPluvExcelHeader', modulo === 'pluviometria' && temRelat);
+  show('btnPluvPDFHeader',   modulo === 'pluviometria' && temRelat);
 
   if (modulo === 'irrigacao')    iniciarModuloIrrigacao(); else pararModuloIrrigacao();
   if (modulo === 'pluviometria') iniciarModuloPluv();      else pararModuloPluv();
