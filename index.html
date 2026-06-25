@@ -6058,11 +6058,13 @@ function abrirNovaReceita(receitaId = null) {
     renderTalhoesSel();
     renderItensReceita();
   }
+  renderCulturaChips();
   document.getElementById('overlayNovaReceita').classList.add('aberto');
 }
 
 function fecharNovaReceita() {
   document.getElementById('overlayNovaReceita').classList.remove('aberto');
+  const recCult = document.getElementById('recCultura'); if (recCult) recCult.value = '';
   _recEditandoId = null; _recItens = []; _recTalhoesSel = [];
 }
 
