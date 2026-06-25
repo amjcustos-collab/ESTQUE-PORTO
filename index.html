@@ -538,6 +538,52 @@ header {
 .btn-cancelar { background: white; color: var(--cinza); border: 1.5px solid var(--borda); border-radius: 8px; padding: 10px 16px; font-size: 14px; cursor: pointer; }
 .btn-cancelar:hover { background: var(--cinza-claro); }
 
+/* =====================================================================
+   MÓDULO RECEITAS
+   ===================================================================== */
+.tela-receitas { display:none; padding:20px; max-width:1400px; margin:0 auto; }
+.tela-receitas.ativa { display:block; }
+
+.rec-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.rec-toolbar h2 { flex:1; font-size:18px; font-weight:800; color:var(--texto); margin:0; }
+.btn-rec-novo { background:var(--verde); color:white; border:none; border-radius:9px;
+  padding:10px 20px; font-size:13px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; }
+.btn-rec-novo:hover { filter:brightness(1.1); }
+
+.rec-filtros { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.rec-filtro-select { padding:7px 12px; border:1.5px solid var(--borda); border-radius:8px;
+  font-size:13px; background:white; color:var(--texto); cursor:pointer; }
+.rec-busca { flex:1; min-width:200px; padding:8px 14px; border:1.5px solid var(--borda);
+  border-radius:8px; font-size:13px; }
+
+.rec-lista { display:flex; flex-direction:column; gap:10px; }
+.rec-card { background:white; border:1.5px solid var(--borda); border-radius:12px;
+  padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
+.rec-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.10); border-color:#b0c0d8; }
+.rec-card-header { display:flex; align-items:flex-start; gap:12px; }
+.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+.rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:2px 0 4px; }
+.rec-card-sub { font-size:12px; color:var(--texto-suave); }
+.rec-card-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.rec-status { display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+.rec-status.pendente   { background:#fff3cd; color:#856404; }
+.rec-status.em_aberto  { background:#cfe2ff; color:#084298; }
+.rec-status.finalizado { background:#d1e7dd; color:#0a3622; }
+.rec-status.cancelado  { background:#f8d7da; color:#842029; }
+.rec-card-meta { font-size:11px; color:var(--texto-suave); text-align:right; }
+.rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
+  display:flex; flex-wrap:wrap; gap:6px; }
+.rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--texto); }
+.rec-prod-tag.biologico { background:#e8f5e9; color:#2e7d32; }
+.rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
+.rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
+
+.rec-op-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
+  border-radius:20px; font-size:11px; font-weight:700; }
+.rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
+.rec-op-badge.autopropelido { background:#f3e5f5; color:#6a1b9a; }
+
+
 /* MODAIS */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
 .overlay.aberto { display: flex; }
@@ -2358,6 +2404,9 @@ let _mapaUsuarios = {}; // { 'email@x.com': 'Nome do Usuário' }
 
 // Resolve o nome de exibição a partir de um lançamento.
 // Prioridade: nomeUsuario (campo novo) → lookup no mapa → email (fallback)
+// Normaliza string para uso como ID no Firestore
+function normalize(s) { return String(s).trim().toUpperCase().replace(/\s+/g, '_').replace(/[^A-Z0-9_]/g, ''); }
+
 function nomeDeUsuario(m) {
   if (m && m.nomeUsuario) return m.nomeUsuario;
   const email = m && m.usuario;
@@ -5848,7 +5897,7 @@ function pararModuloReceitas() {
 }
 
 async function carregarTalhoes() {
-  const snap = await getDocs(query(collection(db, 'receitas_talhoes'), orderBy('fazenda')));
+  const snap = await getDocs(collection(db, 'receitas_talhoes'));
   if (snap.empty) {
     // Primeira vez: migrar dados padrão
     const batch = writeBatch(db);
