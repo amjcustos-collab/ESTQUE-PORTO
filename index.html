@@ -1036,6 +1036,258 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 
 </div><!-- /tela-pluv -->
 
+<!-- ================================================================
+     TELA RECEITAS
+     ================================================================ -->
+<div class="tela-receitas" id="telaReceitas">
+  <div class="rec-toolbar">
+    <h2>🧪 Receitas Agronômicas</h2>
+    <button class="btn-rec-novo somente-agronomo-admin" onclick="window.AppEstoque.abrirNovaReceita()">
+      ✚ Nova Receita
+    </button>
+    <button class="btn-rec-novo" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirGestaoTalhoes()">
+      ⚙️ Talhões
+    </button>
+  </div>
+  <div class="rec-filtros">
+    <select class="rec-filtro-select" id="recFiltroStatus" onchange="window.AppEstoque.renderReceitas()">
+      <option value="">Todos os status</option>
+      <option value="pendente">Pendente</option>
+      <option value="em_aberto">Em aberto</option>
+      <option value="finalizado">Finalizado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <select class="rec-filtro-select" id="recFiltroFazenda" onchange="window.AppEstoque.renderReceitas()">
+      <option value="">Todas as fazendas</option>
+    </select>
+    <input class="rec-busca" type="text" id="recBusca" placeholder="🔍 Buscar receita, produto ou talhão..." oninput="window.AppEstoque.renderReceitas()">
+  </div>
+  <div class="rec-lista" id="recLista">
+    <div class="rec-vazio">Carregando receitas...</div>
+  </div>
+</div>
+
+<!-- MODAL NOVA/EDITAR RECEITA -->
+<div class="overlay" id="overlayNovaReceita" onclick="if(event.target===this)window.AppEstoque.fecharNovaReceita()">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="novaReceitaTitulo">✚ Nova Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharNovaReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;max-height:75vh;overflow-y:auto">
+      <!-- Cabeçalho da receita -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div class="campo-group">
+          <label class="label-campo">Fazenda *</label>
+          <select id="recFazenda" class="campo-input" onchange="window.AppEstoque.onRecFazendaChange()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Cultura *</label>
+          <input type="text" id="recCultura" class="campo-input" placeholder="Ex: Feijão | SF 2026">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Tipo de operação *</label>
+          <select id="recOperacao" class="campo-input" onchange="window.AppEstoque.onRecOperacaoChange()">
+            <option value="">Selecione...</option>
+            <option value="autopropelido">🚜 Pulverização Autopropelido</option>
+            <option value="drone">🚁 Drone</option>
+          </select>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Período de aplicação *</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="recDataInicio" class="campo-input" style="flex:1">
+            <span style="color:var(--texto-suave);font-size:12px">até</span>
+            <input type="date" id="recDataFim" class="campo-input" style="flex:1">
+          </div>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Vazão por hectare (L/ha) *</label>
+          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
+        </div>
+        <div class="campo-group" id="recTanqueGrupo" style="display:none">
+          <label class="label-campo">Tamanho do tanque (L) — Drone</label>
+          <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Técnico responsável *</label>
+          <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Observações</label>
+          <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
+        </div>
+      </div>
+
+      <!-- Talhões -->
+      <div style="margin-bottom:16px">
+        <label class="label-campo" style="display:block;margin-bottom:8px">Talhões *</label>
+        <div id="recTalhoesLista" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;padding:10px;
+          border:1.5px solid var(--borda);border-radius:8px;background:var(--cinza-claro)">
+          <span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>
+        </div>
+      </div>
+      <div id="recAreaTotal" style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:16px;display:none">
+        Área total selecionada: <span id="recAreaTotalValor">0</span> ha
+      </div>
+
+      <!-- Produtos -->
+      <div style="border-top:1.5px solid var(--borda);padding-top:16px;margin-top:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <label class="label-campo" style="margin:0">Produtos *</label>
+          <button onclick="window.AppEstoque.adicionarItemReceita()" style="background:var(--azul);color:white;
+            border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
+            + Adicionar produto
+          </button>
+        </div>
+        <div id="recItensLista"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharNovaReceita()">Cancelar</button>
+      <button id="btnSalvarReceita" style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarReceita()">
+        ✓ Salvar Receita
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACEITE DE RECEITA -->
+<div class="overlay" id="overlayAceiteReceita" onclick="">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2>✅ Aceitar Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharAceiteReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;max-height:80vh;overflow-y:auto">
+      <div id="aceiteReceitaConteudo"></div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharAceiteReceita()">Cancelar</button>
+      <button id="btnConfirmarAceite" style="background:var(--azul);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarAceite()">
+        ✅ Confirmar aceite e dar baixa no estoque
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FINALIZAR RECEITA -->
+<div class="overlay" id="overlayFinalizarReceita" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2>✔ Finalizar Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharFinalizarReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <div id="finalizarReceitaInfo" style="background:var(--cinza-claro);border-radius:8px;
+        padding:12px 16px;margin-bottom:16px;font-size:13px"></div>
+      <div class="campo-group">
+        <label class="label-campo">Aplicador / Operador *</label>
+        <input type="text" id="finalizarAplicador" class="campo-input" placeholder="Nome do aplicador">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div class="campo-group">
+          <label class="label-campo">Data de início *</label>
+          <input type="date" id="finalizarDataInicio" class="campo-input">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Data de término *</label>
+          <input type="date" id="finalizarDataFim" class="campo-input">
+        </div>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Observações finais</label>
+        <input type="text" id="finalizarObs" class="campo-input" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharFinalizarReceita()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarFinalizar()">
+        ✔ Finalizar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES DA RECEITA -->
+<div class="overlay" id="overlayDetReceita" onclick="if(event.target===this)window.AppEstoque.fecharDetReceita()">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-header" id="detReceitaHeader" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2 id="detReceitaTitulo">Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharDetReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;max-height:82vh;overflow-y:auto">
+      <div id="detReceitaConteudo" style="padding:20px 24px"></div>
+    </div>
+    <div class="modal-footer" id="detReceitaFooter" style="gap:8px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- MODAL GESTÃO DE TALHÕES -->
+<div class="overlay" id="overlayGestaoTalhoes" onclick="if(event.target===this)window.AppEstoque.fecharGestaoTalhoes()">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2>⚙️ Gestão de Talhões</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoTalhoes()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto">
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <select id="gestaoTalhoesFazenda" class="rec-filtro-select" style="flex:1"
+          onchange="window.AppEstoque.renderGestaoTalhoes()">
+          <option value="">Todas as fazendas</option>
+        </select>
+        <button onclick="window.AppEstoque.abrirNovoTalhao()" style="background:var(--verde);color:white;
+          border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">
+          + Novo
+        </button>
+      </div>
+      <div id="gestaoTalhoesLista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoTalhoes()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TALHÃO -->
+<div class="overlay" id="overlayEditarTalhao" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="editarTalhaoTitulo">Talhão</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarTalhao()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <input type="hidden" id="editarTalhaoId">
+      <div class="campo-group">
+        <label class="label-campo">Fazenda *</label>
+        <select id="editarTalhaoFazenda" class="campo-input">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Nome do talhão *</label>
+        <input type="text" id="editarTalhaoNome" class="campo-input" placeholder="Ex: Pivô Cachoeira">
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Área (hectares) *</label>
+        <input type="number" id="editarTalhaoArea" class="campo-input" placeholder="Ex: 93.75" min="0.01" step="0.01">
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarTalhao()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarTalhao()">
+        ✓ Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL HISTÓRICO -->
 <div class="overlay" id="overlayHistorico" onclick="if(event.target===this)window.AppEstoque.fecharHistorico()">
   <div class="modal">
@@ -2357,7 +2609,7 @@ async function iniciarSessaoAutenticada(user) {
     } catch (_) { /* offline */ }
 
     // Ativa a tela correta no DOM antes de revelar (evita flash de módulo)
-    ['telaEstoque','telaIrrigacao','telaPluv','telaDash'].forEach(id => {
+    ['telaEstoque','telaIrrigacao','telaPluv','telaDash','telaReceitas'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.remove('ativa');
     });
@@ -4205,257 +4457,6 @@ function gerarPDFLancamento(movId) {
   </div>
   <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · AMJ Agro Gestão · Documento gerado automaticamente em ${emitido}</div>
   
-<!-- ================================================================
-     TELA RECEITAS
-     ================================================================ -->
-<div class="tela-receitas" id="telaReceitas">
-  <div class="rec-toolbar">
-    <h2>🧪 Receitas Agronômicas</h2>
-    <button class="btn-rec-novo somente-agronomo-admin" onclick="window.AppEstoque.abrirNovaReceita()">
-      ✚ Nova Receita
-    </button>
-    <button class="btn-rec-novo" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirGestaoTalhoes()">
-      ⚙️ Talhões
-    </button>
-  </div>
-  <div class="rec-filtros">
-    <select class="rec-filtro-select" id="recFiltroStatus" onchange="window.AppEstoque.renderReceitas()">
-      <option value="">Todos os status</option>
-      <option value="pendente">Pendente</option>
-      <option value="em_aberto">Em aberto</option>
-      <option value="finalizado">Finalizado</option>
-      <option value="cancelado">Cancelado</option>
-    </select>
-    <select class="rec-filtro-select" id="recFiltroFazenda" onchange="window.AppEstoque.renderReceitas()">
-      <option value="">Todas as fazendas</option>
-    </select>
-    <input class="rec-busca" type="text" id="recBusca" placeholder="🔍 Buscar receita, produto ou talhão..." oninput="window.AppEstoque.renderReceitas()">
-  </div>
-  <div class="rec-lista" id="recLista">
-    <div class="rec-vazio">Carregando receitas...</div>
-  </div>
-</div>
-
-<!-- MODAL NOVA/EDITAR RECEITA -->
-<div class="overlay" id="overlayNovaReceita" onclick="if(event.target===this)window.AppEstoque.fecharNovaReceita()">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
-      <h2 id="novaReceitaTitulo">✚ Nova Receita</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharNovaReceita()">×</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px;max-height:75vh;overflow-y:auto">
-      <!-- Cabeçalho da receita -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
-        <div class="campo-group">
-          <label class="label-campo">Fazenda *</label>
-          <select id="recFazenda" class="campo-input" onchange="window.AppEstoque.onRecFazendaChange()">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Cultura *</label>
-          <input type="text" id="recCultura" class="campo-input" placeholder="Ex: Feijão | SF 2026">
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Tipo de operação *</label>
-          <select id="recOperacao" class="campo-input" onchange="window.AppEstoque.onRecOperacaoChange()">
-            <option value="">Selecione...</option>
-            <option value="autopropelido">🚜 Pulverização Autopropelido</option>
-            <option value="drone">🚁 Drone</option>
-          </select>
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Período de aplicação *</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="date" id="recDataInicio" class="campo-input" style="flex:1">
-            <span style="color:var(--texto-suave);font-size:12px">até</span>
-            <input type="date" id="recDataFim" class="campo-input" style="flex:1">
-          </div>
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Vazão por hectare (L/ha) *</label>
-          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
-        </div>
-        <div class="campo-group" id="recTanqueGrupo" style="display:none">
-          <label class="label-campo">Tamanho do tanque (L) — Drone</label>
-          <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Técnico responsável *</label>
-          <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Observações</label>
-          <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
-        </div>
-      </div>
-
-      <!-- Talhões -->
-      <div style="margin-bottom:16px">
-        <label class="label-campo" style="display:block;margin-bottom:8px">Talhões *</label>
-        <div id="recTalhoesLista" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;padding:10px;
-          border:1.5px solid var(--borda);border-radius:8px;background:var(--cinza-claro)">
-          <span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>
-        </div>
-      </div>
-      <div id="recAreaTotal" style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:16px;display:none">
-        Área total selecionada: <span id="recAreaTotalValor">0</span> ha
-      </div>
-
-      <!-- Produtos -->
-      <div style="border-top:1.5px solid var(--borda);padding-top:16px;margin-top:4px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <label class="label-campo" style="margin:0">Produtos *</label>
-          <button onclick="window.AppEstoque.adicionarItemReceita()" style="background:var(--azul);color:white;
-            border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
-            + Adicionar produto
-          </button>
-        </div>
-        <div id="recItensLista"></div>
-      </div>
-    </div>
-    <div class="modal-footer" style="gap:10px">
-      <button class="btn-cancelar" onclick="window.AppEstoque.fecharNovaReceita()">Cancelar</button>
-      <button id="btnSalvarReceita" style="background:var(--verde);color:white;border:none;border-radius:8px;
-        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarReceita()">
-        ✓ Salvar Receita
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL ACEITE DE RECEITA -->
-<div class="overlay" id="overlayAceiteReceita" onclick="">
-  <div class="modal" style="max-width:760px">
-    <div class="modal-header" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
-      <h2>✅ Aceitar Receita</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharAceiteReceita()">×</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px;max-height:80vh;overflow-y:auto">
-      <div id="aceiteReceitaConteudo"></div>
-    </div>
-    <div class="modal-footer" style="gap:10px">
-      <button class="btn-cancelar" onclick="window.AppEstoque.fecharAceiteReceita()">Cancelar</button>
-      <button id="btnConfirmarAceite" style="background:var(--azul);color:white;border:none;border-radius:8px;
-        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarAceite()">
-        ✅ Confirmar aceite e dar baixa no estoque
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL FINALIZAR RECEITA -->
-<div class="overlay" id="overlayFinalizarReceita" onclick="">
-  <div class="modal estreito">
-    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
-      <h2>✔ Finalizar Receita</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharFinalizarReceita()">×</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px">
-      <div id="finalizarReceitaInfo" style="background:var(--cinza-claro);border-radius:8px;
-        padding:12px 16px;margin-bottom:16px;font-size:13px"></div>
-      <div class="campo-group">
-        <label class="label-campo">Aplicador / Operador *</label>
-        <input type="text" id="finalizarAplicador" class="campo-input" placeholder="Nome do aplicador">
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-        <div class="campo-group">
-          <label class="label-campo">Data de início *</label>
-          <input type="date" id="finalizarDataInicio" class="campo-input">
-        </div>
-        <div class="campo-group">
-          <label class="label-campo">Data de término *</label>
-          <input type="date" id="finalizarDataFim" class="campo-input">
-        </div>
-      </div>
-      <div class="campo-group" style="margin-top:12px">
-        <label class="label-campo">Observações finais</label>
-        <input type="text" id="finalizarObs" class="campo-input" placeholder="Opcional">
-      </div>
-    </div>
-    <div class="modal-footer" style="gap:10px">
-      <button class="btn-cancelar" onclick="window.AppEstoque.fecharFinalizarReceita()">Cancelar</button>
-      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
-        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarFinalizar()">
-        ✔ Finalizar
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL DETALHES DA RECEITA -->
-<div class="overlay" id="overlayDetReceita" onclick="if(event.target===this)window.AppEstoque.fecharDetReceita()">
-  <div class="modal" style="max-width:780px">
-    <div class="modal-header" id="detReceitaHeader" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
-      <h2 id="detReceitaTitulo">Receita</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharDetReceita()">×</button>
-    </div>
-    <div class="modal-body" style="padding:0;max-height:82vh;overflow-y:auto">
-      <div id="detReceitaConteudo" style="padding:20px 24px"></div>
-    </div>
-    <div class="modal-footer" id="detReceitaFooter" style="gap:8px;flex-wrap:wrap"></div>
-  </div>
-</div>
-
-<!-- MODAL GESTÃO DE TALHÕES -->
-<div class="overlay" id="overlayGestaoTalhoes" onclick="if(event.target===this)window.AppEstoque.fecharGestaoTalhoes()">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
-      <h2>⚙️ Gestão de Talhões</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoTalhoes()">×</button>
-    </div>
-    <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto">
-      <div style="display:flex;gap:10px;margin-bottom:14px">
-        <select id="gestaoTalhoesFazenda" class="rec-filtro-select" style="flex:1"
-          onchange="window.AppEstoque.renderGestaoTalhoes()">
-          <option value="">Todas as fazendas</option>
-        </select>
-        <button onclick="window.AppEstoque.abrirNovoTalhao()" style="background:var(--verde);color:white;
-          border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">
-          + Novo
-        </button>
-      </div>
-      <div id="gestaoTalhoesLista"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoTalhoes()">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL EDITAR TALHÃO -->
-<div class="overlay" id="overlayEditarTalhao" onclick="">
-  <div class="modal estreito">
-    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
-      <h2 id="editarTalhaoTitulo">Talhão</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarTalhao()">×</button>
-    </div>
-    <div class="modal-body" style="padding:20px 24px">
-      <input type="hidden" id="editarTalhaoId">
-      <div class="campo-group">
-        <label class="label-campo">Fazenda *</label>
-        <select id="editarTalhaoFazenda" class="campo-input">
-          <option value="">Selecione...</option>
-        </select>
-      </div>
-      <div class="campo-group" style="margin-top:12px">
-        <label class="label-campo">Nome do talhão *</label>
-        <input type="text" id="editarTalhaoNome" class="campo-input" placeholder="Ex: Pivô Cachoeira">
-      </div>
-      <div class="campo-group" style="margin-top:12px">
-        <label class="label-campo">Área (hectares) *</label>
-        <input type="number" id="editarTalhaoArea" class="campo-input" placeholder="Ex: 93.75" min="0.01" step="0.01">
-      </div>
-    </div>
-    <div class="modal-footer" style="gap:10px">
-      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarTalhao()">Cancelar</button>
-      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
-        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarTalhao()">
-        ✓ Salvar
-      </button>
-    </div>
-  </div>
-</div>
 
 </body></html>`;
 
