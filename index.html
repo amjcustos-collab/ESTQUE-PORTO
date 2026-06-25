@@ -818,11 +818,11 @@ header {
     <button class="btn-header verde" id="btnExcelHeader" onclick="window.AppEstoque.abrirExportacaoXLS()">📊 <span>Excel</span></button>
     <button class="btn-header destaque" id="btnPDFHeader" onclick="window.AppEstoque.abrirModalPDF()">🖨️ <span>PDF</span></button>
     <!-- Botões da Irrigação -->
-    <button class="btn-header verde" id="btnIrrigExcelHeader" onclick="window.AppEstoque.exportarIrrigXLS()" style="display:none">📊 <span>Excel</span></button>
-    <button class="btn-header destaque" id="btnIrrigPDFHeader" onclick="window.AppEstoque.exportarIrrigPDF()" style="display:none">🖨️ <span>PDF</span></button>
+    <button class="btn-header verde" id="btnIrrigExcelHeader" onclick="window.AppEstoque.confirmarIrrigXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnIrrigPDFHeader" onclick="window.AppEstoque.confirmarIrrigPDF()" style="display:none">🖨️ <span>PDF</span></button>
     <!-- Botões da Pluviometria -->
-    <button class="btn-header verde" id="btnPluvExcelHeader" onclick="window.AppEstoque.exportarPluvXLS()" style="display:none">📊 <span>Excel</span></button>
-    <button class="btn-header destaque" id="btnPluvPDFHeader" onclick="window.AppEstoque.exportarPluvPDF()" style="display:none">🖨️ <span>PDF</span></button>
+    <button class="btn-header verde" id="btnPluvExcelHeader" onclick="window.AppEstoque.confirmarPluvXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnPluvPDFHeader" onclick="window.AppEstoque.confirmarPluvPDF()" style="display:none">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.solicitarRedefinicaoSenha()" title="Alterar minha senha" style="margin-right:2px">🔑</button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -1354,6 +1354,32 @@ header {
     <div class="modal-footer" style="gap:10px">
       <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarPluv()">Cancelar</button>
       <button id="btnSalvarEditPluv" style="background:#1a7a5b;color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarEdicaoPluv()">✓ Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR EXPORT (Irrigação / Pluviometria) -->
+<div class="overlay" id="overlayConfirmExport" onclick="if(event.target===this)window.AppEstoque.fecharConfirmExport()">
+  <div class="modal estreito">
+    <div class="modal-header" id="confirmExportHeader">
+      <h2 id="confirmExportTitulo">Gerar arquivo</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharConfirmExport()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--cinza-claro);border-radius:10px;margin-bottom:18px">
+        <div style="font-size:36px" id="confirmExportIcone">📊</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;color:var(--texto)" id="confirmExportDesc">Exportar dados</div>
+          <div style="font-size:12px;color:var(--texto-suave);margin-top:3px" id="confirmExportSub"></div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--texto-suave);text-align:center">
+        Deseja gerar o arquivo com os dados atuais<br>exibidos na tela (filtros aplicados)?
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharConfirmExport()">Cancelar</button>
+      <button id="btnConfirmExport" style="color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.executarConfirmExport()">Gerar</button>
     </div>
   </div>
 </div>
@@ -5331,6 +5357,91 @@ async function pedirExclusaoPluv(id) {
   }
 }
 
+
+// =====================================================================
+// MODAL DE CONFIRMAÇÃO DE EXPORT (Irrigação / Pluviometria)
+// =====================================================================
+let _confirmExportFn = null;
+
+function abrirConfirmExport({ titulo, icone, desc, sub, corHeader, corBtn, labelBtn, fn }) {
+  _confirmExportFn = fn;
+  document.getElementById('confirmExportTitulo').textContent = titulo;
+  document.getElementById('confirmExportIcone').textContent  = icone;
+  document.getElementById('confirmExportDesc').textContent   = desc;
+  document.getElementById('confirmExportSub').textContent    = sub || '';
+  document.getElementById('confirmExportHeader').style.background = corHeader || 'linear-gradient(90deg,#0f2545,#1a4080)';
+  const btn = document.getElementById('btnConfirmExport');
+  btn.style.background = corBtn || 'var(--azul)';
+  btn.textContent = labelBtn || 'Gerar';
+  document.getElementById('overlayConfirmExport').classList.add('aberto');
+}
+function fecharConfirmExport() {
+  document.getElementById('overlayConfirmExport').classList.remove('aberto');
+  _confirmExportFn = null;
+}
+function executarConfirmExport() {
+  fecharConfirmExport();
+  if (_confirmExportFn) _confirmExportFn();
+}
+
+// Wrappers que abrem o modal antes de exportar
+function confirmarIrrigXLS() {
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.selectedOptions[0]?.text || 'período atual';
+  const n = getLancamentosFiltrados().length;
+  abrirConfirmExport({
+    titulo: 'Exportar Excel — Irrigação',
+    icone: '📊',
+    desc: `Excel com os lançamentos de irrigação`,
+    sub: `${periodo} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    corHeader: 'linear-gradient(90deg,#1a4a3b,#1a7a3b)',
+    corBtn: 'var(--verde)',
+    labelBtn: '📊 Baixar Excel',
+    fn: exportarIrrigXLS
+  });
+}
+function confirmarIrrigPDF() {
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.selectedOptions[0]?.text || 'período atual';
+  const n = getLancamentosFiltrados().length;
+  abrirConfirmExport({
+    titulo: 'Gerar PDF — Irrigação',
+    icone: '🖨️',
+    desc: `Relatório PDF de irrigação`,
+    sub: `${periodo} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    corHeader: 'linear-gradient(90deg,#5a3a00,#9a6a00)',
+    corBtn: '#c8860a',
+    labelBtn: '🖨️ Gerar PDF',
+    fn: exportarIrrigPDF
+  });
+}
+function confirmarPluvXLS() {
+  const mes = document.getElementById('pluvMesFiltro')?.selectedOptions[0]?.text || 'mês atual';
+  const n   = getLancamentosMes(getMesAtivo()).length;
+  abrirConfirmExport({
+    titulo: 'Exportar Excel — Pluviometria',
+    icone: '📊',
+    desc: `Excel com os lançamentos de chuva`,
+    sub: `${mes} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    corHeader: 'linear-gradient(90deg,#1a4a3b,#1a7a3b)',
+    corBtn: 'var(--verde)',
+    labelBtn: '📊 Baixar Excel',
+    fn: exportarPluvXLS
+  });
+}
+function confirmarPluvPDF() {
+  const mes = document.getElementById('pluvMesFiltro')?.selectedOptions[0]?.text || 'mês atual';
+  const n   = getLancamentosMes(getMesAtivo()).length;
+  abrirConfirmExport({
+    titulo: 'Gerar PDF — Pluviometria',
+    icone: '🖨️',
+    desc: `Relatório PDF mensal de chuva`,
+    sub: `${mes} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    corHeader: 'linear-gradient(90deg,#5a3a00,#9a6a00)',
+    corBtn: '#c8860a',
+    labelBtn: '🖨️ Gerar PDF',
+    fn: exportarPluvPDF
+  });
+}
+
 // ── GESTÃO DE PLUVIÔMETROS ─────────────────────────────────────────────
 
 async function abrirGestaoPluv() {
@@ -6212,6 +6323,8 @@ window.AppEstoque = {
   navegarModulo, renderDashboard,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
   renderTabelaPluv,
+  abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
+  confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
   abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
