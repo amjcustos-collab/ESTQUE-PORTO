@@ -370,6 +370,8 @@ header {
 /* ── DASHBOARD ────────────────────────────────────────────────────── */
 .tela-dash { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-dash.ativa { display: block; }
+.tela-receitas { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
+.tela-receitas.ativa { display: block; }
 
 .dash-saudacao { font-size: 20px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
 .dash-sub      { font-size: 13px; color: var(--texto-suave); margin-bottom: 20px; }
@@ -7240,8 +7242,10 @@ function navegarModulo(modulo) {
   show('btnPluvPDFHeader',   modulo === 'pluviometria' && temRelat);
   // Receitas — sem botões extras no header (ações ficam dentro dos cards)
 
-  if (modulo === 'irrigacao')    iniciarModuloIrrigacao(); else pararModuloIrrigacao();
-  if (modulo === 'pluviometria') iniciarModuloPluv();      else pararModuloPluv();
+  // Listeners de irrigação e pluv ficam sempre ativos (Dashboard os consome).
+  // Só iniciam se ainda não estiverem rodando.
+  if (modulo === 'irrigacao')    iniciarModuloIrrigacao();
+  if (modulo === 'pluviometria') iniciarModuloPluv();
   if (modulo === 'receitas')     iniciarModuloReceitas();  else pararModuloReceitas();
   if (modulo === 'dashboard')    renderDashboard();
 }
