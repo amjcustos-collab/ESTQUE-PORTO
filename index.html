@@ -59,11 +59,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 /* App fica completamente oculto até login ser confirmado pelo Firebase.
    A classe .app-pronto é adicionada via JS após autenticação confirmada. */
 header, nav.modulos-nav, .filtros, .tela-estoque, .tela-irrigacao,
-.tela-pluv, .tela-dash { visibility: hidden; }
+.tela-pluv, .tela-dash, .tela-receitas { visibility: hidden; }
 body.app-pronto header, body.app-pronto nav.modulos-nav,
 body.app-pronto .filtros, body.app-pronto .tela-estoque,
 body.app-pronto .tela-irrigacao, body.app-pronto .tela-pluv,
-body.app-pronto .tela-dash { visibility: visible; }
+body.app-pronto .tela-dash, body.app-pronto .tela-receitas { visibility: visible; }
 
 /* HEADER */
 header {
@@ -628,6 +628,8 @@ header {
 
 /* Esconder elementos por permissão */
 .somente-admin { display: none; }
+body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
+.somente-agronomo-admin { display: none; }
 .is-admin .somente-admin { display: inline-flex; align-items: center; gap: 6px; }
 .is-admin .btn-novo-produto.somente-admin { display: inline-block; }
 .is-admin .btn-acoes.somente-admin,
@@ -841,6 +843,9 @@ header {
   </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('pluviometria')" id="tab-pluviometria">
     🌧️ Pluviometria
+  </button>
+  <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('receitas')" id="tab-receitas">
+    🧪 Receitas
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
     💰 Custos <span class="modulo-badge em-breve">em breve</span>
@@ -2354,7 +2359,7 @@ async function iniciarSessaoAutenticada(user) {
       const el = document.getElementById(id);
       if (el) el.classList.remove('ativa');
     });
-    const telaMap = { estoque:'telaEstoque', irrigacao:'telaIrrigacao', pluviometria:'telaPluv', dashboard:'telaDash' };
+    const telaMap = { estoque:'telaEstoque', irrigacao:'telaIrrigacao', pluviometria:'telaPluv', dashboard:'telaDash', receitas:'telaReceitas' };
     const telaAlvo = document.getElementById(telaMap[_moduloInicial]);
     if (telaAlvo) telaAlvo.classList.add('ativa');
 
@@ -2379,6 +2384,7 @@ function finalizarSessao() {
   if (unsubProdutos) { unsubProdutos(); unsubProdutos = null; }
   if (unsubHistorico) { unsubHistorico(); unsubHistorico = null; }
   if (unsubDashHistorico) { unsubDashHistorico(); unsubDashHistorico = null; }
+  pararModuloReceitas();
   produtos = [];
   historico = [];
   dashUltimasMov = [];
@@ -3056,7 +3062,7 @@ function abrirReceita() {
   document.getElementById('rec-obs').value = '';
   document.getElementById('rec-busca-produto').value = '';
   document.getElementById('rec-sugestoes').innerHTML = '';
-  renderItensReceita();
+  renderItensBaixaReceita();
   document.getElementById('overlayReceita').classList.add('aberto');
   setTimeout(() => document.getElementById('rec-numero').focus(), 80);
 }
@@ -3083,7 +3089,7 @@ function buscarProdutoReceita() {
   }
 
   caixa.innerHTML = `<div class="rec-sugestoes-lista">${candidatos.map(p => `
-    <div class="rec-sugestao-item" onclick="window.AppEstoque.adicionarItemReceita('${p.id}')">
+    <div class="rec-sugestao-item" onclick="window.AppEstoque.adicionarItemBaixaReceita('${p.id}')">
       <div>
         <div class="rec-sugestao-nome">${p.nome}</div>
         <div class="rec-sugestao-info">${p.pa}</div>
@@ -3093,7 +3099,7 @@ function buscarProdutoReceita() {
   `).join('')}</div>`;
 }
 
-function adicionarItemReceita(produtoId) {
+function adicionarItemBaixaReceita(produtoId) {
   const p = produtos.find(x => String(x.id) === String(produtoId));
   if (!p) return;
   if (p.estoque <= 0) { mostrarToast(`"${p.nome}" está com estoque zerado.`, 'erro'); return; }
@@ -3102,7 +3108,7 @@ function adicionarItemReceita(produtoId) {
 
   document.getElementById('rec-busca-produto').value = '';
   document.getElementById('rec-sugestoes').innerHTML = '';
-  renderItensReceita();
+  renderItensBaixaReceita();
   setTimeout(() => {
     const idx = receitaItens.length - 1;
     const input = document.getElementById(`rec-qtd-${idx}`);
@@ -3110,9 +3116,9 @@ function adicionarItemReceita(produtoId) {
   }, 60);
 }
 
-function removerItemReceita(idx) {
+function removerItemBaixaReceita(idx) {
   receitaItens.splice(idx, 1);
-  renderItensReceita();
+  renderItensBaixaReceita();
 }
 
 function atualizarQtdReceita(idx, valor) {
@@ -3143,7 +3149,7 @@ function atualizarQtdReceita(idx, valor) {
   }
 }
 
-function renderItensReceita() {
+function renderItensBaixaReceita() {
   const vazio = document.getElementById('rec-itens-vazio');
   const lista = document.getElementById('rec-lista-itens');
 
@@ -3161,7 +3167,7 @@ function renderItensReceita() {
         <input type="number" class="rec-item-qtd-input" id="rec-qtd-${idx}" min="0.1" step="0.5" placeholder="Qtd" value="${item.qtd}" oninput="window.AppEstoque.atualizarQtdReceita(${idx}, this.value)">
         <span class="rec-item-unidade">${item.unidade}</span>
         <span class="rec-item-disponivel">disp.: ${fmt(item.estoqueDisponivel)} ${item.unidade}</span>
-        <button class="rec-item-remover" onclick="window.AppEstoque.removerItemReceita(${idx})" title="Remover">✕</button>
+        <button class="rec-item-remover" onclick="window.AppEstoque.removerItemBaixaReceita(${idx})" title="Remover">✕</button>
       </div>
       <div class="rec-preview" id="rec-preview-${idx}"></div>
     </div>
@@ -4196,7 +4202,260 @@ function gerarPDFLancamento(movId) {
     <div class="assin"><div class="assin-linha"></div><div class="assin-rot">Conferência / Almoxarifado</div></div>
   </div>
   <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · AMJ Agro Gestão · Documento gerado automaticamente em ${emitido}</div>
-  </body></html>`;
+  
+<!-- ================================================================
+     TELA RECEITAS
+     ================================================================ -->
+<div class="tela-receitas" id="telaReceitas">
+  <div class="rec-toolbar">
+    <h2>🧪 Receitas Agronômicas</h2>
+    <button class="btn-rec-novo somente-agronomo-admin" onclick="window.AppEstoque.abrirNovaReceita()">
+      ✚ Nova Receita
+    </button>
+    <button class="btn-rec-novo" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirGestaoTalhoes()">
+      ⚙️ Talhões
+    </button>
+  </div>
+  <div class="rec-filtros">
+    <select class="rec-filtro-select" id="recFiltroStatus" onchange="window.AppEstoque.renderReceitas()">
+      <option value="">Todos os status</option>
+      <option value="pendente">Pendente</option>
+      <option value="em_aberto">Em aberto</option>
+      <option value="finalizado">Finalizado</option>
+      <option value="cancelado">Cancelado</option>
+    </select>
+    <select class="rec-filtro-select" id="recFiltroFazenda" onchange="window.AppEstoque.renderReceitas()">
+      <option value="">Todas as fazendas</option>
+    </select>
+    <input class="rec-busca" type="text" id="recBusca" placeholder="🔍 Buscar receita, produto ou talhão..." oninput="window.AppEstoque.renderReceitas()">
+  </div>
+  <div class="rec-lista" id="recLista">
+    <div class="rec-vazio">Carregando receitas...</div>
+  </div>
+</div>
+
+<!-- MODAL NOVA/EDITAR RECEITA -->
+<div class="overlay" id="overlayNovaReceita" onclick="if(event.target===this)window.AppEstoque.fecharNovaReceita()">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="novaReceitaTitulo">✚ Nova Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharNovaReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;max-height:75vh;overflow-y:auto">
+      <!-- Cabeçalho da receita -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+        <div class="campo-group">
+          <label class="label-campo">Fazenda *</label>
+          <select id="recFazenda" class="campo-input" onchange="window.AppEstoque.onRecFazendaChange()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Cultura *</label>
+          <input type="text" id="recCultura" class="campo-input" placeholder="Ex: Feijão | SF 2026">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Tipo de operação *</label>
+          <select id="recOperacao" class="campo-input" onchange="window.AppEstoque.onRecOperacaoChange()">
+            <option value="">Selecione...</option>
+            <option value="autopropelido">🚜 Pulverização Autopropelido</option>
+            <option value="drone">🚁 Drone</option>
+          </select>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Período de aplicação *</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="date" id="recDataInicio" class="campo-input" style="flex:1">
+            <span style="color:var(--texto-suave);font-size:12px">até</span>
+            <input type="date" id="recDataFim" class="campo-input" style="flex:1">
+          </div>
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Vazão por hectare (L/ha) *</label>
+          <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
+        </div>
+        <div class="campo-group" id="recTanqueGrupo" style="display:none">
+          <label class="label-campo">Tamanho do tanque (L) — Drone</label>
+          <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Técnico responsável *</label>
+          <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Observações</label>
+          <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
+        </div>
+      </div>
+
+      <!-- Talhões -->
+      <div style="margin-bottom:16px">
+        <label class="label-campo" style="display:block;margin-bottom:8px">Talhões *</label>
+        <div id="recTalhoesLista" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;padding:10px;
+          border:1.5px solid var(--borda);border-radius:8px;background:var(--cinza-claro)">
+          <span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>
+        </div>
+      </div>
+      <div id="recAreaTotal" style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:16px;display:none">
+        Área total selecionada: <span id="recAreaTotalValor">0</span> ha
+      </div>
+
+      <!-- Produtos -->
+      <div style="border-top:1.5px solid var(--borda);padding-top:16px;margin-top:4px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <label class="label-campo" style="margin:0">Produtos *</label>
+          <button onclick="window.AppEstoque.adicionarItemReceita()" style="background:var(--azul);color:white;
+            border:none;border-radius:7px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer">
+            + Adicionar produto
+          </button>
+        </div>
+        <div id="recItensLista"></div>
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharNovaReceita()">Cancelar</button>
+      <button id="btnSalvarReceita" style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarReceita()">
+        ✓ Salvar Receita
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ACEITE DE RECEITA -->
+<div class="overlay" id="overlayAceiteReceita" onclick="">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2>✅ Aceitar Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharAceiteReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px;max-height:80vh;overflow-y:auto">
+      <div id="aceiteReceitaConteudo"></div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharAceiteReceita()">Cancelar</button>
+      <button id="btnConfirmarAceite" style="background:var(--azul);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarAceite()">
+        ✅ Confirmar aceite e dar baixa no estoque
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL FINALIZAR RECEITA -->
+<div class="overlay" id="overlayFinalizarReceita" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2>✔ Finalizar Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharFinalizarReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <div id="finalizarReceitaInfo" style="background:var(--cinza-claro);border-radius:8px;
+        padding:12px 16px;margin-bottom:16px;font-size:13px"></div>
+      <div class="campo-group">
+        <label class="label-campo">Aplicador / Operador *</label>
+        <input type="text" id="finalizarAplicador" class="campo-input" placeholder="Nome do aplicador">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div class="campo-group">
+          <label class="label-campo">Data de início *</label>
+          <input type="date" id="finalizarDataInicio" class="campo-input">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Data de término *</label>
+          <input type="date" id="finalizarDataFim" class="campo-input">
+        </div>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Observações finais</label>
+        <input type="text" id="finalizarObs" class="campo-input" placeholder="Opcional">
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharFinalizarReceita()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.confirmarFinalizar()">
+        ✔ Finalizar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALHES DA RECEITA -->
+<div class="overlay" id="overlayDetReceita" onclick="if(event.target===this)window.AppEstoque.fecharDetReceita()">
+  <div class="modal" style="max-width:780px">
+    <div class="modal-header" id="detReceitaHeader" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2 id="detReceitaTitulo">Receita</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharDetReceita()">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;max-height:82vh;overflow-y:auto">
+      <div id="detReceitaConteudo" style="padding:20px 24px"></div>
+    </div>
+    <div class="modal-footer" id="detReceitaFooter" style="gap:8px;flex-wrap:wrap"></div>
+  </div>
+</div>
+
+<!-- MODAL GESTÃO DE TALHÕES -->
+<div class="overlay" id="overlayGestaoTalhoes" onclick="if(event.target===this)window.AppEstoque.fecharGestaoTalhoes()">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2>⚙️ Gestão de Talhões</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoTalhoes()">×</button>
+    </div>
+    <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto">
+      <div style="display:flex;gap:10px;margin-bottom:14px">
+        <select id="gestaoTalhoesFazenda" class="rec-filtro-select" style="flex:1"
+          onchange="window.AppEstoque.renderGestaoTalhoes()">
+          <option value="">Todas as fazendas</option>
+        </select>
+        <button onclick="window.AppEstoque.abrirNovoTalhao()" style="background:var(--verde);color:white;
+          border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer">
+          + Novo
+        </button>
+      </div>
+      <div id="gestaoTalhoesLista"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharGestaoTalhoes()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR TALHÃO -->
+<div class="overlay" id="overlayEditarTalhao" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="editarTalhaoTitulo">Talhão</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarTalhao()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <input type="hidden" id="editarTalhaoId">
+      <div class="campo-group">
+        <label class="label-campo">Fazenda *</label>
+        <select id="editarTalhaoFazenda" class="campo-input">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Nome do talhão *</label>
+        <input type="text" id="editarTalhaoNome" class="campo-input" placeholder="Ex: Pivô Cachoeira">
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Área (hectares) *</label>
+        <input type="number" id="editarTalhaoArea" class="campo-input" placeholder="Ex: 93.75" min="0.01" step="0.01">
+      </div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarTalhao()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarTalhao()">
+        ✓ Salvar
+      </button>
+    </div>
+  </div>
+</div>
+
+</body></html>`;
 
   win.document.write(html);
   win.document.close();
@@ -5455,6 +5714,1103 @@ function confirmarPluvPDF() {
   });
 }
 
+
+// =====================================================================
+// MÓDULO RECEITAS — Dados, variáveis e Firestore
+// =====================================================================
+
+// Talhões pré-carregados (editáveis via Gestão de Talhões)
+const TALHOES_PADRAO = [
+  // CATARINA
+  {fazenda:'CATARINA', nome:'MATO', area:125.00},
+  {fazenda:'CATARINA', nome:'IPÊ', area:23.85},
+  {fazenda:'CATARINA', nome:'EUCALIPTO', area:121.44},
+  {fazenda:'CATARINA', nome:'ABACATE', area:23.86},
+  {fazenda:'CATARINA', nome:'AROEIRA', area:16.68},
+  {fazenda:'CATARINA', nome:'TAMARINDO', area:60.00},
+  {fazenda:'CATARINA', nome:'BEIRA RIO', area:14.79},
+  {fazenda:'CATARINA', nome:'CAPELA 1', area:10.98},
+  {fazenda:'CATARINA', nome:'CAPELA 2', area:17.00},
+  {fazenda:'CATARINA', nome:'SEQUEIRO CATARINA', area:81.44},
+  // FIGUEIRÃO
+  {fazenda:'FIGUEIRÃO', nome:'PAINEIRA', area:15.65},
+  {fazenda:'FIGUEIRÃO', nome:'JEQUITIBÁ', area:88.87},
+  {fazenda:'FIGUEIRÃO', nome:'TAMBORIL', area:35.05},
+  {fazenda:'FIGUEIRÃO', nome:'CANDIÚBA', area:34.81},
+  {fazenda:'FIGUEIRÃO', nome:'PAU BRASIL', area:14.65},
+  {fazenda:'FIGUEIRÃO', nome:'PALMITO', area:38.00},
+  {fazenda:'FIGUEIRÃO', nome:'MOGNO', area:53.00},
+  {fazenda:'FIGUEIRÃO', nome:'SEQUEIRO FIGUEIRÃO', area:54.91},
+  // JUPIÁ
+  {fazenda:'JUPIÁ', nome:'MAMÃO', area:21.68},
+  {fazenda:'JUPIÁ', nome:'BURITI', area:38.00},
+  {fazenda:'JUPIÁ', nome:'JENIPAPO', area:25.22},
+  {fazenda:'JUPIÁ', nome:'JABUTICABA', area:15.03},
+  {fazenda:'JUPIÁ', nome:'SEQUEIRO JUPIÁ', area:40.00},
+  // MAOA
+  {fazenda:'MAOA', nome:'PIVÔ 1', area:46.58},
+  {fazenda:'MAOA', nome:'PIVÔ 2', area:35.24},
+  {fazenda:'MAOA', nome:'PIVÔ 3', area:14.48},
+  // PALMITAL
+  {fazenda:'PALMITAL', nome:'ANGELIM', area:13.97},
+  {fazenda:'PALMITAL', nome:'COQUEIRÃO', area:20.30},
+  {fazenda:'PALMITAL', nome:'PEQUI', area:37.41},
+  {fazenda:'PALMITAL', nome:'CAJU', area:13.09},
+  {fazenda:'PALMITAL', nome:'JACA', area:7.06},
+  {fazenda:'PALMITAL', nome:'BALSA', area:17.00},
+  {fazenda:'PALMITAL', nome:'REPRESA 1', area:15.00},
+  {fazenda:'PALMITAL', nome:'REPRESA 2', area:15.00},
+  {fazenda:'PALMITAL', nome:'SEQUEIRO PALMITAL', area:23.50},
+  // PONTAL
+  {fazenda:'PONTAL', nome:'SERINGUEIRA', area:118.29},
+  {fazenda:'PONTAL', nome:'GAIROVA', area:10.50},
+  {fazenda:'PONTAL', nome:'GOIABA', area:48.00},
+  {fazenda:'PONTAL', nome:'SAPUCAÍ 1', area:20.00},
+  {fazenda:'PONTAL', nome:'SAPUCAÍ 2', area:10.00},
+  {fazenda:'PONTAL', nome:'SEQUEIRO PONTAL', area:40.51},
+  // PORTO
+  {fazenda:'PORTO', nome:'JATOBÁ', area:19.90},
+  {fazenda:'PORTO', nome:'CACHOEIRA', area:93.75},
+  {fazenda:'PORTO', nome:'ANGICO', area:48.87},
+  {fazenda:'PORTO', nome:'FARINHA SECA', area:71.33},
+  {fazenda:'PORTO', nome:'XIXÁ', area:13.61},
+  {fazenda:'PORTO', nome:'REPRESA 1', area:15.00},
+  {fazenda:'PORTO', nome:'REPRESA 2', area:15.00},
+  {fazenda:'PORTO', nome:'MATINHA', area:19.13},
+  {fazenda:'PORTO', nome:'CEDRO', area:75.65},
+  {fazenda:'PORTO', nome:'PEROBA', area:71.05},
+  {fazenda:'PORTO', nome:'JACARANDÁ', area:25.00},
+  {fazenda:'PORTO', nome:'FLAMBOYANT', area:30.97},
+  {fazenda:'PORTO', nome:'SANTA MARIA 1 E 2', area:36.00},
+  {fazenda:'PORTO', nome:'MACAÚBA', area:24.30},
+  {fazenda:'PORTO', nome:'FIGUEIRA', area:124.04},
+  {fazenda:'PORTO', nome:'BACABA', area:47.74},
+  {fazenda:'PORTO', nome:'BACURI', area:69.91},
+  {fazenda:'PORTO', nome:'MERINDIBA', area:40.70},
+  {fazenda:'PORTO', nome:'SEQUEIRO PORTO', area:223.77},
+  {fazenda:'PORTO', nome:'SEQUEIRO REPRESA', area:16.51},
+  // SEMPRE VERDE
+  {fazenda:'SEMPRE VERDE', nome:'AMENDOIM', area:22.98},
+  {fazenda:'SEMPRE VERDE', nome:'TORRE', area:20.20},
+  {fazenda:'SEMPRE VERDE', nome:'BAMBU', area:11.00},
+  {fazenda:'SEMPRE VERDE', nome:'VENDA', area:21.80},
+  {fazenda:'SEMPRE VERDE', nome:'SEDE', area:40.30},
+  {fazenda:'SEMPRE VERDE', nome:'CURRAL', area:38.36},
+  {fazenda:'SEMPRE VERDE', nome:'MANGA', area:10.47},
+  {fazenda:'SEMPRE VERDE', nome:'LIMÃO', area:51.07},
+  {fazenda:'SEMPRE VERDE', nome:'PERA', area:7.00},
+  {fazenda:'SEMPRE VERDE', nome:'SEQUEIRO SEMPRE VERDE', area:50.93},
+];
+
+const FAZENDAS_RECEITAS = [...new Set(TALHOES_PADRAO.map(t => t.fazenda))].sort();
+
+// Estado do módulo
+let recReceitas       = [];   // lista carregada do Firestore
+let recTalhoes        = [];   // talhões carregados do Firestore
+let _recEditandoId    = null; // id da receita em edição
+let _recAceitandoId   = null; // id da receita em aceite
+let _recFinalizandoId = null; // id da receita sendo finalizada
+let _recItens         = [];   // itens do formulário de nova receita
+let _recTalhoesSel    = [];   // talhões selecionados no formulário
+let _recProxNum       = 1;    // próximo número de receita
+let unsubReceitas     = null; // listener Firestore
+
+// Tipos biológicos (para identificar no cálculo)
+const TIPOS_BIOLOGICOS = ['biológico', 'biologico', 'biológicos', 'biologicos'];
+
+
+// =====================================================================
+// MÓDULO RECEITAS — Funções principais
+// =====================================================================
+
+// ── Inicialização ──────────────────────────────────────────────────
+async function iniciarModuloReceitas() {
+  await carregarTalhoes();
+  popularSelectsFazendasReceitas();
+  if (unsubReceitas) return; // já escutando
+  unsubReceitas = onSnapshot(
+    query(collection(db, 'receitas'), orderBy('numero', 'desc')),
+    snap => {
+      recReceitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Próximo número
+      const nums = recReceitas.map(r => r.numero || 0);
+      _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
+      renderReceitas();
+    }
+  );
+}
+
+function pararModuloReceitas() {
+  if (unsubReceitas) { unsubReceitas(); unsubReceitas = null; }
+}
+
+async function carregarTalhoes() {
+  const snap = await getDocs(query(collection(db, 'receitas_talhoes'), orderBy('fazenda')));
+  if (snap.empty) {
+    // Primeira vez: migrar dados padrão
+    const batch = writeBatch(db);
+    TALHOES_PADRAO.forEach(t => {
+      const id = normalize(t.fazenda) + '___' + normalize(t.nome);
+      batch.set(doc(db, 'receitas_talhoes', id), { ...t, ativo: true });
+    });
+    await batch.commit();
+    recTalhoes = TALHOES_PADRAO.map((t, i) => ({
+      id: normalize(t.fazenda) + '___' + normalize(t.nome), ...t, ativo: true
+    }));
+  } else {
+    recTalhoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
+}
+
+function popularSelectsFazendasReceitas() {
+  const fazendas = [...new Set(recTalhoes.filter(t => t.ativo !== false).map(t => t.fazenda))].sort();
+  ['recFiltroFazenda', 'recFazenda', 'gestaoTalhoesFazenda', 'editarTalhaoFazenda'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const val = el.value;
+    const isFilter = id === 'recFiltroFazenda' || id === 'gestaoTalhoesFazenda';
+    el.innerHTML = `<option value="">${isFilter ? 'Todas as fazendas' : 'Selecione...'}</option>`;
+    fazendas.forEach(f => el.innerHTML += `<option value="${f}">${f}</option>`);
+    if (val) el.value = val;
+  });
+}
+
+// ── Renderização da lista ───────────────────────────────────────────
+function renderReceitas() {
+  const lista  = document.getElementById('recLista');
+  if (!lista) return;
+  const filtroStatus  = document.getElementById('recFiltroStatus')?.value  || '';
+  const filtroFazenda = document.getElementById('recFiltroFazenda')?.value || '';
+  const busca = (document.getElementById('recBusca')?.value || '').toLowerCase();
+
+  let items = recReceitas.filter(r => {
+    if (filtroStatus  && r.status !== filtroStatus)  return false;
+    if (filtroFazenda && r.fazenda !== filtroFazenda) return false;
+    if (busca) {
+      const txt = [r.numero, r.fazenda, r.cultura, r.tecnico,
+        ...(r.talhoes || []).map(t => t.nome),
+        ...(r.itens   || []).map(i => i.nome)].join(' ').toLowerCase();
+      if (!txt.includes(busca)) return false;
+    }
+    return true;
+  });
+
+  if (!items.length) {
+    lista.innerHTML = `<div class="rec-vazio">📋 Nenhuma receita encontrada.</div>`;
+    return;
+  }
+
+  const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
+  lista.innerHTML = items.map(r => {
+    const opBadge = r.operacao === 'drone'
+      ? `<span class="rec-op-badge drone">🚁 Drone</span>`
+      : `<span class="rec-op-badge autopropelido">🚜 Autopropelido</span>`;
+    const tags = (r.itens || []).map(it => {
+      const isBio = TIPOS_BIOLOGICOS.some(t => (it.tipo||'').toLowerCase().includes(t));
+      const isSub = !!it.substituidoPor;
+      return `<span class="rec-prod-tag ${isBio?'biologico':''} ${isSub?'substituido':''}">${esc(it.nome)}</span>`;
+    }).join('');
+    const talhoesTxt = (r.talhoes || []).map(t => t.nome).join(', ');
+    const dataFmt = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
+    const impresso = r.impresso ? ' · <span style="color:#2a7a2a;font-weight:600">🖨️ Impresso</span>' : '';
+    return `
+    <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${r.id}')">
+      <div class="rec-card-header">
+        <div style="flex:1">
+          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda}</div>
+          <div class="rec-card-titulo">${esc(r.cultura || '—')}</div>
+          <div class="rec-card-sub">${talhoesTxt}${impresso}</div>
+        </div>
+        <div class="rec-card-right">
+          <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
+          ${opBadge}
+          <div class="rec-card-meta">${dataFmt} · ${esc(r.tecnico||'—')}</div>
+        </div>
+      </div>
+      ${tags ? `<div class="rec-card-produtos">${tags}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ── Nova receita ────────────────────────────────────────────────────
+function abrirNovaReceita(receitaId = null) {
+  _recEditandoId = receitaId;
+  _recItens = [];
+  _recTalhoesSel = [];
+
+  document.getElementById('novaReceitaTitulo').textContent = receitaId ? '✏️ Editar Receita' : '✚ Nova Receita';
+
+  if (receitaId) {
+    const r = recReceitas.find(x => x.id === receitaId);
+    if (!r) return;
+    document.getElementById('recFazenda').value    = r.fazenda || '';
+    document.getElementById('recCultura').value    = r.cultura || '';
+    document.getElementById('recOperacao').value   = r.operacao || '';
+    document.getElementById('recVazao').value      = r.vazao || '';
+    document.getElementById('recTanque').value     = r.tanque || '';
+    document.getElementById('recTecnico').value    = r.tecnico || '';
+    document.getElementById('recObs').value        = r.obs || '';
+    document.getElementById('recDataInicio').value = r.dataInicio || '';
+    document.getElementById('recDataFim').value    = r.dataFim || '';
+    _recTalhoesSel = (r.talhoes || []).map(t => ({...t}));
+    _recItens = (r.itens || []).map(i => ({...i}));
+    onRecOperacaoChange();
+    onRecFazendaChange();
+  } else {
+    document.getElementById('recFazenda').value    = '';
+    document.getElementById('recCultura').value    = '';
+    document.getElementById('recOperacao').value   = '';
+    document.getElementById('recVazao').value      = '';
+    document.getElementById('recTanque').value     = '';
+    document.getElementById('recTecnico').value    = sessaoAtual?.label || '';
+    document.getElementById('recObs').value        = '';
+    document.getElementById('recDataInicio').value = '';
+    document.getElementById('recDataFim').value    = '';
+    renderTalhoesSel();
+    renderItensReceita();
+  }
+  document.getElementById('overlayNovaReceita').classList.add('aberto');
+}
+
+function fecharNovaReceita() {
+  document.getElementById('overlayNovaReceita').classList.remove('aberto');
+  _recEditandoId = null; _recItens = []; _recTalhoesSel = [];
+}
+
+function onRecFazendaChange() {
+  const fazenda = document.getElementById('recFazenda').value;
+  _recTalhoesSel = _recTalhoesSel.filter(t => t.fazenda === fazenda);
+  renderTalhoesSel();
+}
+
+function onRecOperacaoChange() {
+  const op = document.getElementById('recOperacao').value;
+  const grp = document.getElementById('recTanqueGrupo');
+  if (grp) grp.style.display = op === 'drone' ? '' : 'none';
+}
+
+function renderTalhoesSel() {
+  const fazenda = document.getElementById('recFazenda').value;
+  const cont = document.getElementById('recTalhoesLista');
+  const areaEl = document.getElementById('recAreaTotal');
+  const areaValEl = document.getElementById('recAreaTotalValor');
+  if (!cont) return;
+
+  if (!fazenda) {
+    cont.innerHTML = '<span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>';
+    if (areaEl) areaEl.style.display = 'none';
+    return;
+  }
+
+  const talhoesFaz = recTalhoes.filter(t => t.fazenda === fazenda && t.ativo !== false)
+    .sort((a,b) => a.nome.localeCompare(b.nome));
+
+  cont.innerHTML = talhoesFaz.map(t => {
+    const sel = _recTalhoesSel.some(s => s.id === t.id);
+    return `<label style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;
+      cursor:pointer;font-size:12px;font-weight:600;border:1.5px solid ${sel?'var(--verde)':'var(--borda)'};
+      background:${sel?'#e8f5e9':'white'};color:${sel?'var(--verde)':'var(--texto)'};user-select:none">
+      <input type="checkbox" style="display:none" ${sel?'checked':''} 
+        onchange="window.AppEstoque.toggleTalhao('${t.id}','${esc(t.nome)}',${t.area},'${fazenda}')">
+      ${esc(t.nome)} <span style="opacity:.7">(${t.area} ha)</span>
+    </label>`;
+  }).join('');
+
+  const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+  if (areaEl) areaEl.style.display = _recTalhoesSel.length ? '' : 'none';
+  if (areaValEl) areaValEl.textContent = areaTotal.toFixed(2);
+}
+
+function toggleTalhao(id, nome, area, fazenda) {
+  const idx = _recTalhoesSel.findIndex(t => t.id === id);
+  if (idx >= 0) _recTalhoesSel.splice(idx, 1);
+  else _recTalhoesSel.push({ id, nome, area, fazenda });
+  renderTalhoesSel();
+}
+
+// ── Itens (produtos) da receita ─────────────────────────────────────
+function adicionarItemReceita() {
+  _recItens.push({ nome:'', tipo:'', unidade:'L', doseHa:0, qdeTotalArea:0, biologico:false });
+  renderItensReceita();
+}
+
+function renderItensReceita() {
+  const cont = document.getElementById('recItensLista');
+  if (!cont) return;
+  if (!_recItens.length) {
+    cont.innerHTML = '<div style="text-align:center;color:var(--texto-suave);font-size:13px;padding:16px">Nenhum produto adicionado</div>';
+    return;
+  }
+  cont.innerHTML = _recItens.map((it, i) => `
+    <div style="display:grid;grid-template-columns:2fr 1fr 60px 80px 80px auto;gap:8px;align-items:end;
+      margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--borda)">
+      <div>
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">PRODUTO</label>
+        <input type="text" value="${esc(it.nome)}" placeholder="Nome do produto"
+          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
+          onchange="window.AppEstoque.updateItemReceita(${i},'nome',this.value)">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">TIPO</label>
+        <select style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
+          onchange="window.AppEstoque.updateItemReceita(${i},'tipo',this.value)">
+          <option value="">Tipo...</option>
+          ${['Adjuvante','Inseticida','Fungicida','Herbicida','Biológico','Nutrição Foliar','Bioestimulante'].map(t =>
+            `<option value="${t}" ${it.tipo===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">UNID.</label>
+        <select style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
+          onchange="window.AppEstoque.updateItemReceita(${i},'unidade',this.value)">
+          ${['L','Kg','Un'].map(u => `<option value="${u}" ${it.unidade===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
+        <input type="number" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
+          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
+          onchange="window.AppEstoque.updateItemReceita(${i},'doseHa',parseFloat(this.value)||0)">
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL</label>
+        <input type="number" value="${it.qdeTotalArea||''}" min="0" step="0.001" placeholder="Auto"
+          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box;background:#f9f9f9"
+          onchange="window.AppEstoque.updateItemReceita(${i},'qdeTotalArea',parseFloat(this.value)||0)">
+      </div>
+      <button onclick="window.AppEstoque.removerItemReceita(${i})"
+        style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
+        padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;align-self:end">🗑</button>
+    </div>`).join('');
+}
+
+function updateItemReceita(i, campo, valor) {
+  if (!_recItens[i]) return;
+  _recItens[i][campo] = valor;
+  if (campo === 'tipo') _recItens[i].biologico = TIPOS_BIOLOGICOS.some(t => valor.toLowerCase().includes(t));
+}
+
+function removerItemReceita(i) {
+  _recItens.splice(i, 1);
+  renderItensReceita();
+}
+
+// ── Salvar receita ──────────────────────────────────────────────────
+async function salvarReceita() {
+  const fazenda  = document.getElementById('recFazenda').value.trim();
+  const cultura  = document.getElementById('recCultura').value.trim();
+  const operacao = document.getElementById('recOperacao').value;
+  const vazao    = parseFloat(document.getElementById('recVazao').value) || 0;
+  const tanque   = parseFloat(document.getElementById('recTanque').value) || 0;
+  const tecnico  = document.getElementById('recTecnico').value.trim();
+  const obs      = document.getElementById('recObs').value.trim();
+  const dataInicio = document.getElementById('recDataInicio').value;
+  const dataFim    = document.getElementById('recDataFim').value;
+
+  if (!fazenda || !cultura || !operacao || !vazao || !tecnico) {
+    mostrarToast('Preencha todos os campos obrigatórios.', 'erro'); return;
+  }
+  if (!_recTalhoesSel.length) {
+    mostrarToast('Selecione pelo menos um talhão.', 'erro'); return;
+  }
+  if (!_recItens.length || _recItens.some(i => !i.nome)) {
+    mostrarToast('Adicione pelo menos um produto com nome.', 'erro'); return;
+  }
+
+  // Calcular área total e Qde Total automática para itens sem valor manual
+  const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+  const itens = _recItens.map(it => ({
+    ...it,
+    qdeTotalArea: it.qdeTotalArea || Math.round(it.doseHa * areaTotal * 1000) / 1000,
+    biologico: TIPOS_BIOLOGICOS.some(t => (it.tipo||'').toLowerCase().includes(t))
+  }));
+
+  const btn = document.getElementById('btnSalvarReceita');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+
+  try {
+    const dados = {
+      fazenda, cultura, operacao, vazao, tecnico, obs, dataInicio, dataFim,
+      talhoes: _recTalhoesSel, itens, areaTotal,
+      ...(operacao === 'drone' ? { tanque } : {}),
+      status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
+      atualizadoEm: new Date().toISOString(),
+      nomeUsuario: sessaoAtual?.label || sessaoAtual?.email || '—',
+    };
+
+    if (_recEditandoId) {
+      await updateDoc(doc(db, 'receitas', _recEditandoId), dados);
+      mostrarToast('Receita atualizada!', 'sucesso');
+    } else {
+      dados.numero = _recProxNum;
+      dados.criadoEm = new Date().toISOString();
+      dados.criadoPor = sessaoAtual?.email || '';
+      await addDoc(collection(db, 'receitas'), dados);
+      mostrarToast(`Receita #${String(_recProxNum).padStart(4,'0')} criada!`, 'sucesso');
+    }
+    fecharNovaReceita();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao salvar receita.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '✓ Salvar Receita';
+  }
+}
+
+
+// ── Detalhes da receita ─────────────────────────────────────────────
+function abrirDetReceita(id) {
+  const r = recReceitas.find(x => x.id === id);
+  if (!r) return;
+  const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
+  const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
+  const numFmt = `#${String(r.numero||0).padStart(4,'0')}`;
+  document.getElementById('detReceitaTitulo').textContent = `Receita ${numFmt}`;
+  document.getElementById('detReceitaHeader').style.background =
+    r.status === 'finalizado' ? 'linear-gradient(90deg,#1a4a3b,#1a7a3b)' :
+    r.status === 'cancelado'  ? 'linear-gradient(90deg,#5a1a1a,#8a2020)' :
+    'linear-gradient(90deg,#0f2545,#1a4080)';
+
+  const talhoesTxt  = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
+  const dataEmit    = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
+  const opLabel     = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Autopropelido';
+  const periodoTxt  = r.dataInicio && r.dataFim
+    ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
+    : '—';
+
+  const linhasProd = (r.itens||[]).map(it => {
+    const isBio = it.biologico;
+    const isSub = !!it.substituidoPor;
+    const subInfo = isSub ? `<br><span style="color:#e65100;font-size:11px">↔ Substituiu: ${esc(it.nomeOriginal||'')}</span>` : '';
+    return `<tr style="${isBio?'background:#f1f8e9':''}">
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;font-weight:${isBio?700:400}">${esc(it.nome)}${subInfo}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.tipo||'—')}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.unidade||'L')}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${it.doseHa||0}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right;font-weight:700;color:#1a5fb4">${(it.qdeTotalArea||0).toFixed(3)}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center;font-size:11px;color:${it.saldoOk===false?'#c00':'#2a7a2a'}">${it.saldoOk===false?'⚠️ Saldo insuf.':it.saldoOk===true?'✓':''}</td>
+    </tr>`;
+  }).join('');
+
+  let finalizadoHTML = '';
+  if (r.status === 'finalizado') {
+    const dIni = r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const dFim = r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
+    finalizadoHTML = `<div style="margin-top:14px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
+      <strong style="color:#0a3622">✔ Finalizado</strong><br>
+      <span style="font-size:13px;color:#0a3622">Aplicador: ${esc(r.aplicador||'—')} · ${dIni} a ${dFim}</span>
+      ${r.obsFinalizacao ? `<br><span style="font-size:12px;color:#0a3622">${esc(r.obsFinalizacao)}</span>` : ''}
+    </div>`;
+  }
+
+  const aceiteHTML = r.aceiteNome ? `<div style="margin-top:10px;font-size:12px;color:var(--texto-suave)">
+    ✅ Aceito por <strong>${esc(r.aceiteNome)}</strong> em ${r.aceiteEm ? new Date(r.aceiteEm).toLocaleDateString('pt-BR') : '—'}
+    ${r.impresso ? ' · 🖨️ Impresso' : ''}
+  </div>` : '';
+
+  document.getElementById('detReceitaConteudo').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;font-size:13px">
+      <div><span style="color:var(--texto-suave)">Fazenda:</span> <strong>${esc(r.fazenda)}</strong></div>
+      <div><span style="color:var(--texto-suave)">Cultura:</span> <strong>${esc(r.cultura||'—')}</strong></div>
+      <div><span style="color:var(--texto-suave)">Operação:</span> <strong>${opLabel}</strong></div>
+      <div><span style="color:var(--texto-suave)">Período:</span> <strong>${periodoTxt}</strong></div>
+      <div><span style="color:var(--texto-suave)">Vazão:</span> <strong>${r.vazao||0} L/ha</strong></div>
+      <div><span style="color:var(--texto-suave)">Área total:</span> <strong>${(r.areaTotal||0).toFixed(2)} ha</strong></div>
+      ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque drone:</span> <strong>${r.tanque} L</strong></div>` : ''}
+      <div><span style="color:var(--texto-suave)">Técnico:</span> <strong>${esc(r.tecnico||'—')}</strong></div>
+    </div>
+    <div style="font-size:13px;margin-bottom:10px;color:var(--texto-suave)">
+      <strong>Talhões:</strong> ${talhoesTxt}
+    </div>
+    ${r.obs ? `<div style="font-size:12px;color:#856404;background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:12px">📌 ${esc(r.obs)}</div>` : ''}
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">
+      <thead><tr style="background:#1a3a6b;color:white">
+        <th style="padding:8px 10px;text-align:left">Produto</th>
+        <th style="padding:8px 10px;text-align:center">Tipo</th>
+        <th style="padding:8px 10px;text-align:center">Unid.</th>
+        <th style="padding:8px 10px;text-align:center">Dose/ha</th>
+        <th style="padding:8px 10px;text-align:right">Qde Total</th>
+        <th style="padding:8px 10px;text-align:center">Estoque</th>
+      </tr></thead>
+      <tbody>${linhasProd}</tbody>
+    </table>
+    <div style="font-size:11px;color:var(--texto-suave)">Criado em ${dataEmit} por ${esc(r.criadoPorNome||r.criadoPor||'—')}</div>
+    ${aceiteHTML}
+    ${finalizadoHTML}
+  `;
+
+  // Footer com botões conforme status
+  const footer = document.getElementById('detReceitaFooter');
+  const s = r.status;
+  const isAdmin = sessaoAtual?.nivel === 'admin';
+  const isAgro  = sessaoAtual?.nivel === 'agronomo' || isAdmin;
+  let btns = `<button class="btn-cancelar" onclick="window.AppEstoque.fecharDetReceita()">Fechar</button>`;
+
+  if (s === 'pendente') {
+    if (isAgro) btns += `<button onclick="window.AppEstoque.abrirNovaReceita('${id}')" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✏️ Editar</button>`;
+    if (isAgro) btns += `<button onclick="window.AppEstoque.cancelarReceita('${id}')" style="background:var(--vermelho);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✕ Cancelar receita</button>`;
+    btns += `<button onclick="window.AppEstoque.abrirAceiteReceita('${id}')" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✅ Aceitar receita</button>`;
+  }
+  if (s === 'em_aberto') {
+    btns += `<button onclick="window.AppEstoque.imprimirReceita('${id}')" style="background:#c8860a;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Imprimir PDF</button>`;
+    btns += `<button onclick="window.AppEstoque.abrirFinalizarReceita('${id}')" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✔ Finalizar</button>`;
+  }
+  if (s === 'finalizado') {
+    btns += `<button onclick="window.AppEstoque.imprimirReceita('${id}')" style="background:#c8860a;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">🖨️ Imprimir PDF</button>`;
+  }
+  footer.innerHTML = btns;
+
+  document.getElementById('overlayDetReceita').classList.add('aberto');
+}
+
+function fecharDetReceita() {
+  document.getElementById('overlayDetReceita').classList.remove('aberto');
+}
+
+// ── Cancelar receita ────────────────────────────────────────────────
+async function cancelarReceita(id) {
+  const ok = await confirmarGenerico({
+    titulo: 'Cancelar receita',
+    icone: '✕',
+    mensagem: 'Tem certeza que deseja cancelar esta receita? O status mudará para <strong>Cancelado</strong>.',
+    corBtn: 'var(--vermelho)',
+    labelBtn: '✕ Cancelar receita'
+  });
+  if (!ok) return;
+  try {
+    await updateDoc(doc(db, 'receitas', id), { status: 'cancelado', atualizadoEm: new Date().toISOString() });
+    mostrarToast('Receita cancelada.', 'sucesso');
+    fecharDetReceita();
+  } catch(e) { mostrarToast('Erro ao cancelar.', 'erro'); }
+}
+
+// ── Aceite ──────────────────────────────────────────────────────────
+function abrirAceiteReceita(id) {
+  _recAceitandoId = id;
+  const r = recReceitas.find(x => x.id === id);
+  if (!r) return;
+
+  const vazao     = r.vazao || 0;
+  const areaTotal = r.areaTotal || 0;
+  const tanque    = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const capTanque = vazao > 0 ? tanque / vazao : 0;
+  const nTanques  = capTanque > 0 ? Math.ceil(areaTotal / capTanque) : 0;
+
+  // Verificar saldo no estoque para cada produto
+  const itensComSaldo = r.itens.map(it => {
+    const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
+    const saldo = prod ? (prod.estoque || 0) : null;
+    const saldoOk = saldo === null ? null : saldo >= it.qdeTotalArea;
+    return { ...it, produtoId: prod?.id || null, saldoEstoque: saldo, saldoOk };
+  });
+
+  // Itens biológicos para calculador
+  const bios = itensComSaldo.filter(it => it.biologico);
+
+  const talhoesTxt = (r.talhoes||[]).map(t => `${t.nome} (${t.area} ha)`).join(', ');
+
+  let biosHTML = '';
+  if (bios.length) {
+    biosHTML = `
+    <div style="margin:16px 0;padding:14px 16px;background:#e8f5e9;border-radius:10px;border:1.5px solid #a5d6a7">
+      <div style="font-weight:700;color:#1b5e20;margin-bottom:10px">🧬 Calculador de Diluição — Biológicos</div>
+      <div style="font-size:12px;color:#2e7d32;margin-bottom:10px">
+        Capacidade do tanque: <strong>${capTanque.toFixed(2)} ha/tanque</strong> · 
+        Nº de tanques: <strong>${nTanques}</strong> · 
+        Vazão: <strong>${vazao} L/ha</strong>
+      </div>
+      ${bios.map((it, i) => {
+        const volTotalBio = it.qdeTotalArea || 0;
+        const volPorTanque = capTanque > 0 ? Math.round(it.doseHa * capTanque * 1000)/1000 : 0;
+        const concPorTanque = tanque > 0 ? Math.round(volPorTanque / tanque * 10000)/100 : 0;
+        return `
+        <div style="background:white;border-radius:8px;padding:12px;margin-bottom:8px" id="bioCalc_${i}">
+          <div style="font-weight:700;color:#1b5e20;margin-bottom:8px">🌿 ${esc(it.nome)}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <div style="font-size:10px;color:#5a7a5a;text-transform:uppercase;letter-spacing:.4px">Vol. total</div>
+              <input type="number" value="${volTotalBio}" step="0.001"
+                style="width:100%;padding:6px 8px;border:1.5px solid #a5d6a7;border-radius:6px;font-size:13px;font-weight:700;color:#1b5e20;box-sizing:border-box"
+                onchange="window.AppEstoque.updateBioCalc(${i},'volTotal',parseFloat(this.value)||0,'bio_${i}')">
+              <div style="font-size:10px;color:#5a7a5a">${esc(it.unidade||'L')}</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:#5a7a5a;text-transform:uppercase;letter-spacing:.4px">Por tanque</div>
+              <input type="number" value="${volPorTanque}" step="0.001" id="bio_ptanque_${i}"
+                style="width:100%;padding:6px 8px;border:1.5px solid #a5d6a7;border-radius:6px;font-size:13px;font-weight:700;color:#1b5e20;box-sizing:border-box"
+                onchange="window.AppEstoque.updateBioCalc(${i},'porTanque',parseFloat(this.value)||0,'bio_${i}')">
+              <div style="font-size:10px;color:#5a7a5a">${esc(it.unidade||'L')}/tanque</div>
+            </div>
+            <div>
+              <div style="font-size:10px;color:#5a7a5a;text-transform:uppercase;letter-spacing:.4px">Concentração</div>
+              <div style="padding:6px 8px;border:1.5px solid #a5d6a7;border-radius:6px;font-size:13px;font-weight:700;color:#1b5e20;background:#f1f8f1" id="bio_conc_${i}">
+                ${concPorTanque.toFixed(2)}%
+              </div>
+              <div style="font-size:10px;color:#5a7a5a">do tanque</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#5a7a5a;background:#f1f8e9;padding:8px 10px;border-radius:6px">
+            💡 Diluir <strong id="bio_instrucao_${i}">${volPorTanque.toFixed(3)} ${esc(it.unidade||'L')}</strong> 
+            do produto em água antes de adicionar ao tanque de <strong>${tanque}L</strong>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  const linhasProd = itensComSaldo.map((it, i) => {
+    const semSaldo = it.saldoOk === false;
+    const semCad   = it.saldoEstoque === null;
+    return `<tr style="${semSaldo?'background:#fff3cd':''}">
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2">
+        ${esc(it.nome)}
+        ${semCad ? '<span style="font-size:10px;color:#856404;margin-left:4px">⚠️ não cadastrado</span>' : ''}
+      </td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.tipo||'—')}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right;font-weight:700;color:#1a5fb4">${(it.qdeTotalArea||0).toFixed(3)} ${esc(it.unidade||'L')}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right">${it.saldoEstoque !== null ? it.saldoEstoque.toFixed(2) : '—'}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
+        ${semCad ? '<span style="color:#856404;font-size:12px">Não cadastrado</span>'
+          : semSaldo ? `<span style="color:#c00;font-size:11px;font-weight:700">⚠️ Insuficiente<br>(faltam ${((it.qdeTotalArea||0)-(it.saldoEstoque||0)).toFixed(2)} ${esc(it.unidade||'L')})</span>`
+          : '<span style="color:#2a7a2a;font-weight:700">✓ OK</span>'}
+      </td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
+        <button onclick="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
+          style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:6px;
+          padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">↔ Substituir</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const temInsuf = itensComSaldo.some(it => it.saldoOk === false);
+
+  document.getElementById('aceiteReceitaConteudo').innerHTML = `
+    <div style="background:var(--cinza-claro);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px">
+      <strong>Receita #${String(r.numero||0).padStart(4,'0')}</strong> · ${esc(r.fazenda)} · ${esc(r.cultura||'')}<br>
+      <span style="color:var(--texto-suave)">${talhoesTxt} · Área: ${(r.areaTotal||0).toFixed(2)} ha</span>
+    </div>
+    ${temInsuf ? `<div style="background:#fff3cd;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;color:#856404">
+      ⚠️ Alguns produtos estão com saldo insuficiente. Você pode substituí-los ou aceitar mesmo assim (os produtos pendentes ficam marcados).
+    </div>` : ''}
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px">
+      <thead><tr style="background:#1a3a6b;color:white">
+        <th style="padding:8px 10px;text-align:left">Produto</th>
+        <th style="padding:8px 10px;text-align:center">Tipo</th>
+        <th style="padding:8px 10px;text-align:right">Necessário</th>
+        <th style="padding:8px 10px;text-align:right">Saldo</th>
+        <th style="padding:8px 10px;text-align:center">Status</th>
+        <th style="padding:8px 10px;text-align:center">Ação</th>
+      </tr></thead>
+      <tbody>${linhasProd}</tbody>
+    </table>
+    ${biosHTML}
+  `;
+
+  document.getElementById('overlayAceiteReceita').classList.add('aberto');
+}
+
+// Guardamos os itens com saldo calculado para uso no confirmarAceite
+let _aceiteItensCache = [];
+
+function fecharAceiteReceita() {
+  document.getElementById('overlayAceiteReceita').classList.remove('aberto');
+  _recAceitandoId = null;
+  _aceiteItensCache = [];
+}
+
+function updateBioCalc(i, campo, valor, prefixo) {
+  // Recalcula concentração ao editar campos do calculador
+  const r = recReceitas.find(x => x.id === _recAceitandoId);
+  if (!r) return;
+  const tanque = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const ptEl   = document.getElementById(`bio_ptanque_${i}`);
+  const concEl = document.getElementById(`bio_conc_${i}`);
+  const instEl = document.getElementById(`bio_instrucao_${i}`);
+  const bios   = (r.itens||[]).filter(it => it.biologico);
+  const bio    = bios[i];
+  if (!bio || !ptEl || !concEl) return;
+  const vPt = campo === 'porTanque' ? valor : parseFloat(ptEl.value) || 0;
+  const conc = tanque > 0 ? Math.round(vPt / tanque * 10000)/100 : 0;
+  concEl.textContent = conc.toFixed(2) + '%';
+  if (instEl) instEl.innerHTML = `${vPt.toFixed(3)} ${esc(bio.unidade||'L')}`;
+}
+
+async function confirmarAceite() {
+  const r = recReceitas.find(x => x.id === _recAceitandoId);
+  if (!r) return;
+  const btn = document.getElementById('btnConfirmarAceite');
+  btn.disabled = true; btn.textContent = 'Processando...';
+
+  try {
+    // Dar baixa no estoque para cada produto que tiver saldo
+    const itensAtualizados = await Promise.all((r.itens||[]).map(async it => {
+      const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
+      if (!prod) return { ...it, saldoOk: null, baixaDada: false };
+      const saldo = prod.estoque || 0;
+      const saldoOk = saldo >= (it.qdeTotalArea||0);
+      if (saldoOk) {
+        // Dar baixa no estoque
+        await runTransaction(db, async tx => {
+          const ref = doc(db, 'produtos', prod.id);
+          const snap = await tx.get(ref);
+          const atual = Math.round((snap.data().estoque||0)*100)/100;
+          if (atual < (it.qdeTotalArea||0)) throw new Error('ESTOQUE_INSUFICIENTE');
+          tx.update(ref, { estoque: increment(-(it.qdeTotalArea||0)) });
+        });
+        // Registrar no histórico
+        await addDoc(collection(db, 'historico'), {
+          tipo: 'receita',
+          produtoId: prod.id,
+          produtoNome: prod.nome,
+          unidade: prod.unidade,
+          quantidade: it.qdeTotalArea,
+          receitaNum: r.numero,
+          receitaId: _recAceitandoId,
+          fazenda: r.fazenda,
+          usuario: sessaoAtual?.email || '',
+          nomeUsuario: sessaoAtual?.label || '',
+          dataOrdenacao: serverTimestamp(),
+          dataLocal: new Date().getTime(),
+          data: new Date().toISOString().split('T')[0],
+        });
+        return { ...it, saldoOk: true, baixaDada: true };
+      }
+      return { ...it, saldoOk: false, baixaDada: false };
+    }));
+
+    await updateDoc(doc(db, 'receitas', _recAceitandoId), {
+      status: 'em_aberto',
+      itens: itensAtualizados,
+      aceiteEm: new Date().toISOString(),
+      aceiteNome: sessaoAtual?.label || sessaoAtual?.email || '—',
+      atualizadoEm: new Date().toISOString(),
+    });
+
+    const pendentes = itensAtualizados.filter(it => it.saldoOk === false).length;
+    mostrarToast(pendentes
+      ? `Aceite realizado! ${pendentes} produto(s) com saldo insuficiente ficaram pendentes.`
+      : 'Receita aceita e baixas realizadas no estoque!', 'sucesso');
+    fecharAceiteReceita();
+    fecharDetReceita();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao processar aceite.', 'erro');
+  } finally {
+    btn.disabled = false; btn.textContent = '✅ Confirmar aceite e dar baixa no estoque';
+  }
+}
+
+// ── Substituição de produto ─────────────────────────────────────────
+async function abrirSubstituirProduto(receitaId, itemIdx) {
+  const r = recReceitas.find(x => x.id === receitaId);
+  if (!r) return;
+  const it = r.itens[itemIdx];
+  const novonome = prompt(`Substituir "${it.nome}" por qual produto?
+(Digite o nome exato conforme cadastrado no estoque)`);
+  if (!novonome || !novonome.trim()) return;
+  const prod = produtos.find(p => p.nome.toLowerCase() === novonome.trim().toLowerCase());
+  if (!prod) { mostrarToast('Produto não encontrado no estoque.', 'erro'); return; }
+
+  const itensAtt = [...r.itens];
+  itensAtt[itemIdx] = {
+    ...it,
+    nomeOriginal: it.nome,
+    nome: prod.nome,
+    unidade: prod.unidade,
+    produtoId: prod.id,
+    substituidoPor: prod.id,
+    substituidoEm: new Date().toISOString(),
+    substituidoPorNome: sessaoAtual?.label || '',
+  };
+  await updateDoc(doc(db, 'receitas', receitaId), { itens: itensAtt, atualizadoEm: new Date().toISOString() });
+  mostrarToast(`Produto substituído por ${prod.nome}.`, 'sucesso');
+  fecharAceiteReceita();
+  setTimeout(() => abrirAceiteReceita(receitaId), 400);
+}
+
+// ── Finalizar ───────────────────────────────────────────────────────
+function abrirFinalizarReceita(id) {
+  _recFinalizandoId = id;
+  const r = recReceitas.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('finalizarReceitaInfo').innerHTML =
+    `<strong>Receita #${String(r.numero||0).padStart(4,'0')}</strong> · ${esc(r.fazenda)} · ${esc(r.cultura||'')}`;
+  document.getElementById('finalizarAplicador').value = '';
+  document.getElementById('finalizarDataInicio').value = r.dataInicio || '';
+  document.getElementById('finalizarDataFim').value    = r.dataFim   || '';
+  document.getElementById('finalizarObs').value        = '';
+  document.getElementById('overlayFinalizarReceita').classList.add('aberto');
+}
+
+function fecharFinalizarReceita() {
+  document.getElementById('overlayFinalizarReceita').classList.remove('aberto');
+  _recFinalizandoId = null;
+}
+
+async function confirmarFinalizar() {
+  const aplicador   = document.getElementById('finalizarAplicador').value.trim();
+  const dataInicio  = document.getElementById('finalizarDataInicio').value;
+  const dataFim     = document.getElementById('finalizarDataFim').value;
+  const obs         = document.getElementById('finalizarObs').value.trim();
+  if (!aplicador || !dataInicio || !dataFim) {
+    mostrarToast('Preencha aplicador e datas.', 'erro'); return;
+  }
+  try {
+    await updateDoc(doc(db, 'receitas', _recFinalizandoId), {
+      status: 'finalizado',
+      aplicador, aplicacaoInicio: dataInicio, aplicacaoFim: dataFim,
+      obsFinalizacao: obs,
+      finalizadoEm: new Date().toISOString(),
+      finalizadoPor: sessaoAtual?.label || sessaoAtual?.email || '',
+      atualizadoEm: new Date().toISOString(),
+    });
+    mostrarToast('Receita finalizada!', 'sucesso');
+    fecharFinalizarReceita();
+    fecharDetReceita();
+  } catch(e) { mostrarToast('Erro ao finalizar.', 'erro'); }
+}
+
+
+// ── PDF de Recomendação ─────────────────────────────────────────────
+async function imprimirReceita(id) {
+  const r = recReceitas.find(x => x.id === id);
+  if (!r) return;
+
+  const numFmt    = `#${String(r.numero||0).padStart(4,'0')}`;
+  const opLabel   = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Pulverização Autopropelido';
+  const dataEmit  = new Date().toLocaleString('pt-BR');
+  const periodoTxt = r.dataInicio && r.dataFim
+    ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
+    : '—';
+  const talhoesTxt = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
+  const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
+  const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
+  const statusBg    = { pendente:'#fff3cd', em_aberto:'#cfe2ff', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
+
+  const vazao     = r.vazao || 0;
+  const areaTotal = r.areaTotal || 0;
+  const tanque    = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const capTanque = vazao > 0 ? tanque / vazao : 0;
+  const nTanques  = capTanque > 0 ? Math.ceil(areaTotal / capTanque) : 0;
+
+  const linhasProd = (r.itens||[]).map(it => {
+    const isBio = it.biologico;
+    const isSub = !!it.substituidoPor;
+    const nomeTxt = isSub ? `${esc(it.nome)}<br><span style="font-size:10px;color:#e65100">↔ Substituiu: ${esc(it.nomeOriginal||'')}</span>` : esc(it.nome);
+    const doseHa = it.doseHa || 0;
+    const qdeTot = it.qdeTotalArea || 0;
+    const doseBomba = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
+    return `<tr style="${isBio?'background:#f1f8e9':''}">
+      <td style="padding:7px 10px;border:1px solid #d0d8e0">${nomeTxt}</td>
+      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${esc(it.tipo||'—')}</td>
+      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${esc(it.unidade||'L')}</td>
+      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${doseHa}</td>
+      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center;font-weight:700">${doseBomba.toFixed(3)}</td>
+      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:right;font-weight:700;color:#1a5fb4">${qdeTot.toFixed(3)}</td>
+    </tr>`;
+  }).join('');
+
+  // Bloco biológicos
+  const bios = (r.itens||[]).filter(it => it.biologico);
+  let biosBloco = '';
+  if (bios.length) {
+    biosBloco = `
+    <div style="margin-top:16px;padding:12px 16px;background:#e8f5e9;border-radius:8px;border:1.5px solid #a5d6a7">
+      <div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:13px">🧬 Diluição de Biológicos</div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#2e7d32;color:white">
+          <th style="padding:6px 8px;text-align:left">Produto</th>
+          <th style="padding:6px 8px;text-align:center">Vol. Total</th>
+          <th style="padding:6px 8px;text-align:center">Por Tanque (${tanque}L)</th>
+          <th style="padding:6px 8px;text-align:center">Concentração</th>
+        </tr></thead>
+        <tbody>${bios.map(it => {
+          const vPt = capTanque > 0 ? Math.round(it.doseHa * capTanque * 1000)/1000 : 0;
+          const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
+          return `<tr style="background:white">
+            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9">${esc(it.nome)}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center;font-weight:700">${(it.qdeTotalArea||0).toFixed(3)} ${esc(it.unidade||'L')}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center;font-weight:700;color:#1b5e20">${vPt.toFixed(3)} ${esc(it.unidade||'L')}</td>
+            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center">${conc.toFixed(2)}%</td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>`;
+  }
+
+  const aplicadorBloco = r.status === 'finalizado' ? `
+    <div style="margin-top:16px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
+      <strong style="color:#0a3622">✔ Aplicação realizada</strong><br>
+      <span style="font-size:13px">Aplicador: ${esc(r.aplicador||'—')} · 
+      ${r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : ''} a 
+      ${r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : ''}</span>
+    </div>` : '';
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Receita ${numFmt} — ${r.fazenda}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+    .logo-wrap img { height:52px; }
+    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:18px; font-weight:900; }
+    .capa-titulo  { font-size:13px; color:#5a6472; }
+    .status-badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; }
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; font-size:12px; }
+    .info-item span { color:#6a7a8a; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; }
+    th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #2a5aaa; }
+    th.tc { text-align:center; }
+    td { font-size:11px; }
+    tr:nth-child(even) td { background:#f7f9fc; }
+    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
+  </style></head><body>
+  <div class="logo-wrap">
+    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
+    <div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="capa-titulo">Receita Agronômica ${numFmt} · Emitido em ${dataEmit}</div>
+    </div>
+    <div style="margin-left:auto">
+      <span class="status-badge" style="background:${statusBg[r.status]||'#eee'};color:${statusCor[r.status]||'#333'}">
+        ${statusLabel[r.status]||r.status}
+      </span>
+    </div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-item"><span>Fazenda: </span><strong>${esc(r.fazenda)}</strong></div>
+    <div class="info-item"><span>Cultura: </span><strong>${esc(r.cultura||'—')}</strong></div>
+    <div class="info-item"><span>Operação: </span><strong>${opLabel}</strong></div>
+    <div class="info-item"><span>Período: </span><strong>${periodoTxt}</strong></div>
+    <div class="info-item"><span>Talhões: </span><strong>${talhoesTxt}</strong></div>
+    <div class="info-item"><span>Área total: </span><strong>${areaTotal.toFixed(2)} ha</strong></div>
+    <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
+    <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
+    ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L (Drone)</strong></div>` : ''}
+    <div class="info-item"><span>Técnico: </span><strong>${esc(r.tecnico||'—')}</strong></div>
+  </div>
+  ${r.obs ? `<div style="background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:12px">📌 <strong>Observação:</strong> ${esc(r.obs)}</div>` : ''}
+
+  <table>
+    <thead><tr>
+      <th>Produto</th><th class="tc">Tipo</th><th class="tc">Unid.</th>
+      <th class="tc">Dose/ha</th><th class="tc">Dose/Tanque</th><th class="tc">Qde Total</th>
+    </tr></thead>
+    <tbody>${linhasProd}</tbody>
+  </table>
+
+  ${biosBloco}
+  ${aplicadorBloco}
+
+  ${r.aceiteNome ? `<div style="margin-top:12px;font-size:11px;color:#6a7a8a">
+    ✅ Aceito por <strong>${esc(r.aceiteNome)}</strong> em ${r.aceiteEm ? new Date(r.aceiteEm).toLocaleDateString('pt-BR') : '—'}
+  </div>` : ''}
+
+  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Receita ${numFmt} · Gerado em ${dataEmit}</div>
+  <script>window.onload = () => window.print()<\/script>
+  </body></html>`;
+
+  // Marcar como impresso
+  await updateDoc(doc(db, 'receitas', id), { impresso: true, impressoEm: new Date().toISOString() });
+
+  const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
+}
+
+// ── Gestão de Talhões ───────────────────────────────────────────────
+function abrirGestaoTalhoes() {
+  popularSelectsFazendasReceitas();
+  renderGestaoTalhoes();
+  document.getElementById('overlayGestaoTalhoes').classList.add('aberto');
+}
+
+function fecharGestaoTalhoes() {
+  document.getElementById('overlayGestaoTalhoes').classList.remove('aberto');
+}
+
+function renderGestaoTalhoes() {
+  const filtro = document.getElementById('gestaoTalhoesFazenda')?.value || '';
+  const lista  = document.getElementById('gestaoTalhoesLista');
+  if (!lista) return;
+  const items = recTalhoes.filter(t => !filtro || t.fazenda === filtro)
+    .sort((a,b) => a.fazenda.localeCompare(b.fazenda) || a.nome.localeCompare(b.nome));
+  if (!items.length) { lista.innerHTML = '<div class="vazio">Nenhum talhão cadastrado.</div>'; return; }
+
+  let html = '', fazAtual = '';
+  items.forEach(t => {
+    if (t.fazenda !== fazAtual) {
+      if (fazAtual) html += '</div>';
+      html += `<div style="font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;
+        letter-spacing:.5px;margin:12px 0 6px">${esc(t.fazenda)}</div><div>`;
+      fazAtual = t.fazenda;
+    }
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+      background:white;border:1px solid var(--borda);border-radius:8px;margin-bottom:6px">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${esc(t.nome)}</div>
+        <div style="font-size:12px;color:var(--texto-suave)">${t.area} ha</div>
+      </div>
+      <button onclick="window.AppEstoque.abrirEditarTalhao('${t.id}')"
+        style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:7px;
+        padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+    </div>`;
+  });
+  if (fazAtual) html += '</div>';
+  lista.innerHTML = html;
+}
+
+function abrirNovoTalhao() {
+  document.getElementById('editarTalhaoId').value  = '';
+  document.getElementById('editarTalhaoNome').value = '';
+  document.getElementById('editarTalhaoArea').value = '';
+  document.getElementById('editarTalhaoFazenda').value = '';
+  document.getElementById('editarTalhaoTitulo').textContent = '+ Novo Talhão';
+  popularSelectsFazendasReceitas();
+  document.getElementById('overlayEditarTalhao').classList.add('aberto');
+}
+
+function abrirEditarTalhao(id) {
+  const t = recTalhoes.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('editarTalhaoId').value      = id;
+  document.getElementById('editarTalhaoFazenda').value = t.fazenda;
+  document.getElementById('editarTalhaoNome').value    = t.nome;
+  document.getElementById('editarTalhaoArea').value    = t.area;
+  document.getElementById('editarTalhaoTitulo').textContent = '✏️ Editar Talhão';
+  popularSelectsFazendasReceitas();
+  document.getElementById('overlayEditarTalhao').classList.add('aberto');
+}
+
+function fecharEditarTalhao() {
+  document.getElementById('overlayEditarTalhao').classList.remove('aberto');
+}
+
+async function salvarTalhao() {
+  const id      = document.getElementById('editarTalhaoId').value;
+  const fazenda = document.getElementById('editarTalhaoFazenda').value.trim();
+  const nome    = document.getElementById('editarTalhaoNome').value.trim().toUpperCase();
+  const area    = parseFloat(document.getElementById('editarTalhaoArea').value) || 0;
+  if (!fazenda || !nome || !area) { mostrarToast('Preencha todos os campos.', 'erro'); return; }
+
+  const docId = id || normalize(fazenda) + '___' + normalize(nome);
+  try {
+    await setDoc(doc(db, 'receitas_talhoes', docId), { fazenda, nome, area, ativo: true }, { merge: true });
+    // Atualizar cache local
+    const idx = recTalhoes.findIndex(t => t.id === docId);
+    if (idx >= 0) recTalhoes[idx] = { id: docId, fazenda, nome, area, ativo: true };
+    else recTalhoes.push({ id: docId, fazenda, nome, area, ativo: true });
+    mostrarToast('Talhão salvo!', 'sucesso');
+    fecharEditarTalhao();
+    renderGestaoTalhoes();
+    popularSelectsFazendasReceitas();
+  } catch(e) { mostrarToast('Erro ao salvar talhão.', 'erro'); }
+}
+
 // ── GESTÃO DE PLUVIÔMETROS ─────────────────────────────────────────────
 
 async function abrirGestaoPluv() {
@@ -5882,9 +7238,11 @@ function navegarModulo(modulo) {
   // Pluviometria
   show('btnPluvExcelHeader', modulo === 'pluviometria' && temRelat);
   show('btnPluvPDFHeader',   modulo === 'pluviometria' && temRelat);
+  // Receitas — sem botões extras no header (ações ficam dentro dos cards)
 
   if (modulo === 'irrigacao')    iniciarModuloIrrigacao(); else pararModuloIrrigacao();
   if (modulo === 'pluviometria') iniciarModuloPluv();      else pararModuloPluv();
+  if (modulo === 'receitas')     iniciarModuloReceitas();  else pararModuloReceitas();
   if (modulo === 'dashboard')    renderDashboard();
 }
 
@@ -6339,6 +7697,17 @@ window.AppEstoque = {
   renderTabelaPluv,
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
   confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
+  // Receitas
+  abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
+  onRecFazendaChange, onRecOperacaoChange, toggleTalhao, renderTalhoesSel,
+  adicionarItemReceita, removerItemReceita, updateItemReceita,
+  removerItemBaixaReceita, adicionarItemBaixaReceita,
+  abrirDetReceita, fecharDetReceita, cancelarReceita,
+  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, abrirSubstituirProduto,
+  abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
+  imprimirReceita,
+  abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
+  abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
   abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
