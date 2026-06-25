@@ -5380,8 +5380,9 @@ function fecharConfirmExport() {
   _confirmExportFn = null;
 }
 function executarConfirmExport() {
+  const fn = _confirmExportFn;  // salva antes de fechar (fechar zera a variável)
   fecharConfirmExport();
-  if (_confirmExportFn) _confirmExportFn();
+  if (fn) fn();
 }
 
 // Wrappers que abrem o modal antes de exportar
@@ -5407,8 +5408,8 @@ function confirmarIrrigPDF() {
     icone: '🖨️',
     desc: `Relatório PDF de irrigação`,
     sub: `${periodo} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
-    corHeader: 'linear-gradient(90deg,#5a3a00,#9a6a00)',
-    corBtn: '#c8860a',
+    corHeader: 'linear-gradient(90deg,#0f2545,#1a4080)',
+    corBtn: 'var(--azul)',
     labelBtn: '🖨️ Gerar PDF',
     fn: exportarIrrigPDF
   });
@@ -5435,8 +5436,8 @@ function confirmarPluvPDF() {
     icone: '🖨️',
     desc: `Relatório PDF mensal de chuva`,
     sub: `${mes} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
-    corHeader: 'linear-gradient(90deg,#5a3a00,#9a6a00)',
-    corBtn: '#c8860a',
+    corHeader: 'linear-gradient(90deg,#0f2545,#1a4080)',
+    corBtn: 'var(--azul)',
     labelBtn: '🖨️ Gerar PDF',
     fn: exportarPluvPDF
   });
