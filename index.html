@@ -6261,6 +6261,25 @@ function _selProdRec(i, el) {
 
 
 
+function selecionarProdutoReceita(i, nome, unidade, classe) {
+  if (!_recItens[i]) return;
+  const classeParaTipo = {
+    'ADJUVANTE':'Adjuvante','INSETICIDA':'Inseticida','FUNGICIDA':'Fungicida',
+    'HERBICIDA':'Herbicida','BIOLÓGICO':'Biológico','BIOLOGICO':'Biológico',
+    'NUTRIÇÃO FOLIAR':'Nutrição Foliar','NUTRICAO FOLIAR':'Nutrição Foliar',
+    'BIOESTIMULANTE':'Bioestimulante','FERTILIZANTE':'Nutrição Foliar',
+  };
+  const tipoMapeado = classeParaTipo[(classe||'').toUpperCase()] || '';
+  const prod = produtos.find(p => p.nome === nome);
+  _recItens[i].nome        = nome;
+  _recItens[i].unidade     = unidade;
+  _recItens[i].tipo        = tipoMapeado;
+  _recItens[i].biologico   = tipoMapeado === 'Biológico';
+  _recItens[i].estoqueDisp = prod ? prod.estoque : null;
+  fecharSugsReceita(i);
+  renderItensReceita();
+}
+
 function fecharSugsReceita(i) {
   const el = document.getElementById(`recProdSugs_${i}`);
   if (el) el.innerHTML = '';
