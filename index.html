@@ -6142,13 +6142,16 @@ function renderItensReceita() {
         <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
         <input type="number" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
           style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
-          onchange="window.AppEstoque.updateItemReceita(${i},'doseHa',parseFloat(this.value)||0)">
+          oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
       </div>
       <div>
-        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL</label>
-        <input type="number" value="${it.qdeTotalArea||''}" min="0" step="0.001" placeholder="Auto"
-          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box;background:#f9f9f9"
-          onchange="window.AppEstoque.updateItemReceita(${i},'qdeTotalArea',parseFloat(this.value)||0)">
+        <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL <span style="font-size:10px;color:#888">(auto)</span></label>
+        <input type="number" id="recQdeTotal_${i}" value="${
+          it.qdeTotalManual != null ? it.qdeTotalManual :
+          (it.doseHa && _recTalhoesSel.length ? Math.round(it.doseHa * _recTalhoesSel.reduce((s,t)=>s+(t.area||0),0) * 1000)/1000 : '')
+        }" min="0" step="0.001" placeholder="Auto"
+          style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box;background:#f0f8f0;font-weight:700;color:#1a5fb4"
+          oninput="window.AppEstoque.updateItemReceita(${i},'qdeTotalManual',parseFloat(this.value)||null)">
       </div>
       <button onclick="window.AppEstoque.removerItemReceita(${i})"
         style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
@@ -6160,6 +6163,19 @@ function updateItemReceita(i, campo, valor) {
   if (!_recItens[i]) return;
   _recItens[i][campo] = valor;
   if (campo === 'tipo') _recItens[i].biologico = TIPOS_BIOLOGICOS.some(t => valor.toLowerCase().includes(t));
+}
+
+function updateDoseHa(i, doseHa) {
+  if (!_recItens[i]) return;
+  _recItens[i].doseHa = doseHa;
+  // Recalcula QDE TOTAL automaticamente se não foi editada manualmente
+  if (_recItens[i].qdeTotalManual == null) {
+    const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+    const qdeAuto = Math.round(doseHa * areaTotal * 1000) / 1000;
+    _recItens[i].qdeTotalArea = qdeAuto;
+    const el = document.getElementById('recQdeTotal_' + i);
+    if (el) el.value = qdeAuto || '';
+  }
 }
 
 function removerItemReceita(i) {
@@ -6193,7 +6209,7 @@ async function salvarReceita() {
   const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
   const itens = _recItens.map(it => ({
     ...it,
-    qdeTotalArea: it.qdeTotalArea || Math.round(it.doseHa * areaTotal * 1000) / 1000,
+    qdeTotalArea: it.qdeTotalManual != null ? it.qdeTotalManual : Math.round((it.doseHa||0) * areaTotal * 1000) / 1000,
     biologico: TIPOS_BIOLOGICOS.some(t => (it.tipo||'').toLowerCase().includes(t))
   }));
 
@@ -6222,8 +6238,11 @@ async function salvarReceita() {
     }
     fecharNovaReceita();
   } catch(e) {
-    console.error(e);
-    mostrarToast('Erro ao salvar receita.', 'erro');
+    console.error('Erro ao salvar receita:', e);
+    const msg = e?.code === 'permission-denied'
+      ? 'Sem permissão no Firestore. Verifique as regras de segurança.'
+      : e?.message || 'Erro ao salvar receita.';
+    mostrarToast(msg, 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '✓ Salvar Receita';
   }
@@ -6806,22 +6825,46 @@ function fecharGestaoTalhoes() {
 }
 
 function renderGestaoTalhoes() {
-  const filtro = document.getElementById('gestaoTalhoesFazenda')?.value || '';
-  const lista  = document.getElementById('gestaoTalhoesLista');
+  const filtro  = document.getElementById('gestaoTalhoesFazenda')?.value || '';
+  const lista   = document.getElementById('gestaoTalhoesLista');
+  const isAdmin = sessaoAtual?.nivel === 'admin';
   if (!lista) return;
-  const items = recTalhoes.filter(t => !filtro || t.fazenda === filtro)
+
+  const items = recTalhoes.filter(t => (t.ativo !== false) && (!filtro || t.fazenda === filtro))
     .sort((a,b) => a.fazenda.localeCompare(b.fazenda) || a.nome.localeCompare(b.nome));
   if (!items.length) { lista.innerHTML = '<div class="vazio">Nenhum talhão cadastrado.</div>'; return; }
 
-  let html = '', fazAtual = '';
+  // Contagens
+  const totalGeral = recTalhoes.filter(t => t.ativo !== false).length;
+  const fazendas   = [...new Set(items.map(t => t.fazenda))];
+  const contagemFaz = {};
+  fazendas.forEach(f => { contagemFaz[f] = items.filter(t => t.fazenda === f).length; });
+
+  // Resumo no topo
+  let html = `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+    background:var(--cinza-claro);border-radius:8px;margin-bottom:12px;font-size:12px;color:var(--texto-suave)">
+    <span>📍</span>
+    <span><strong style="color:var(--texto)">${items.length}</strong> talhão${items.length !== 1?'s':''} exibido${items.length !== 1?'s':''}</span>
+    ${!filtro ? `<span style="margin-left:4px">de <strong style="color:var(--texto)">${totalGeral}</strong> no total</span>` : ''}
+    <span style="margin-left:4px">em <strong style="color:var(--texto)">${fazendas.length}</strong> fazenda${fazendas.length !== 1?'s':''}</span>
+  </div>`;
+
+  let fazAtual = '';
   items.forEach(t => {
     if (t.fazenda !== fazAtual) {
       if (fazAtual) html += '</div>';
-      html += `<div style="font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;
-        letter-spacing:.5px;margin:12px 0 6px">${esc(t.fazenda)}</div><div>`;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
+        <span style="font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:.5px">${esc(t.fazenda)}</span>
+        <span style="font-size:11px;color:var(--texto-suave)">${contagemFaz[t.fazenda]} talhão${contagemFaz[t.fazenda]!==1?'s':''}</span>
+      </div><div>`;
       fazAtual = t.fazenda;
     }
-    html += `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
+    const btnExcluir = isAdmin
+      ? `<button onclick="window.AppEstoque.excluirTalhao('${t.id}')"
+          style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
+          padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer" title="Excluir talhão">🗑</button>`
+      : '';
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
       background:white;border:1px solid var(--borda);border-radius:8px;margin-bottom:6px">
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600">${esc(t.nome)}</div>
@@ -6830,10 +6873,35 @@ function renderGestaoTalhoes() {
       <button onclick="window.AppEstoque.abrirEditarTalhao('${t.id}')"
         style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:7px;
         padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+      ${btnExcluir}
     </div>`;
   });
   if (fazAtual) html += '</div>';
   lista.innerHTML = html;
+}
+
+async function excluirTalhao(id) {
+  const t = recTalhoes.find(x => x.id === id);
+  if (!t) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Excluir talhão',
+    icone: '🗑',
+    mensagem: `Excluir o talhão <strong>${esc(t.nome)}</strong> (${t.fazenda} · ${t.area} ha)?<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Esta ação é irreversível. Receitas já criadas com este talhão não serão afetadas.</span>`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'receitas_talhoes', id));
+    recTalhoes = recTalhoes.filter(x => x.id !== id);
+    mostrarToast(`Talhão ${t.nome} excluído.`, 'sucesso');
+    renderGestaoTalhoes();
+    popularSelectsFazendasReceitas();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao excluir talhão.', 'erro');
+  }
 }
 
 function abrirNovoTalhao() {
@@ -7784,7 +7852,7 @@ window.AppEstoque = {
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
-  abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao,
+  abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
   abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
