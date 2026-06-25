@@ -1120,6 +1120,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <select class="rec-filtro-select" id="recFiltroFazenda" onchange="window.AppEstoque.renderReceitas()">
       <option value="">Todas as fazendas</option>
     </select>
+    <select class="rec-filtro-select" id="recFiltroCultura" onchange="window.AppEstoque.renderReceitas()">
+      <option value="">Todas as culturas</option>
+    </select>
     <input class="rec-busca" type="text" id="recBusca" placeholder="🔍 Buscar receita, produto ou talhão..." oninput="window.AppEstoque.renderReceitas()">
   </div>
   <div class="rec-lista" id="recLista">
@@ -1128,7 +1131,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 </div>
 
 <!-- MODAL NOVA/EDITAR RECEITA -->
-<div class="overlay" id="overlayNovaReceita" onclick="if(event.target===this)window.AppEstoque.fecharNovaReceita()">
+<div class="overlay" id="overlayNovaReceita" onclick="">
   <div class="modal" style="max-width:720px">
     <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
       <h2 id="novaReceitaTitulo">✚ Nova Receita</h2>
@@ -1195,6 +1198,12 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
         <div class="campo-group">
           <label class="label-campo">Técnico responsável *</label>
           <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Safra</label>
+          <select id="recSafra" class="campo-input">
+            <option value="">Selecione...</option>
+          </select>
         </div>
         <div class="campo-group">
           <label class="label-campo">Observações</label>
@@ -2388,15 +2397,31 @@ const PERMISSOES_DISPONIVEIS = [
   { chave: 'editarProduto',  label: 'Editar produto',                  icone: '✎' },
   { chave: 'excluirProduto', label: 'Excluir produto',                 icone: '🗑' },
   { chave: 'cadastrarProduto', label: 'Cadastrar produto novo',        icone: '🆕' },
-  { chave: 'verRelatorios',  label: 'Ver histórico e relatórios',      icone: '📊' }
+  { chave: 'verRelatorios',  label: 'Ver histórico e relatórios',      icone: '📊' },
+  // ── Acesso por módulo ──────────────────────────────────────────────
+  { chave: 'modulo_estoque',      label: 'Acessar módulo Estoque',      icone: '📦', grupo: 'módulos' },
+  { chave: 'modulo_irrigacao',    label: 'Acessar módulo Irrigação',    icone: '💧', grupo: 'módulos' },
+  { chave: 'modulo_pluviometria', label: 'Acessar módulo Pluviometria', icone: '🌧️', grupo: 'módulos' },
+  { chave: 'modulo_receitas',     label: 'Acessar módulo Receitas',     icone: '🧪', grupo: 'módulos' },
 ];
 
 // Conjunto padrão de permissões para a função "Operador de Estoque" —
 // usado ao criar o perfil de uma conta nova pela primeira vez.
 const PERMISSOES_PADRAO_ESTOQUE = {
   darEntrada: true, darBaixa: true, usarReceita: true, usarCompra: true,
-  editarProduto: false, excluirProduto: false, cadastrarProduto: false, verRelatorios: true
+  editarProduto: false, excluirProduto: false, cadastrarProduto: false, verRelatorios: true,
+  modulo_estoque: true, modulo_irrigacao: false, modulo_pluviometria: false, modulo_receitas: false
 };
+
+// Verificar se usuário tem acesso a um módulo específico
+function temAcessoModulo(modulo) {
+  if (!sessaoAtual) return false;
+  if (sessaoAtual.nivel === 'admin') return true;
+  const chave = 'modulo_' + modulo;
+  // dashboard sempre acessível
+  if (modulo === 'dashboard') return true;
+  return !!(sessaoAtual.permissoes && sessaoAtual.permissoes[chave]);
+}
 
 function todasPermissoes() {
   const obj = {};
@@ -2473,6 +2498,17 @@ function exigirPermissao(chave, mensagem) {
 function aplicarPermissoesUI() {
   const s = getSessao();
   if (!s) return;
+  // Mostrar/ocultar abas conforme permissão de módulo
+  const modulosNav = [
+    { id: 'tab-estoque',      modulo: 'estoque' },
+    { id: 'tab-irrigacao',    modulo: 'irrigacao' },
+    { id: 'tab-pluviometria', modulo: 'pluviometria' },
+    { id: 'tab-receitas',     modulo: 'receitas' },
+  ];
+  modulosNav.forEach(({ id, modulo }) => {
+    const tab = document.getElementById(id);
+    if (tab) tab.style.display = temAcessoModulo(modulo) ? '' : 'none';
+  });
   document.body.classList.toggle('is-admin', s.nivel === 'admin');
   const badge = document.getElementById('badgeUsuario');
   badge.innerHTML = `<span class="ponto"></span><span class="txt">${s.label} (${s.email})</span>`;
@@ -2697,7 +2733,9 @@ async function iniciarSessaoAutenticada(user) {
     await iniciarListenersTempoReal();
 
     // Finaliza navegação — inicia listeners do módulo, renderiza, atualiza header
-    navegarModulo(_moduloInicial);
+    // Se não tiver acesso ao módulo salvo, ir para dashboard
+    const moduloParaNavegar = temAcessoModulo(_moduloInicial) ? _moduloInicial : 'dashboard';
+    navegarModulo(moduloParaNavegar);
 
   } catch (e) {
     console.error('Erro ao iniciar sessão:', e);
@@ -3979,13 +4017,23 @@ function abrirPermissoes(uid) {
   const permissoesAtuais = ehAdmin ? todasPermissoes() : (u.permissoes || { ...PERMISSOES_PADRAO_ESTOQUE });
 
   const listaEl = document.getElementById('perm-lista');
-  listaEl.innerHTML = PERMISSOES_DISPONIVEIS.map(p => `
-    <label class="perm-item ${ehAdmin ? 'perm-item-desabilitado' : ''}">
-      <input type="checkbox" id="perm-${p.chave}" ${permissoesAtuais[p.chave] ? 'checked' : ''} ${ehAdmin ? 'disabled' : ''}>
-      <span class="perm-icone">${p.icone}</span>
-      <span class="perm-label">${p.label}</span>
-    </label>
-  `).join('');
+  // Separar permissões por grupo
+  const permGerais  = PERMISSOES_DISPONIVEIS.filter(p => !p.grupo);
+  const permModulos = PERMISSOES_DISPONIVEIS.filter(p => p.grupo === 'módulos');
+  const renderGrupo = (titulo, lista) => `
+    <div style="font-size:11px;font-weight:700;color:var(--azul);text-transform:uppercase;
+      letter-spacing:.5px;margin:12px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--borda)">
+      ${titulo}
+    </div>
+    ${lista.map(p => `
+      <label class="perm-item ${ehAdmin ? 'perm-item-desabilitado' : ''}">
+        <input type="checkbox" id="perm-${p.chave}" ${permissoesAtuais[p.chave] ? 'checked' : ''} ${ehAdmin ? 'disabled' : ''}>
+        <span class="perm-icone">${p.icone}</span>
+        <span class="perm-label">${p.label}</span>
+      </label>`).join('')}`;
+  listaEl.innerHTML =
+    renderGrupo('Permissões do Estoque', permGerais) +
+    renderGrupo('Acesso aos Módulos', permModulos);
 
   document.getElementById('btn-salvar-permissoes').style.display = ehAdmin ? 'none' : 'inline-flex';
   document.getElementById('overlayPermissoes').classList.add('aberto');
@@ -5968,6 +6016,16 @@ function popularSelectsFazendasReceitas() {
     fazendas.forEach(f => el.innerHTML += `<option value="${f}">${f}</option>`);
     if (val) el.value = val;
   });
+  // Popular filtro de cultura
+  const filtCult = document.getElementById('recFiltroCultura');
+  if (filtCult) {
+    const culturas = irrigConfig?.culturas?.length ? irrigConfig.culturas : CULTURAS_PADRAO;
+    filtCult.innerHTML = '<option value="">Todas as culturas</option>';
+    culturas.forEach(c => {
+      const emoji = CULTURAS_EMOJI[c] || '';
+      filtCult.innerHTML += `<option value="${c}">${emoji ? emoji+' ' : ''}${c}</option>`;
+    });
+  }
 }
 
 // ── Renderização da lista ───────────────────────────────────────────
@@ -5976,11 +6034,13 @@ function renderReceitas() {
   if (!lista) return;
   const filtroStatus  = document.getElementById('recFiltroStatus')?.value  || '';
   const filtroFazenda = document.getElementById('recFiltroFazenda')?.value || '';
+  const filtroCultura = document.getElementById('recFiltroCultura')?.value || '';
   const busca = (document.getElementById('recBusca')?.value || '').toLowerCase();
 
   let items = recReceitas.filter(r => {
     if (filtroStatus  && r.status !== filtroStatus)  return false;
     if (filtroFazenda && r.fazenda !== filtroFazenda) return false;
+    if (filtroCultura && r.cultura !== filtroCultura) return false;
     if (busca) {
       const txt = [r.numero, r.fazenda, r.cultura, r.tecnico,
         ...(r.talhoes || []).map(t => t.nome),
@@ -6012,11 +6072,8 @@ function renderReceitas() {
     <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${r.id}')">
       <div class="rec-card-header">
         <div style="flex:1">
-          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda}</div>
+          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda} · ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra ? ' · Safra '+esc(r.safra) : ''}</div>
           <div class="rec-card-titulo">${esc(r.descricao || r.cultura || '—')}</div>
-          <div style="font-size:12px;color:var(--texto-suave);margin-bottom:3px">
-            ${CULTURAS_EMOJI[r.cultura] ? CULTURAS_EMOJI[r.cultura]+' ' : ''}${esc(r.cultura || '')}
-          </div>
           <div class="rec-card-sub">${talhoesTxt}${impresso}</div>
         </div>
         <div class="rec-card-right">
@@ -6049,6 +6106,7 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recTecnico').value    = r.tecnico || '';
     document.getElementById('recObs').value        = r.obs || '';
     document.getElementById('recDescricao').value = r.descricao || '';
+    document.getElementById('recSafra').value        = r.safra     || '';
     document.getElementById('recDataInicio').value = r.dataInicio || '';
     document.getElementById('recDataFim').value    = r.dataFim || '';
     _recTalhoesSel = (r.talhoes || []).map(t => ({...t}));
@@ -6070,12 +6128,14 @@ function abrirNovaReceita(receitaId = null) {
     renderItensReceita();
   }
   renderCulturaChips();
+  popularSafrasReceita();
   document.getElementById('overlayNovaReceita').classList.add('aberto');
 }
 
 function fecharNovaReceita() {
   document.getElementById('overlayNovaReceita').classList.remove('aberto');
   const recCult = document.getElementById('recCultura'); if (recCult) recCult.value = '';
+  const recSafra = document.getElementById('recSafra'); if (recSafra) recSafra.value = '';
   _recEditandoId = null; _recItens = []; _recTalhoesSel = [];
 }
 
@@ -6083,6 +6143,15 @@ function onRecFazendaChange() {
   const fazenda = document.getElementById('recFazenda').value;
   _recTalhoesSel = _recTalhoesSel.filter(t => t.fazenda === fazenda);
   renderTalhoesSel();
+}
+
+function popularSafrasReceita() {
+  const el = document.getElementById('recSafra');
+  if (!el) return;
+  const val = el.value;
+  const safras = irrigConfig?.safras?.length ? irrigConfig.safras : SAFRAS_PADRAO;
+  el.innerHTML = '<option value="">Selecione...</option>';
+  safras.forEach(s => el.innerHTML += `<option value="${s}" ${val===s?'selected':''}>${s}</option>`);
 }
 
 function renderCulturaChips() {
@@ -6183,7 +6252,8 @@ function renderItensReceita() {
           <input type="text" id="recProdNome_${i}" value="${esc(it.nome)}" placeholder=""
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
             oninput="window.AppEstoque.onProdutoReceitaInput(${i},this.value)"
-            onblur="setTimeout(()=>window.AppEstoque.fecharSugsReceita(${i}),150)">
+            onblur="setTimeout(()=>window.AppEstoque.fecharSugsReceita(${i}),150)"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <div id="recProdSugs_${i}" style="position:absolute;top:100%;left:0;right:0;z-index:99"></div>
         </div>
         <div>
@@ -6333,11 +6403,15 @@ async function salvarReceita() {
   const tecnico  = document.getElementById('recTecnico').value.trim();
   const obs      = document.getElementById('recObs').value.trim();
   const descricao = document.getElementById('recDescricao').value.trim();
+  const safra     = document.getElementById('recSafra').value;
   const dataInicio = document.getElementById('recDataInicio').value;
   const dataFim    = document.getElementById('recDataFim').value;
 
   if (!fazenda || !cultura || !operacao || !vazao || !tecnico || !descricao) {
     mostrarToast('Preencha todos os campos obrigatórios.', 'erro'); return;
+  }
+  if (!dataInicio || !dataFim) {
+    mostrarToast('Informe o período de aplicação (início e término).', 'erro'); return;
   }
   if (!_recTalhoesSel.length) {
     mostrarToast('Selecione pelo menos um talhão.', 'erro'); return;
@@ -6359,7 +6433,7 @@ async function salvarReceita() {
 
   try {
     const dados = {
-      fazenda, cultura, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
+      fazenda, cultura, safra, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
       talhoes: _recTalhoesSel, itens, areaTotal,
       ...(operacao === 'drone' ? { tanque } : {}),
       status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
@@ -6371,11 +6445,19 @@ async function salvarReceita() {
       await updateDoc(doc(db, 'receitas', _recEditandoId), dados);
       mostrarToast('Receita atualizada!', 'sucesso');
     } else {
-      dados.numero = _recProxNum;
+      // Número sequencial via transação atômica — evita duplicação concorrente
+      const contRef = doc(db, 'configuracoes', 'receitas_contador');
+      let novoNum = 1;
+      await runTransaction(db, async tx => {
+        const contSnap = await tx.get(contRef);
+        novoNum = contSnap.exists() ? (contSnap.data().ultimo || 0) + 1 : 1;
+        tx.set(contRef, { ultimo: novoNum }, { merge: true });
+      });
+      dados.numero = novoNum;
       dados.criadoEm = new Date().toISOString();
       dados.criadoPor = sessaoAtual?.email || '';
       await addDoc(collection(db, 'receitas'), dados);
-      mostrarToast(`Receita #${String(_recProxNum).padStart(4,'0')} criada!`, 'sucesso');
+      mostrarToast(`Receita #${String(novoNum).padStart(4,'0')} criada!`, 'sucesso');
     }
     fecharNovaReceita();
   } catch(e) {
@@ -6450,6 +6532,7 @@ function abrirDetReceita(id) {
       <div><span style="color:var(--texto-suave)">Área total:</span> <strong>${(r.areaTotal||0).toFixed(2)} ha</strong></div>
       ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque drone:</span> <strong>${r.tanque} L</strong></div>` : ''}
       <div><span style="color:var(--texto-suave)">Técnico:</span> <strong>${esc(r.tecnico||'—')}</strong></div>
+      ${r.safra ? `<div><span style="color:var(--texto-suave)">Safra:</span> <strong>\${esc(r.safra)}</strong></div>` : ''}
     </div>
     <div style="font-size:13px;margin-bottom:10px;color:var(--texto-suave)">
       <strong>Talhões:</strong> ${talhoesTxt}
@@ -7503,6 +7586,11 @@ function renderDashboard() {
 // ── NAVEGAÇÃO ─────────────────────────────────────────────────────────
 
 function navegarModulo(modulo) {
+  // Verificar acesso — admin sempre pode, outros dependem da permissão
+  if (modulo !== 'dashboard' && sessaoAtual && !temAcessoModulo(modulo)) {
+    mostrarToast(`Você não tem acesso ao módulo ${modulo}.`, 'erro');
+    return;
+  }
   moduloAtivo = modulo;
   try { sessionStorage.setItem('amj_modulo_ativo', modulo); } catch(_) {}
 
@@ -8010,7 +8098,7 @@ window.AppEstoque = {
   confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
   // Receitas
   abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
-  onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita,
+  onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita, popularSafrasReceita,
   toggleTalhao, renderTalhoesSel,
   adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa, recalcularTodasQdes,
   onProdutoReceitaInput, _selProdRec, selecionarProdutoReceita, fecharSugsReceita,
