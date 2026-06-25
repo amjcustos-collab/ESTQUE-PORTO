@@ -592,6 +592,9 @@ header {
 .rec-op-badge.autopropelido { background:#f3e5f5; color:#6a1b9a; }
 
 
+/* Remove tooltip nativo do browser nas sugestões de produto */
+#recItensLista [onmousedown] { -webkit-user-select:none; user-select:none; }
+
 /* MODAIS */
 .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; padding: 20px; overflow-y: auto; }
 .overlay.aberto { display: flex; }
@@ -1129,14 +1132,29 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <button class="btn-fechar" onclick="window.AppEstoque.fecharNovaReceita()">×</button>
     </div>
     <div class="modal-body" style="padding:20px 24px;max-height:75vh;overflow-y:auto">
-      <!-- Cabeçalho da receita -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px">
+
+      <!-- PASSO 1: Fazenda + Talhões (juntos) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:8px">
         <div class="campo-group">
           <label class="label-campo">Fazenda *</label>
           <select id="recFazenda" class="campo-input" onchange="window.AppEstoque.onRecFazendaChange()">
             <option value="">Selecione...</option>
           </select>
         </div>
+      </div>
+      <div style="margin-bottom:6px">
+        <label class="label-campo" style="display:block;margin-bottom:8px">Talhões *</label>
+        <div id="recTalhoesLista" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;padding:10px;
+          border:1.5px solid var(--borda);border-radius:8px;background:var(--cinza-claro)">
+          <span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>
+        </div>
+      </div>
+      <div id="recAreaTotal" style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:14px;display:none">
+        Área total selecionada: <span id="recAreaTotalValor">0</span> ha
+      </div>
+
+      <!-- PASSO 2: Restante do formulário -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;border-top:1.5px solid var(--borda);padding-top:14px">
         <div class="campo-group" style="grid-column:1/-1">
           <label class="label-campo">Cultura *</label>
           <div id="recCulturaChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
@@ -1180,18 +1198,6 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <label class="label-campo">Observações</label>
           <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
         </div>
-      </div>
-
-      <!-- Talhões -->
-      <div style="margin-bottom:16px">
-        <label class="label-campo" style="display:block;margin-bottom:8px">Talhões *</label>
-        <div id="recTalhoesLista" style="display:flex;flex-wrap:wrap;gap:8px;min-height:40px;padding:10px;
-          border:1.5px solid var(--borda);border-radius:8px;background:var(--cinza-claro)">
-          <span style="color:var(--texto-suave);font-size:13px">Selecione a fazenda primeiro</span>
-        </div>
-      </div>
-      <div id="recAreaTotal" style="font-size:13px;font-weight:700;color:var(--verde);margin-bottom:16px;display:none">
-        Área total selecionada: <span id="recAreaTotalValor">0</span> ha
       </div>
 
       <!-- Produtos -->
@@ -6144,6 +6150,8 @@ function toggleTalhao(id, nome, area, fazenda) {
 
 // ── Itens (produtos) da receita ─────────────────────────────────────
 function adicionarItemReceita() {
+  // Fechar sugestões abertas antes de adicionar novo item
+  document.querySelectorAll('[id^="recProdSugs_"]').forEach(el => el.innerHTML = '');
   _recItens.push({ nome:'', tipo:'', unidade:'L', doseHa:0, qdeTotalArea:0, biologico:false });
   renderItensReceita();
 }
@@ -6167,7 +6175,7 @@ function renderItensReceita() {
       border-radius:0 0 8px 8px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:160px;overflow-y:auto">
       ${sugs.map(p => `<div onclick="window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
         style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
-        onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
+        title="" onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
         <span><strong>${esc(p.nome)}</strong> <span style="color:var(--texto-suave);font-size:11px">${esc(p.classe||'')}</span></span>
         <span style="font-size:11px;color:${p.estoque>0?'var(--verde)':'var(--vermelho)'}">
           ${p.estoque>0?fmt(p.estoque)+' '+esc(p.unidade):'Zerado'}
@@ -6240,7 +6248,7 @@ function onProdutoReceitaInput(i, valor) {
     border-radius:0 0 8px 8px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.15);max-height:160px;overflow-y:auto">
     ${sugs.map(p => `<div onmousedown="event.preventDefault();window.AppEstoque.selecionarProdutoReceita(${i},'${p.nome.replace(/'/g,"\'")}','${p.unidade}','${p.classe||''}')"
       style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
-      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
+      title="" onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
       <span><strong>${esc(p.nome)}</strong> <span style="color:var(--texto-suave);font-size:11px">${esc(p.classe||'')}</span></span>
       <span style="font-size:11px;color:${p.estoque>0?'var(--verde)':'var(--vermelho)'}">
         ${p.estoque>0?fmt(p.estoque)+' '+esc(p.unidade):'Zerado'}
@@ -6280,15 +6288,17 @@ function updateItemReceita(i, campo, valor) {
 }
 
 function recalcularTodasQdes() {
-  // Recalcula QDE TOTAL de todos os itens quando área ou vazão mudam
   const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
+  if (!areaTotal) return; // sem talhões selecionados, não há o que calcular
   _recItens.forEach((it, i) => {
-    if (it.qdeTotalManual != null) return; // manual não recalcula
+    if (it.qdeTotalManual != null) return;
     const qdeAuto = Math.round((it.doseHa||0) * areaTotal * 1000) / 1000;
     it.qdeTotalArea = qdeAuto;
     const el = document.getElementById('recQdeTotal_' + i);
-    if (el) el.value = qdeAuto || '';
+    if (el) { el.value = qdeAuto || ''; }
   });
+  // Re-renderiza para atualizar os valores exibidos
+  renderItensReceita();
 }
 
 function updateDoseHa(i, doseHa) {
