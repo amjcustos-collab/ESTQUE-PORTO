@@ -5897,20 +5897,40 @@ function pararModuloReceitas() {
 }
 
 async function carregarTalhoes() {
-  const snap = await getDocs(collection(db, 'receitas_talhoes'));
-  if (snap.empty) {
-    // Primeira vez: migrar dados padrão
+  // Carregar sempre do Firestore primeiro
+  try {
+    const snap = await getDocs(collection(db, 'receitas_talhoes'));
+    if (!snap.empty) {
+      const carregados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      if (carregados.length >= 10) {
+        recTalhoes = carregados;
+        return; // dados válidos no Firestore
+      }
+      // Menos de 10 talhões = dados corrompidos/incompletos, refaz a migração
+    }
+  } catch(e) {
+    console.warn('Firestore indisponível para talhões:', e);
+  }
+
+  // Coleção vazia, erro ou dados insuficientes: usar dados padrão em memória
+  recTalhoes = TALHOES_PADRAO.map(t => ({
+    id: normalize(t.fazenda) + '___' + normalize(t.nome),
+    ...t, ativo: true
+  }));
+
+  // Tentar salvar no Firestore em background (não bloqueia a UI)
+  try {
     const batch = writeBatch(db);
-    TALHOES_PADRAO.forEach(t => {
-      const id = normalize(t.fazenda) + '___' + normalize(t.nome);
-      batch.set(doc(db, 'receitas_talhoes', id), { ...t, ativo: true });
+    recTalhoes.forEach(t => {
+      batch.set(doc(db, 'receitas_talhoes', t.id), {
+        fazenda: t.fazenda, nome: t.nome, area: t.area, ativo: true
+      });
     });
     await batch.commit();
-    recTalhoes = TALHOES_PADRAO.map((t, i) => ({
-      id: normalize(t.fazenda) + '___' + normalize(t.nome), ...t, ativo: true
-    }));
-  } else {
-    recTalhoes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    console.log('Talhões migrados para Firestore:', recTalhoes.length);
+  } catch(e) {
+    console.warn('Não foi possível salvar talhões no Firestore:', e);
+    // Continua com dados em memória — funciona offline
   }
 }
 
