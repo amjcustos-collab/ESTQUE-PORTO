@@ -586,8 +586,9 @@ header {
 .rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
 .rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
 
-.rec-op-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
+.rec-op-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px;
   border-radius:20px; font-size:11px; font-weight:700; }
+.rec-op-badge svg { display:block; flex-shrink:0; }
 .rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
 .rec-op-badge.autopropelido { background:#f3e5f5; color:#6a1b9a; }
 
@@ -901,13 +902,13 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     📦 Estoque
   </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('irrigacao')" id="tab-irrigacao">
-    💧 Irrigação
+    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="32" fill="#4285f4"/><path d="M0 38 Q32 28 64 38 L64 64 L0 64 Z" fill="#1a5cb8"/><path d="M0 42 Q32 34 64 42 L64 64 L0 64 Z" fill="#9ec8f7" opacity="0.5"/><path d="M20 46 Q20 38 26 38 Q32 38 32 46 Q32 52 26 54 Q20 52 20 46Z" fill="#2d7d32"/><path d="M16 46 Q18 40 22 42 Q20 48 18 50 Z" fill="#52b788"/><path d="M30 46 Q32 38 36 40 Q34 46 32 50 Z" fill="#52b788"/><path d="M36 46 Q36 40 41 40 Q46 40 46 46 Q46 51 41 53 Q36 51 36 46Z" fill="#2d7d32"/><path d="M32 52 Q34 46 38 48 Q36 54 34 56 Z" fill="#52b788"/><circle cx="22" cy="26" r="2.5" fill="white" opacity="0.9"/><circle cx="30" cy="22" r="2.5" fill="white" opacity="0.9"/><circle cx="38" cy="24" r="2.5" fill="white" opacity="0.9"/><circle cx="44" cy="28" r="2.5" fill="white" opacity="0.9"/><circle cx="34" cy="30" r="2.5" fill="white" opacity="0.9"/><path d="M28 14 Q32 10 36 14" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M24 17 Q32 11 40 17" stroke="white" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/><circle cx="32" cy="19" r="1.5" fill="white"/></svg> Irrigação
   </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('pluviometria')" id="tab-pluviometria">
     🌧️ Pluviometria
   </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('receitas')" id="tab-receitas">
-    🧪 Receitas
+    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="10" width="36" height="46" rx="4" fill="white" stroke="#1a5c1a" stroke-width="2.5"/><rect x="20" y="6" width="12" height="8" rx="3" fill="#2d7d32"/><rect x="23" y="4" width="6" height="6" rx="2" fill="#52b788"/><circle cx="26" cy="7" r="2" fill="#1a4a1a"/><path d="M14 24 L24 24" stroke="#2d7d32" stroke-width="2" stroke-linecap="round"/><path d="M14 30 L32 30" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M14 35 L30 35" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M14 40 L28 40" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><rect x="12" y="22" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="28" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="33" width="3" height="3" rx="0.5" fill="#2d7d32"/><path d="M16 14 Q18 10 20 12 L20 14 Z" fill="#52b788"/><path d="M22 12 Q24 8 26 10 L25 14 Z" fill="#2d7d32"/><path d="M28 14 Q31 9 33 12 L32 15 Z" fill="#52b788"/><path d="M36 28 L34 44 Q34 48 38 48 Q42 48 42 44 L40 28 Z" fill="white" stroke="#1a5c1a" stroke-width="2"/><path d="M34 44 Q34 48 38 48 Q42 48 42 44 Z" fill="#52b788"/><path d="M33 28 L43 28" stroke="#1a5c1a" stroke-width="2" stroke-linecap="round"/><circle cx="38" cy="40" r="1.2" fill="white" opacity="0.7"/><circle cx="40" cy="44" r="1" fill="white" opacity="0.6"/><path d="M38 22 Q42 14 48 10 Q50 18 46 24 Q42 26 38 24 Z" fill="#2d7d32"/><path d="M38 22 Q44 16 48 10" stroke="#52b788" stroke-width="1.2" fill="none"/></svg> Receitas
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
     💰 Custos <span class="modulo-badge em-breve">em breve</span>
@@ -1175,8 +1176,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <label class="label-campo">Tipo de operação *</label>
           <select id="recOperacao" class="campo-input" onchange="window.AppEstoque.onRecOperacaoChange()">
             <option value="">Selecione...</option>
-            <option value="autopropelido">🚜 Pulverização Autopropelido</option>
-            <option value="drone">🚁 Drone</option>
+            <option value="autopropelido">Pulverização Autopropelido</option>
+            <option value="drone">Drone</option>
           </select>
         </div>
         <div class="campo-group">
@@ -6058,8 +6059,8 @@ function renderReceitas() {
   const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
   lista.innerHTML = items.map(r => {
     const opBadge = r.operacao === 'drone'
-      ? `<span class="rec-op-badge drone">🚁 Drone</span>`
-      : `<span class="rec-op-badge autopropelido">🚜 Autopropelido</span>`;
+      ? `<span class="rec-op-badge drone"><svg width="18" height="14" viewBox="0 0 80 50" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="28" y="12" width="24" height="16" rx="3" fill="#d0d8e8"/><rect x="32" y="14" width="16" height="12" rx="2" fill="#b0bcd0"/><circle cx="40" cy="28" r="4" fill="#666"/><line x1="0" y1="22" x2="80" y2="22" stroke="#222" stroke-width="3" stroke-linecap="round"/><rect x="0" y="17" width="10" height="10" rx="2" fill="#333"/><rect x="70" y="17" width="10" height="10" rx="2" fill="#333"/><ellipse cx="5" cy="15" rx="10" ry="3.5" fill="#444" transform="rotate(-8 5 15)"/><ellipse cx="75" cy="15" rx="10" ry="3.5" fill="#444" transform="rotate(8 75 15)"/><rect x="3" y="15" width="6" height="4" rx="1" fill="#f90"/><rect x="71" y="15" width="6" height="4" rx="1" fill="#f90"/><line x1="26" y1="28" x2="22" y2="40" stroke="#555" stroke-width="2"/><line x1="54" y1="28" x2="58" y2="40" stroke="#555" stroke-width="2"/><line x1="32" y1="28" x2="29" y2="40" stroke="#555" stroke-width="2"/><line x1="48" y1="28" x2="51" y2="40" stroke="#555" stroke-width="2"/><circle cx="22" cy="42" r="3" fill="#f90"/><circle cx="58" cy="42" r="3" fill="#f90"/><circle cx="29" cy="42" r="3" fill="#f90"/><circle cx="51" cy="42" r="3" fill="#f90"/></svg> Drone</span>`
+      : `<span class="rec-op-badge autopropelido"><svg width="22" height="14" viewBox="0 0 90 50" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="26" y="6" width="24" height="26" rx="3" fill="#2d7d32"/><rect x="30" y="8" width="14" height="12" rx="1" fill="#90caf9" opacity="0.85"/><rect x="38" y="2" width="22" height="26" rx="3" fill="#cfd8dc"/><rect x="40" y="4" width="18" height="22" rx="2" fill="#b0bec5"/><circle cx="34" cy="40" r="8" fill="#333"/><circle cx="34" cy="40" r="4.5" fill="#777"/><circle cx="64" cy="40" r="8" fill="#333"/><circle cx="64" cy="40" r="4.5" fill="#777"/><line x1="0" y1="30" x2="90" y2="30" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="0" y1="30" x2="12" y2="22" stroke="#2d7d32" stroke-width="2.5"/><line x1="90" y1="30" x2="78" y2="22" stroke="#2d7d32" stroke-width="2.5"/><circle cx="2" cy="31" r="3" fill="#f90"/><circle cx="20" cy="31" r="3" fill="#f90"/><circle cx="38" cy="31" r="3" fill="#f90"/><circle cx="56" cy="31" r="3" fill="#f90"/><circle cx="74" cy="31" r="3" fill="#f90"/><circle cx="88" cy="31" r="3" fill="#f90"/><rect x="46" y="32" width="5" height="8" fill="#555"/></svg> Autopropelido</span>`;
     const tags = (r.itens || []).map(it => {
       const isBio = TIPOS_BIOLOGICOS.some(t => (it.tipo||'').toLowerCase().includes(t));
       const isSub = !!it.substituidoPor;
@@ -6487,7 +6488,7 @@ function abrirDetReceita(id) {
 
   const talhoesTxt  = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
   const dataEmit    = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
-  const opLabel     = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Autopropelido';
+  const opLabel     = r.operacao === 'drone' ? 'Drone' : 'Autopropelido';
   const periodoTxt  = r.dataInicio && r.dataFim
     ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
     : '—';
@@ -6917,7 +6918,7 @@ async function imprimirReceita(id) {
   if (!r) return;
 
   const numFmt    = `#${String(r.numero||0).padStart(4,'0')}`;
-  const opLabel   = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Pulverização Autopropelido';
+  const opLabel   = r.operacao === 'drone' ? 'Drone' : 'Pulverização Autopropelido';
   const dataEmit  = new Date().toLocaleString('pt-BR');
   const periodoTxt = r.dataInicio && r.dataFim
     ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
