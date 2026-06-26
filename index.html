@@ -597,6 +597,9 @@ header {
 .rec-op-badge svg { display:block; flex-shrink:0; }
 .rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
 .rec-op-badge.autopropelido { background:#f0faf0; color:#2d6a2d; }
+.rec-realizar-aplicacao { font-size:11px; font-weight:700; color:#084298;
+  background:#dbeafe; border:1px solid #93c5fd; border-radius:6px;
+  padding:4px 10px; text-align:center; white-space:nowrap; margin-top:2px; }
 
 
 /* Remove tooltip nativo do browser nas sugestões de produto */
@@ -1173,6 +1176,12 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <div id="recCulturaChips" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px"></div>
           <input type="hidden" id="recCultura">
         </div>
+        <div class="campo-group" id="recSafraGrupo" style="grid-column:1/-1;display:none">
+          <label class="label-campo">Safra</label>
+          <select id="recSafra" class="campo-input">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
         <div class="campo-group" style="grid-column:1/-1">
           <label class="label-campo">Descrição da aplicação *</label>
           <input type="text" id="recDescricao" class="campo-input"
@@ -1202,16 +1211,46 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <label class="label-campo">Tamanho do tanque (L)</label>
           <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
         </div>
+        <div class="campo-group" id="recBicoGrupo" style="display:none">
+          <label class="label-campo">Tipo de bico</label>
+          <select id="recBico" class="campo-input">
+            <option value="">Selecione...</option>
+            <optgroup label="Bicos de Jato Plano">
+              <option value="XR TeeJet 110015">XR TeeJet 110015 — Jato plano padrão</option>
+              <option value="XR TeeJet 11002">XR TeeJet 11002 — Jato plano padrão</option>
+              <option value="XR TeeJet 11003">XR TeeJet 11003 — Jato plano padrão</option>
+              <option value="XR TeeJet 11004">XR TeeJet 11004 — Jato plano padrão</option>
+              <option value="AIXR TeeJet 110015">AIXR TeeJet 110015 — Jato plano antideriva</option>
+              <option value="AIXR TeeJet 11002">AIXR TeeJet 11002 — Jato plano antideriva</option>
+              <option value="AIXR TeeJet 11003">AIXR TeeJet 11003 — Jato plano antideriva</option>
+            </optgroup>
+            <optgroup label="Bicos de Jato Cônico">
+              <option value="TX-8 Albuz">TX-8 Albuz — Cônico vazio laranja</option>
+              <option value="TX-12 Albuz">TX-12 Albuz — Cônico vazio lilás</option>
+              <option value="TXA-80 Magno">TXA-80 Magno — Cônico vazio antideriva</option>
+            </optgroup>
+            <optgroup label="Bicos de Jato Duplo">
+              <option value="TJ60 11002 TeeJet">TJ60 11002 TeeJet — Duplo jato plano</option>
+              <option value="TJ60 11003 TeeJet">TJ60 11003 TeeJet — Duplo jato plano</option>
+              <option value="DF 120-02 Magno">DF 120-02 Magno — Duplo jato plano</option>
+            </optgroup>
+            <optgroup label="Bicos de Indução de Ar">
+              <option value="AVI Twin 110-02">AVI Twin 110-02 — Indução de ar duplo</option>
+              <option value="ID3 120-015 TeeJet">ID3 120-015 TeeJet — Indução de ar</option>
+              <option value="ID3 120-02 TeeJet">ID3 120-02 TeeJet — Indução de ar</option>
+              <option value="Turbo TeeJet 110-02">Turbo TeeJet 110-02 — Indução ar jato plano</option>
+            </optgroup>
+            <optgroup label="Bicos Rotativos">
+              <option value="ConeJet TXA 80-02">ConeJet TXA 80-02 — Rotativo cônico</option>
+            </optgroup>
+            <option value="Outro">Outro (informar em observações)</option>
+          </select>
+        </div>
         <div class="campo-group">
           <label class="label-campo">Técnico responsável *</label>
           <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
         </div>
-        <div class="campo-group">
-          <label class="label-campo">Safra</label>
-          <select id="recSafra" class="campo-input">
-            <option value="">Selecione...</option>
-          </select>
-        </div>
+
         <div class="campo-group">
           <label class="label-campo">Observações</label>
           <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
@@ -6086,6 +6125,7 @@ function renderReceitas() {
         </div>
         <div class="rec-card-right">
           <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
+          ${r.status === 'em_aberto' ? '<div class="rec-realizar-aplicacao">🚜 Realizar a Aplicação!</div>' : ''}
         </div>
       </div>
       <div class="rec-card-footer">
@@ -6115,10 +6155,15 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = r.operacao || '';
     document.getElementById('recVazao').value      = r.vazao || '';
     document.getElementById('recTanque').value     = r.tanque || '';
+    if(document.getElementById('recBico')) document.getElementById('recBico').value = r.bico || '';
+    const bicoGrpEdit = document.getElementById('recBicoGrupo');
+    if (bicoGrpEdit) bicoGrpEdit.style.display = r.operacao === 'autopropelido' ? '' : 'none';
     document.getElementById('recTecnico').value    = r.tecnico || '';
     document.getElementById('recObs').value        = r.obs || '';
     document.getElementById('recDescricao').value = r.descricao || '';
     document.getElementById('recSafra').value        = r.safra     || '';
+    const sfGrpEdit = document.getElementById('recSafraGrupo');
+    if (sfGrpEdit && r.cultura) sfGrpEdit.style.display = '';
     document.getElementById('recDataInicio').value = r.dataInicio || '';
     document.getElementById('recDataFim').value    = r.dataFim || '';
     _recTalhoesSel = (r.talhoes || []).map(t => ({...t}));
@@ -6131,6 +6176,7 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = '';
     document.getElementById('recVazao').value      = '';
     document.getElementById('recTanque').value     = '';
+    if(document.getElementById('recBico')) document.getElementById('recBico').value = '';
     document.getElementById('recTecnico').value    = sessaoAtual?.label || '';
     document.getElementById('recObs').value        = '';
     document.getElementById('recDescricao').value = '';
@@ -6182,6 +6228,8 @@ function renderCulturaChips() {
 }
 
 function selecionarCulturaReceita(cultura) {
+  const sfGrp = document.getElementById('recSafraGrupo');
+  if (sfGrp) sfGrp.style.display = cultura ? '' : 'none';
   const el = document.getElementById('recCultura');
   if (el) el.value = cultura;
   renderCulturaChips();
@@ -6190,8 +6238,10 @@ function selecionarCulturaReceita(cultura) {
 function onRecOperacaoChange() {
   const op = document.getElementById('recOperacao').value;
   const grp = document.getElementById('recTanqueGrupo');
+  const bicoGrp = document.getElementById('recBicoGrupo');
   const tanqueInput = document.getElementById('recTanque');
   if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
+  if (bicoGrp) bicoGrp.style.display = op === 'autopropelido' ? '' : 'none';
   // Preenche com valor padrão apenas se estiver vazio
   if (tanqueInput && !tanqueInput.value) {
     if (op === 'drone') tanqueInput.value = 70;
@@ -6418,6 +6468,7 @@ async function salvarReceita() {
   const operacao = document.getElementById('recOperacao').value;
   const vazao    = parseFloat(document.getElementById('recVazao').value) || 0;
   const tanque   = parseFloat(document.getElementById('recTanque').value) || 0;
+  const bico      = document.getElementById('recBico')?.value || '';
   const tecnico  = document.getElementById('recTecnico').value.trim();
   const obs      = document.getElementById('recObs').value.trim();
   const descricao = document.getElementById('recDescricao').value.trim();
@@ -6454,6 +6505,7 @@ async function salvarReceita() {
       fazenda, cultura, safra, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
       talhoes: _recTalhoesSel, itens, areaTotal,
       ...(tanque ? { tanque } : {}),
+      ...(bico   ? { bico }   : {}),
       status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
       atualizadoEm: new Date().toISOString(),
       nomeUsuario: sessaoAtual?.label || sessaoAtual?.email || '—',
@@ -6549,8 +6601,9 @@ function abrirDetReceita(id) {
       <div><span style="color:var(--texto-suave)">Vazão:</span> <strong>${r.vazao||0} L/ha</strong></div>
       <div><span style="color:var(--texto-suave)">Área total:</span> <strong>${(r.areaTotal||0).toFixed(2)} ha</strong></div>
       ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque:</span> <strong>${r.tanque} L</strong></div>` : ''}
+      ${r.bico ? `<div><span style="color:var(--texto-suave)">Bico:</span> <strong>${esc(r.bico)}</strong></div>` : ''}
       <div><span style="color:var(--texto-suave)">Técnico:</span> <strong>${esc(r.tecnico||'—')}</strong></div>
-      ${r.safra ? `<div><span style="color:var(--texto-suave)">Safra:</span> <strong>\${esc(r.safra)}</strong></div>` : ''}
+      ${r.safra ? `<div><span style="color:var(--texto-suave)">Safra:</span> <strong>${esc(r.safra)}</strong></div>` : ''}
     </div>
     <div style="font-size:13px;margin-bottom:10px;color:var(--texto-suave)">
       <strong>Talhões:</strong> ${talhoesTxt}
@@ -6815,18 +6868,22 @@ async function confirmarAceite() {
           if (atual < (it.qdeTotalArea||0)) throw new Error('ESTOQUE_INSUFICIENTE');
           tx.update(ref, { estoque: increment(-(it.qdeTotalArea||0)) });
         });
-        // Registrar no histórico
+        // Registrar no histórico (formato compatível com renderHistorico)
+        const estoqueAposCalc = Math.round(((prod.estoque||0) - (it.qdeTotalArea||0))*100)/100;
         await addDoc(collection(db, 'historico'), {
-          tipo: 'receita',
+          tipo: 'saida',
+          produto: prod.nome,
           produtoId: prod.id,
-          produtoNome: prod.nome,
-          unidade: prod.unidade,
-          quantidade: it.qdeTotalArea,
-          receitaNum: r.numero,
-          receitaId: _recAceitandoId,
-          fazenda: r.fazenda,
+          classe: prod.classe || '',
+          unidade: prod.unidade || '',
+          qtd: it.qdeTotalArea || 0,
+          estoqueApos: estoqueAposCalc,
+          resp: sessaoAtual?.label || sessaoAtual?.email || '',
           usuario: sessaoAtual?.email || '',
-          nomeUsuario: sessaoAtual?.label || '',
+          obs: `Baixa via Receita #${String(r.numero).padStart(4,'0')}`,
+          receitaId: _recAceitandoId,
+          receitaNum: r.numero,
+          fazenda: r.fazenda,
           dataOrdenacao: serverTimestamp(),
           dataLocal: new Date().getTime(),
           data: new Date().toISOString().split('T')[0],
