@@ -590,10 +590,16 @@ header {
 .rec-footer-operador { font-size:13px; color:#2d5a1e; font-weight:600; }
 
 /* Grupos de status */
-.rec-grupo-header { display:flex; align-items:center; gap:10px; padding:10px 16px;
-  border-radius:10px; margin:20px 0 10px; }
-.rec-grupo-label { font-size:14px; font-weight:800; flex:1; letter-spacing:.3px; }
-.rec-grupo-count { font-size:11px; font-weight:800; padding:2px 9px; border-radius:20px; }
+.rec-grupo-header { display:flex; align-items:center; gap:14px; padding:14px 18px;
+  border-radius:12px; margin:24px 0 10px; border:1px solid transparent; }
+.rec-grupo-icon-wrap { width:42px; height:42px; border-radius:50%; display:flex;
+  align-items:center; justify-content:center; flex-shrink:0; }
+.rec-grupo-icon-wrap svg { width:22px; height:22px; }
+.rec-grupo-texto { flex:1; }
+.rec-grupo-label { font-size:15px; font-weight:800; letter-spacing:.2px; line-height:1.2; }
+.rec-grupo-sub { font-size:12px; color:var(--texto-suave); margin-top:2px; }
+.rec-grupo-count { font-size:13px; font-weight:800; padding:5px 13px;
+  border-radius:20px; flex-shrink:0; }
 
 /* Chips de cultura no formulário */
 .rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
@@ -6114,10 +6120,10 @@ function renderReceitas() {
   const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
   const statusOrdem = ['pendente','em_aberto','finalizado','cancelado'];
   const statusCfg = {
-    pendente:   { label:'Pendentes',   icon:'🕐', cor:'#856404', bg:'#fff8e1', borda:'#ffd54f' },
-    em_aberto:  { label:'Em Aberto',   icon:'🚜', cor:'#084298', bg:'#e8f0fe', borda:'#84b4f0' },
-    finalizado: { label:'Finalizados', icon:'✅', cor:'#0a3622', bg:'#e8f5ee', borda:'#86c9a0' },
-    cancelado:  { label:'Cancelados',  icon:'✕',  cor:'#842029', bg:'#fdf0f0', borda:'#f0a0a8' },
+    pendente:   { label:'Pendentes',   sub:'Receitas aguardando execução', svgIcon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>', cor:'#92600a', bg:'#fffbeb', borda:'#f59e0b', bgIcon:'#fef3c7', corIcon:'#d97706', bgCount:'#f59e0b', corCount:'white' },
+    em_aberto:  { label:'Em Aberto',   sub:'Receitas em andamento',        svgIcon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C7 2 4 7 4 12s3 10 8 10 8-5 8-10S17 2 12 2z"/><path d="M8 12c0-2.2 1.8-4 4-4s4 1.8 4 4-1.8 4-4 4-4-1.8-4-4z"/></svg>', cor:'#1e40af', bg:'#eff6ff', borda:'#3b82f6', bgIcon:'#dbeafe', corIcon:'#2563eb', bgCount:'#3b82f6', corCount:'white' },
+    finalizado: { label:'Finalizados', sub:'Receitas concluídas',          svgIcon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9" fill="currentColor" stroke="none" opacity="0.15"/><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/></svg>', cor:'#166534', bg:'#f0fdf4', borda:'#22c55e', bgIcon:'#dcfce7', corIcon:'#16a34a', bgCount:'#22c55e', corCount:'white' },
+    cancelado:  { label:'Cancelados',  sub:'Receitas canceladas',          svgIcon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>', cor:'#991b1b', bg:'#fff5f5', borda:'#ef4444', bgIcon:'#fee2e2', corIcon:'#dc2626', bgCount:'#ef4444', corCount:'white' },
   };
   const filtroStatusAtivo = document.getElementById('recFiltroStatus')?.value || '';
   const grupos = filtroStatusAtivo
@@ -6164,9 +6170,12 @@ function renderReceitas() {
   lista.innerHTML = grupos.map(grupo => {
     const cfg = statusCfg[grupo.status] || { label:grupo.status, icon:'', cor:'#333', bg:'#f5f5f5', borda:'#ddd' };
     const cab = `<div class="rec-grupo-header" style="border-left:4px solid ${cfg.borda};background:${cfg.bg}">
-      <span style="font-size:16px">${cfg.icon}</span>
-      <span class="rec-grupo-label" style="color:${cfg.cor}">${cfg.label}</span>
-      <span class="rec-grupo-count" style="background:${cfg.borda};color:${cfg.cor}">${grupo.receitas.length}</span>
+      <div class="rec-grupo-icon-wrap" style="background:${cfg.bgIcon};color:${cfg.corIcon}">${cfg.svgIcon}</div>
+      <div class="rec-grupo-texto">
+        <div class="rec-grupo-label" style="color:${cfg.cor}">${cfg.label}</div>
+        <div class="rec-grupo-sub">${cfg.sub}</div>
+      </div>
+      <span class="rec-grupo-count" style="background:${cfg.bgCount};color:${cfg.corCount}">${grupo.receitas.length}</span>
     </div>`;
     return cab + grupo.receitas.map(_renderCard).join('');
   }).join('');
@@ -6271,9 +6280,14 @@ function selecionarCulturaReceita(cultura) {
 function onRecOperacaoChange() {
   const op = document.getElementById('recOperacao').value;
   const grp = document.getElementById('recTanqueGrupo');
+  const bicoGrp = document.getElementById('recBicoGrupo');
   const tanqueInput = document.getElementById('recTanque');
   if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
-  if (!tanqueInput.value) { if(op==='drone') tanqueInput.value=70; else if(op==='autopropelido') tanqueInput.value=3000; }
+  if (bicoGrp) bicoGrp.style.display = op === 'autopropelido' ? '' : 'none';
+  if (tanqueInput && !tanqueInput.value) {
+    if (op === 'drone') tanqueInput.value = 70;
+    else if (op === 'autopropelido') tanqueInput.value = 3000;
+  }
 }
 
 function renderTalhoesSel() {
