@@ -6672,6 +6672,7 @@ function abrirDetReceita(id) {
   let btns = `<button class="btn-cancelar" onclick="window.AppEstoque.fecharDetReceita()">Fechar</button>`;
 
   if (s === 'pendente') {
+    if (isAgro) btns += `<button onclick="window.AppEstoque.clonarReceita('${id}')" style="background:#6366f1;color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">📋 Clonar</button>`;
     if (isAgro) btns += `<button onclick="window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirNovaReceita('${id}'),150)" style="background:var(--azul);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✏️ Editar</button>`;
     if (isAgro) btns += `<button onclick="window.AppEstoque.cancelarReceita('${id}')" style="background:var(--vermelho);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:700;cursor:pointer">✕ Cancelar receita</button>`;
     btns += `<button onclick="window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${id}'),150)" style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer">✅ Aceitar receita</button>`;
@@ -6690,6 +6691,66 @@ function abrirDetReceita(id) {
 
 function fecharDetReceita() {
   document.getElementById('overlayDetReceita').classList.remove('aberto');
+}
+
+// ── Clonar receita ─────────────────────────────────────────────────
+async function clonarReceita(id) {
+  const r = recReceitas.find(x => x.id === id);
+  if (!r) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Clonar Receita',
+    icone: '📋',
+    mensagem: `Criar uma cópia da <strong>Receita #${String(r.numero||0).padStart(4,'0')}</strong>?<br><span style="font-size:12px;color:#6a7a8a">A cópia ficará como Pendente e você poderá editar a fazenda, talhões e demais campos.</span>`,
+    corBtn: '#6366f1',
+    labelBtn: '📋 Clonar'
+  });
+  if (!ok) return;
+  fecharDetReceita();
+  // Pequeno delay para fechar o modal antes de abrir o de edição
+  setTimeout(() => {
+    // Usar a mesma lógica do abrirNovaReceita mas pré-carregando os dados
+    _recEditandoId = null; // null = nova receita
+    _recItens = (r.itens || []).map(it => ({ ...it }));
+    _recTalhoesSel = (r.talhoes || []).map(t => ({ ...t }));
+    document.getElementById('novaReceitaTitulo').textContent = '📋 Clonar Receita';
+    // Preencher campos
+    const campos = {
+      recFazenda: r.fazenda || '',
+      recCultura: r.cultura || '',
+      recDescricao: r.descricao || '',
+      recOperacao: r.operacao || '',
+      recDataInicio: r.dataInicio || '',
+      recDataFim: r.dataFim || '',
+      recVazao: r.vazao || '',
+      recTanque: r.tanque || '',
+      recTecnico: r.tecnico || '',
+      recObs: r.obs || '',
+      recSafra: r.safra || '',
+      recBico: r.bico || '',
+    };
+    Object.entries(campos).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+    // Mostrar/ocultar grupos condicionais
+    onRecFazendaChange();
+    onRecOperacaoChange();
+    const sfGrp = document.getElementById('recSafraGrupo');
+    if (sfGrp && r.safra) sfGrp.style.display = '';
+    // Renderizar chips de cultura e talhões
+    renderCulturaChips();
+    renderTalhoesSel();
+    popularSafrasReceita();
+    // Renderizar itens
+    renderItensReceita();
+    // Bico
+    if (r.bico) {
+      document.querySelectorAll('.bico-chip').forEach(c =>
+        c.classList.toggle('selecionado', c.dataset.val === r.bico)
+      );
+    }
+    document.getElementById('overlayNovaReceita').classList.add('aberto');
+  }, 200);
 }
 
 // ── Cancelar receita ────────────────────────────────────────────────
@@ -6950,20 +7011,92 @@ async function confirmarAceite() {
 }
 
 // ── Substituição de produto ─────────────────────────────────────────
-async function abrirSubstituirProduto(receitaId, itemIdx) {
+function abrirSubstituirProduto(receitaId, itemIdx) {
   const r = recReceitas.find(x => x.id === receitaId);
   if (!r) return;
   const it = r.itens[itemIdx];
-  const novonome = prompt(`Substituir "${it.nome}" por qual produto?
-(Digite o nome exato conforme cadastrado no estoque)`);
-  if (!novonome || !novonome.trim()) return;
-  const prod = produtos.find(p => p.nome.toLowerCase() === novonome.trim().toLowerCase());
-  if (!prod) { mostrarToast('Produto não encontrado no estoque.', 'erro'); return; }
+  // Injetar modal inline de substituição
+  const existente = document.getElementById('overlaySubstProd');
+  if (existente) existente.remove();
+  const div = document.createElement('div');
+  div.id = 'overlaySubstProd';
+  div.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px';
+  div.innerHTML = `
+    <div style="background:white;border-radius:14px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+      <div style="background:linear-gradient(90deg,#c05a00,#e07820);padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+        <h2 style="color:white;margin:0;font-size:16px">↔ Substituir Produto</h2>
+        <button onclick="document.getElementById('overlaySubstProd').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:16px;font-weight:700">×</button>
+      </div>
+      <div style="padding:20px">
+        <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px">
+          Substituindo: <strong>${esc(it.nome)}</strong>
+        </div>
+        <label style="font-size:12px;font-weight:700;color:#6a7a8a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Novo produto</label>
+        <div style="position:relative">
+          <input id="substProdInput" class="campo-input" placeholder="Digite para buscar no estoque..." autocomplete="off"
+            oninput="window.AppEstoque._filtrarSubstProd()" style="padding-right:36px">
+          <div id="substProdSugs" style="display:none;position:absolute;top:100%;left:0;right:0;background:white;border:1.5px solid var(--borda);border-top:none;border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:10"></div>
+        </div>
+        <div id="substProdSelecionado" style="display:none;margin-top:10px;padding:8px 12px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;font-size:13px;color:#1b5e20;font-weight:600"></div>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end">
+        <button onclick="document.getElementById('overlaySubstProd').remove()" class="btn-cancelar">Cancelar</button>
+        <button id="substProdConfirmar" onclick="window.AppEstoque._confirmarSubstProd('${receitaId}',${itemIdx})"
+          style="background:var(--verde);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;opacity:.5;pointer-events:none">
+          ✓ Substituir
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(div);
+  div._recId = receitaId;
+  div._itemIdx = itemIdx;
+  window._substProdId = null;
+  setTimeout(() => document.getElementById('substProdInput')?.focus(), 100);
+}
 
+function _filtrarSubstProd() {
+  const q = (document.getElementById('substProdInput')?.value || '').toLowerCase();
+  const sugs = document.getElementById('substProdSugs');
+  if (!sugs) return;
+  if (!q || q.length < 2) { sugs.style.display = 'none'; return; }
+  const matches = produtos.filter(p => p.nome.toLowerCase().includes(q)).slice(0, 12);
+  if (!matches.length) { sugs.style.display = 'none'; return; }
+  sugs.innerHTML = matches.map(p =>
+    `<div onmousedown="event.preventDefault();window.AppEstoque._selecionarSubstProd(${JSON.stringify(p.id)},${JSON.stringify(p.nome)},${JSON.stringify(p.unidade||'')})"
+      style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
+      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background=''">
+      <span>${esc(p.nome)}</span>
+      <span style="font-size:11px;color:#999">${esc(p.unidade||'')} · Saldo: ${fmt(p.estoque||0)}</span>
+    </div>`
+  ).join('');
+  sugs.style.display = 'block';
+}
+
+function _selecionarSubstProd(id, nome, unidade) {
+  window._substProdId = id;
+  window._substProdNome = nome;
+  window._substProdUnidade = unidade;
+  const inp = document.getElementById('substProdInput');
+  if (inp) inp.value = nome;
+  const sugs = document.getElementById('substProdSugs');
+  if (sugs) sugs.style.display = 'none';
+  const sel = document.getElementById('substProdSelecionado');
+  if (sel) { sel.textContent = '✓ ' + nome + ' selecionado'; sel.style.display = 'block'; }
+  const btn = document.getElementById('substProdConfirmar');
+  if (btn) { btn.style.opacity = '1'; btn.style.pointerEvents = 'auto'; }
+}
+
+async function _confirmarSubstProd(receitaId, itemIdx) {
+  if (!window._substProdId) return;
+  const r = recReceitas.find(x => x.id === receitaId);
+  if (!r) return;
+  const it = r.itens[itemIdx];
+  const prod = produtos.find(p => p.id === window._substProdId);
+  if (!prod) { mostrarToast('Produto não encontrado.', 'erro'); return; }
   const itensAtt = [...r.itens];
   itensAtt[itemIdx] = {
     ...it,
-    nomeOriginal: it.nome,
+    nomeOriginal: it.nomeOriginal || it.nome,
     nome: prod.nome,
     unidade: prod.unidade,
     produtoId: prod.id,
@@ -6971,10 +7104,13 @@ async function abrirSubstituirProduto(receitaId, itemIdx) {
     substituidoEm: new Date().toISOString(),
     substituidoPorNome: sessaoAtual?.label || '',
   };
-  await updateDoc(doc(db, 'receitas', receitaId), { itens: itensAtt, atualizadoEm: new Date().toISOString() });
-  mostrarToast(`Produto substituído por ${prod.nome}.`, 'sucesso');
-  fecharAceiteReceita();
-  setTimeout(() => abrirAceiteReceita(receitaId), 400);
+  try {
+    await updateDoc(doc(db, 'receitas', receitaId), { itens: itensAtt, atualizadoEm: new Date().toISOString() });
+    mostrarToast('Produto substituído: ' + prod.nome, 'sucesso');
+    document.getElementById('overlaySubstProd')?.remove();
+    fecharAceiteReceita();
+    setTimeout(() => abrirAceiteReceita(receitaId), 400);
+  } catch(e) { mostrarToast('Erro ao substituir.', 'erro'); }
 }
 
 // ── Finalizar ───────────────────────────────────────────────────────
@@ -7050,12 +7186,11 @@ async function imprimirReceita(id) {
     const qdeTot = it.qdeTotalArea || 0;
     const doseBomba = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
     return `<tr style="${isBio?'background:#f1f8e9':''}">
-      <td style="padding:7px 10px;border:1px solid #d0d8e0">${nomeTxt}</td>
-      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${esc(it.tipo||'—')}</td>
-      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${esc(it.unidade||'L')}</td>
-      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center">${doseHa}</td>
-      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:center;font-weight:700">${doseBomba.toFixed(3)}</td>
-      <td style="padding:7px 10px;border:1px solid #d0d8e0;text-align:right;font-weight:700;color:#1a5fb4">${qdeTot.toFixed(3)}</td>
+      <td style="padding:9px 12px;border:1px solid #d0d8e0;font-size:13px">${nomeTxt}</td>
+      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px">${esc(it.tipo||'—')}</td>
+      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px">${doseHa}</td>
+      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px;font-weight:700">${doseBomba.toFixed(3)}</td>
+      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:right;font-size:13px;font-weight:700;color:#1a5fb4">${qdeTot.toFixed(3)}</td>
     </tr>`;
   }).join('');
 
@@ -7098,21 +7233,25 @@ async function imprimirReceita(id) {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>Receita ${numFmt} — ${r.fazenda}</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
-    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
-    .logo-wrap img { height:52px; }
-    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
-    .capa-fazenda { font-size:18px; font-weight:900; }
-    .capa-titulo  { font-size:13px; color:#5a6472; }
-    .status-badge { display:inline-block; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; }
-    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; font-size:12px; }
-    .info-item span { color:#6a7a8a; }
-    table { width:100%; border-collapse:collapse; margin-top:12px; }
-    th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #2a5aaa; }
+    * { box-sizing:border-box; }
+    body { font-family: Arial, sans-serif; margin: 20px 28px; color: #1a2535; font-size: 14px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; border-bottom:2px solid #1a3a6b; padding-bottom:14px; }
+    .logo-wrap img { height:56px; }
+    .capa-empresa { font-size:13px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:20px; font-weight:900; color:#1a2535; }
+    .capa-titulo  { font-size:13px; color:#5a6472; margin-top:2px; }
+    .status-badge { display:inline-block; padding:5px 16px; border-radius:20px; font-size:13px; font-weight:700; }
+    .secao-titulo { font-size:12px; font-weight:700; color:#6a7a8a; text-transform:uppercase; letter-spacing:.6px; margin:18px 0 8px; border-bottom:1px solid #e0e4e8; padding-bottom:4px; }
+    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 18px; }
+    .info-item { font-size:14px; }
+    .info-item span { color:#6a7a8a; font-size:13px; }
+    .info-item strong { font-size:14px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; }
+    th { background:#1a3a6b; color:white; padding:10px 12px; font-size:13px; text-align:left; border:1px solid #2a5aaa; }
     th.tc { text-align:center; }
-    td { font-size:11px; }
+    td { font-size:13px; padding:2px; }
     tr:nth-child(even) td { background:#f7f9fc; }
-    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
+    .rodape { margin-top:24px; font-size:11px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:10px; }
   </style></head><body>
   <div class="logo-wrap">
     <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
@@ -7138,14 +7277,14 @@ async function imprimirReceita(id) {
     <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
     <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
     ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L</strong></div>` : ''}
-      ${r.bico ? `<div class="info-item"><span>Bico: </span><strong>${esc(r.bico)}</strong></div>` : ''}
+    ${r.bico   ? `<div class="info-item"><span>Tipo de Bico: </span><strong>${esc(r.bico)}</strong></div>` : ''}
     <div class="info-item"><span>Técnico: </span><strong>${esc(r.tecnico||'—')}</strong></div>
   </div>
   ${r.obs ? `<div style="background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:12px">📌 <strong>Observação:</strong> ${esc(r.obs)}</div>` : ''}
 
   <table>
     <thead><tr>
-      <th>Produto</th><th class="tc">Tipo</th><th class="tc">Unid.</th>
+      <th>Produto</th><th class="tc">Tipo</th>
       <th class="tc">Dose/ha</th><th class="tc">Dose/Tanque</th><th class="tc">Qde Total</th>
     </tr></thead>
     <tbody>${linhasProd}</tbody>
@@ -8214,7 +8353,7 @@ window.AppEstoque = {
   onProdutoReceitaInput, _selProdRec, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
-  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto,
+  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto, clonarReceita, _filtrarSubstProd, _selecionarSubstProd, _confirmarSubstProd,
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
