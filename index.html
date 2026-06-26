@@ -7161,145 +7161,176 @@ async function imprimirReceita(id) {
   const r = recReceitas.find(x => x.id === id);
   if (!r) return;
 
-  const numFmt    = `#${String(r.numero||0).padStart(4,'0')}`;
-  const opLabel   = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Pulverização Autopropelido';
-  const dataEmit  = new Date().toLocaleString('pt-BR');
+  const numFmt     = '#' + String(r.numero||0).padStart(4,'0');
+  const isDrone    = r.operacao === 'drone';
+  const opLabel    = isDrone ? 'Drone' : 'Pulverização Autopropelido';
+  const opSVG      = isDrone
+    ? '<svg width="28" height="21" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
+    : '<svg width="32" height="21" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
+  const dataEmit   = new Date().toLocaleDateString('pt-BR');
+  const dataLanc   = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : dataEmit;
   const periodoTxt = r.dataInicio && r.dataFim
-    ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
+    ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')
     : '—';
-  const talhoesTxt = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
+  const talhoesTxt = (r.talhoes||[]).map(t => t.nome).join(' , ');
   const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
   const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
   const statusBg    = { pendente:'#fff3cd', em_aberto:'#cfe2ff', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
 
   const vazao     = r.vazao || 0;
   const areaTotal = r.areaTotal || 0;
-  const tanque    = r.tanque || (r.operacao === 'drone' ? 70 : 3000);
+  const tanque    = r.tanque || (isDrone ? 70 : 3000);
   const capTanque = vazao > 0 ? tanque / vazao : 0;
-  const nTanques  = capTanque > 0 ? Math.ceil(areaTotal / capTanque) : 0;
+  const nTanques  = capTanque > 0 ? (areaTotal / capTanque).toFixed(2) : '—';
+  const capHaTxt  = capTanque > 0 ? capTanque.toFixed(2) : '—';
 
+  // Linhas da tabela de produtos
   const linhasProd = (r.itens||[]).map(it => {
     const isBio = it.biologico;
     const isSub = !!it.substituidoPor;
-    const nomeTxt = isSub ? `${esc(it.nome)}<br><span style="font-size:10px;color:#e65100">↔ Substituiu: ${esc(it.nomeOriginal||'')}</span>` : esc(it.nome);
-    const doseHa = it.doseHa || 0;
-    const qdeTot = it.qdeTotalArea || 0;
-    const doseBomba = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
-    return `<tr style="${isBio?'background:#f1f8e9':''}">
-      <td style="padding:9px 12px;border:1px solid #d0d8e0;font-size:13px">${nomeTxt}</td>
-      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px">${esc(it.tipo||'—')}</td>
-      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px">${doseHa}</td>
-      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:center;font-size:13px;font-weight:700">${doseBomba.toFixed(3)}</td>
-      <td style="padding:9px 12px;border:1px solid #d0d8e0;text-align:right;font-size:13px;font-weight:700;color:#1a5fb4">${qdeTot.toFixed(3)}</td>
-    </tr>`;
+    const nomeTxt = isSub
+      ? esc(it.nome) + '<br><span style="font-size:11px;color:#e65100">↔ Substituiu: ' + esc(it.nomeOriginal||'') + '</span>'
+      : esc(it.nome);
+    const doseHa   = it.doseHa || 0;
+    const qdeTot   = it.qdeTotalArea || 0;
+    const doseCarga = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
+    // Dose parcial = último tanque
+    const restHa = capTanque > 0 ? areaTotal % capTanque : 0;
+    const doseParcial = restHa > 0 ? Math.round(doseHa * restHa * 1000)/1000 : doseCarga;
+    const bg = isBio ? 'background:#f1f8e9' : (it._idx%2===0 ? '' : 'background:#f7f9fc');
+    return '<tr style="' + bg + '">'
+      + '<td>' + nomeTxt + '</td>'
+      + '<td class="tc">' + esc(it.tipo||'—') + '</td>'
+      + '<td class="tc">' + doseHa + '</td>'
+      + '<td class="tc bold">' + doseCarga.toFixed(3) + '</td>'
+      + '<td class="tc bold" style="color:#c05a00">' + doseParcial.toFixed(3) + '</td>'
+      + '<td class="tc bold" style="color:#1a4a9a">' + qdeTot.toFixed(3) + '</td>'
+      + '</tr>';
   }).join('');
 
   // Bloco biológicos
   const bios = (r.itens||[]).filter(it => it.biologico);
   let biosBloco = '';
   if (bios.length) {
-    biosBloco = `
-    <div style="margin-top:16px;padding:12px 16px;background:#e8f5e9;border-radius:8px;border:1.5px solid #a5d6a7">
-      <div style="font-weight:700;color:#1b5e20;margin-bottom:8px;font-size:13px">🧬 Diluição de Biológicos</div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead><tr style="background:#2e7d32;color:white">
-          <th style="padding:6px 8px;text-align:left">Produto</th>
-          <th style="padding:6px 8px;text-align:center">Vol. Total</th>
-          <th style="padding:6px 8px;text-align:center">Por Tanque (${tanque}L)</th>
-          <th style="padding:6px 8px;text-align:center">Concentração</th>
-        </tr></thead>
-        <tbody>${bios.map(it => {
-          const vPt = capTanque > 0 ? Math.round(it.doseHa * capTanque * 1000)/1000 : 0;
-          const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
-          return `<tr style="background:white">
-            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9">${esc(it.nome)}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center;font-weight:700">${(it.qdeTotalArea||0).toFixed(3)} ${esc(it.unidade||'L')}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center;font-weight:700;color:#1b5e20">${vPt.toFixed(3)} ${esc(it.unidade||'L')}</td>
-            <td style="padding:6px 8px;border-bottom:1px solid #c8e6c9;text-align:center">${conc.toFixed(2)}%</td>
-          </tr>`;
-        }).join('')}</tbody>
-      </table>
-    </div>`;
+    const biosLinhas = bios.map(it => {
+      const vPt  = capTanque > 0 ? Math.round(it.doseHa * capTanque * 1000)/1000 : 0;
+      const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
+      return '<tr><td>' + esc(it.nome) + '</td>'
+        + '<td class="tc bold">' + (it.qdeTotalArea||0).toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
+        + '<td class="tc bold" style="color:#1b5e20">' + vPt.toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
+        + '<td class="tc">' + conc.toFixed(2) + '%</td></tr>';
+    }).join('');
+    biosBloco = '<div class="secao-bio"><div class="secao-bio-titulo">🧬 Diluição de Biológicos</div>'
+      + '<table><thead><tr style="background:#2e7d32;color:white">'
+      + '<th>Produto</th><th class="tc">Vol. Total</th><th class="tc">Por Tanque (' + tanque + 'L)</th><th class="tc">Concentração</th>'
+      + '</tr></thead><tbody>' + biosLinhas + '</tbody></table></div>';
   }
 
-  const aplicadorBloco = r.status === 'finalizado' ? `
-    <div style="margin-top:16px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
-      <strong style="color:#0a3622">✔ Aplicação realizada</strong><br>
-      <span style="font-size:13px">Aplicador: ${esc(r.aplicador||'—')} · 
-      ${r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : ''} a 
-      ${r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : ''}</span>
-    </div>` : '';
+  // Bloco finalizado
+  let finalizadoHTML = '';
+  if (r.status === 'finalizado' && r.aplicador) {
+    const dIni = r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+    const dFim = r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
+    const diasAtr = r.diasAtraso > 0 ? r.diasAtraso : 0;
+    finalizadoHTML = '<div class="bloco-fin">✔ Aplicação realizada — Aplicador: <strong>' + esc(r.aplicador) + '</strong> · ' + dIni + ' a ' + dFim
+      + (diasAtr > 0 ? ' <span style="color:#7c2d12;font-weight:700">⚠️ ' + diasAtr + ' dia' + (diasAtr>1?'s':'') + ' de atraso</span>' : '')
+      + '</div>';
+  }
 
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Receita ${numFmt} — ${r.fazenda}</title>
-  <style>
-    * { box-sizing:border-box; }
-    body { font-family: Arial, sans-serif; margin: 20px 28px; color: #1a2535; font-size: 14px; }
-    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; border-bottom:2px solid #1a3a6b; padding-bottom:14px; }
-    .logo-wrap img { height:56px; }
-    .capa-empresa { font-size:13px; font-weight:700; color:#1a3a6b; }
-    .capa-fazenda { font-size:20px; font-weight:900; color:#1a2535; }
-    .capa-titulo  { font-size:13px; color:#5a6472; margin-top:2px; }
-    .status-badge { display:inline-block; padding:5px 16px; border-radius:20px; font-size:13px; font-weight:700; }
-    .secao-titulo { font-size:12px; font-weight:700; color:#6a7a8a; text-transform:uppercase; letter-spacing:.6px; margin:18px 0 8px; border-bottom:1px solid #e0e4e8; padding-bottom:4px; }
-    .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0 18px; }
-    .info-item { font-size:14px; }
-    .info-item span { color:#6a7a8a; font-size:13px; }
-    .info-item strong { font-size:14px; }
-    table { width:100%; border-collapse:collapse; margin-top:8px; }
-    th { background:#1a3a6b; color:white; padding:10px 12px; font-size:13px; text-align:left; border:1px solid #2a5aaa; }
-    th.tc { text-align:center; }
-    td { font-size:13px; padding:2px; }
-    tr:nth-child(even) td { background:#f7f9fc; }
-    .rodape { margin-top:24px; font-size:11px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:10px; }
-  </style></head><body>
-  <div class="logo-wrap">
-    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
-    <div>
-      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
-      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
-      <div class="capa-titulo">Receita Agronômica ${numFmt} · Emitido em ${dataEmit}</div>
-    </div>
-    <div style="margin-left:auto">
-      <span class="status-badge" style="background:${statusBg[r.status]||'#eee'};color:${statusCor[r.status]||'#333'}">
-        ${statusLabel[r.status]||r.status}
-      </span>
-    </div>
-  </div>
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<title>Receita ' + numFmt + ' — ' + esc(r.fazenda) + '</title>'
+    + '<style>'
+    + '* { box-sizing:border-box; margin:0; padding:0; }'
+    + 'body { font-family:Arial,sans-serif; margin:22px 30px; color:#1a2535; font-size:15px; line-height:1.5; }'
+    + '.header { display:flex; align-items:center; gap:18px; border-bottom:3px solid #1a3a6b; padding-bottom:14px; margin-bottom:18px; }'
+    + '.header img { height:60px; }'
+    + '.h-empresa { font-size:13px; font-weight:700; color:#1a3a6b; }'
+    + '.h-titulo { font-size:15px; font-weight:600; color:#5a6472; font-style:italic; text-decoration:underline; letter-spacing:.3px; }'
+    + '.h-badge { margin-left:auto; display:inline-block; padding:5px 18px; border-radius:20px; font-size:14px; font-weight:800; }'
+    + '.data-linha { display:flex; justify-content:space-between; font-size:14px; margin-bottom:16px; }'
+    + '.data-linha strong { color:#c05a00; font-size:15px; }'
+    + '.data-linha .aprov { font-weight:700; color:#166534; font-size:15px; }'
+    + '.bloco { margin-bottom:6px; font-size:15px; }'
+    + '.bloco .arr { color:#c05a00; font-weight:900; margin-right:4px; font-size:16px; }'
+    + '.bloco .label { font-weight:700; text-decoration:underline; margin-right:4px; }'
+    + '.bloco.sub1 { margin-left:20px; }'
+    + '.bloco.sub2 { margin-left:40px; }'
+    + '.bloco.sub3 { margin-left:60px; }'
+    + '.bloco.sub4 { margin-left:80px; }'
+    + '.op-bloco { margin:18px 0 10px; }'
+    + '.op-linha { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:700; margin-bottom:8px; }'
+    + '.op-linha svg { vertical-align:middle; }'
+    + '.op-sub { font-size:14px; margin:3px 0 3px 14px; color:#2a3a4a; }'
+    + '.op-sub .arr2 { color:#1a7a2a; font-weight:700; margin-right:4px; }'
+    + 'table { width:100%; border-collapse:collapse; margin-top:12px; }'
+    + 'th { background:#2a4a7a; color:white; padding:10px 12px; font-size:14px; text-align:left; border:1px solid #3a5a9a; }'
+    + 'th.tc { text-align:center; }'
+    + 'td { font-size:14px; padding:8px 12px; border:1px solid #d0d8e0; vertical-align:middle; }'
+    + 'td.tc { text-align:center; }'
+    + 'td.bold { font-weight:700; }'
+    + 'tr:nth-child(even) td { background:#f7f9fc; }'
+    + '.obs-bloco { margin-top:20px; padding:10px 0; border-top:1px solid #e0e4e8; font-size:16px; }'
+    + '.obs-label { font-weight:900; color:#c00; margin-right:6px; }'
+    + '.tec-linha { margin-top:10px; text-align:center; font-size:14px; color:#444; }'
+    + '.tec-linha strong { font-style:italic; }'
+    + '.secao-bio { margin-top:16px; padding:12px 16px; background:#e8f5e9; border-radius:8px; border:1.5px solid #a5d6a7; }'
+    + '.secao-bio-titulo { font-weight:700; color:#1b5e20; margin-bottom:8px; font-size:15px; }'
+    + '.bloco-fin { margin-top:14px; padding:10px 14px; background:#d1e7dd; border-radius:8px; font-size:14px; color:#0a3622; }'
+    + '.rodape { margin-top:20px; font-size:12px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:10px; }'
+    + '</style></head><body>'
 
-  <div class="info-grid">
-    <div class="info-item"><span>Fazenda: </span><strong>${esc(r.fazenda)}</strong></div>
-    <div class="info-item"><span>Cultura: </span><strong>${esc(r.cultura||'—')}</strong></div>
-    <div class="info-item"><span>Operação: </span><strong>${opLabel}</strong></div>
-    <div class="info-item"><span>Período: </span><strong>${periodoTxt}</strong></div>
-    <div class="info-item"><span>Talhões: </span><strong>${talhoesTxt}</strong></div>
-    <div class="info-item"><span>Área total: </span><strong>${areaTotal.toFixed(2)} ha</strong></div>
-    <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
-    <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
-    ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L</strong></div>` : ''}
-    ${r.bico   ? `<div class="info-item"><span>Tipo de Bico: </span><strong>${esc(r.bico)}</strong></div>` : ''}
-    <div class="info-item"><span>Técnico: </span><strong>${esc(r.tecnico||'—')}</strong></div>
-  </div>
-  ${r.obs ? `<div style="background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:12px">📌 <strong>Observação:</strong> ${esc(r.obs)}</div>` : ''}
+    // Cabeçalho
+    + '<div class="header">'
+    + '<img src="' + LOGO_AMJ + '" alt="' + esc(configGlobal.empresa) + '">'
+    + '<div><div class="h-empresa">' + esc(configGlobal.empresa) + '</div>'
+    + '<div class="h-titulo">RELATÓRIO DE RECOMENDAÇÃO AGRÍCOLA</div></div>'
+    + '<span class="h-badge" style="background:' + (statusBg[r.status]||'#eee') + ';color:' + (statusCor[r.status]||'#333') + '">' + (statusLabel[r.status]||r.status) + '</span>'
+    + '</div>'
 
-  <table>
-    <thead><tr>
-      <th>Produto</th><th class="tc">Tipo</th>
-      <th class="tc">Dose/ha</th><th class="tc">Dose/Tanque</th><th class="tc">Qde Total</th>
-    </tr></thead>
-    <tbody>${linhasProd}</tbody>
-  </table>
+    // Data e aprovação
+    + '<div class="data-linha">'
+    + '<span>📅 Data do Lançamento: <strong>' + dataLanc + '</strong></span>'
+    + '<span class="aprov">Aprovação: OK!</span>'
+    + '</div>'
 
-  ${biosBloco}
-  ${aplicadorBloco}
+    // Hierarquia: Cliente → Fazenda → Talhões → Cultura → Área
+    + '<div class="bloco"><span class="arr">➨</span><span class="label">CLIENTE:</span>' + esc(configGlobal.empresa) + '</div>'
+    + '<div class="bloco sub1"><span class="arr">➨</span><span class="label">FAZENDA:</span>' + esc(r.fazenda) + '</div>'
+    + '<div class="bloco sub2"><span class="arr">➨</span><span class="label">TALHÕES:</span>' + talhoesTxt + '</div>'
+    + '<div class="bloco sub3"><span class="arr">➨</span><span class="label">CULTURA:</span>' + esc(r.cultura||'—') + (r.safra ? ' | ' + esc(r.safra) : '') + '</div>'
+    + '<div class="bloco sub4"><span class="arr">➨</span><span class="label">Área Total:</span>' + areaTotal.toFixed(2) + ' Hectares</div>'
 
-  ${r.aceiteNome ? `<div style="margin-top:12px;font-size:11px;color:#6a7a8a">
-    ✅ Aceito por <strong>${esc(r.aceiteNome)}</strong> em ${r.aceiteEm ? new Date(r.aceiteEm).toLocaleDateString('pt-BR') : '—'}
-  </div>` : ''}
+    // Operação
+    + '<div class="op-bloco">'
+    + '<div class="op-linha">' + opSVG + '<span style="text-decoration:underline;font-weight:900">OPERAÇÃO:</span>&nbsp;' + opLabel + '&nbsp;&nbsp;&nbsp;<span style="text-decoration:underline;font-weight:700">Período:</span>&nbsp;' + periodoTxt + '</div>'
+    + '<div class="op-sub"><span class="arr2">➤</span>Tamanho do Tanque - ' + tanque + ' Litros</div>'
+    + '<div class="op-sub" style="margin-left:40px"><span class="arr2">➤</span>Vazão por Hectare - ' + vazao + ' L/Ha</div>'
+    + '<div class="op-sub" style="margin-left:60px"><span class="arr2">➤</span>Capacidade do Tanque - ' + capHaTxt + ' Hectares</div>'
+    + '<div class="op-sub" style="margin-left:80px;font-weight:700">Quantidade Total de Tanque - ' + nTanques + '</div>'
+    + (r.bico ? '<div class="op-sub" style="margin-left:60px"><span class="arr2">➤</span>Tipo de Bico - ' + esc(r.bico) + '</div>' : '')
+    + '</div>'
 
-  <div class="rodape">${esc(configGlobal.empresa)} · ${esc(configGlobal.fazenda)} · Receita ${numFmt} · Gerado em ${dataEmit}</div>
-  <script>window.onload = () => window.print()<\/script>
-  </body></html>`;
+    // Tabela de produtos
+    + '<table><thead><tr>'
+    + '<th>Insumo Recom.</th><th class="tc">Tipo</th><th class="tc">Dose / ha</th>'
+    + '<th class="tc" style="color:#ffe082">Dose / Bomba<br>(Carga Cheia)</th>'
+    + '<th class="tc" style="color:#ffb74d">Dose / Bomba<br>(Carga Parcial)</th>'
+    + '<th class="tc">Qde Total<br>na Área</th>'
+    + '</tr></thead><tbody>' + linhasProd + '</tbody></table>'
+
+    + biosBloco
+    + finalizadoHTML
+
+    // Observações = descricao da receita
+    + (r.descricao ? '<div class="obs-bloco"><span class="obs-label">OBSERVAÇÕES:</span>' + esc(r.descricao) + '</div>' : '')
+    + (r.obs ? '<div class="obs-bloco" style="margin-top:6px"><span class="obs-label" style="color:#856404">OBS. ADICIONAIS:</span>' + esc(r.obs) + '</div>' : '')
+
+    // Técnico
+    + '<div class="tec-linha">✒️&nbsp;<strong>Técnico Responsável: ' + esc(r.tecnico||'—') + '</strong></div>'
+
+    + '<div class="rodape">' + esc(configGlobal.empresa) + ' · Receita ' + numFmt + ' · Gerado em ' + dataEmit + '</div>'
+    + '<script>window.onload = () => window.print()<\/script>'
+    + '</body></html>';
 
   // Marcar como impresso
   await updateDoc(doc(db, 'receitas', id), { impresso: true, impressoEm: new Date().toISOString() });
