@@ -597,9 +597,13 @@ header {
 .rec-op-badge svg { display:block; flex-shrink:0; }
 .rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
 .rec-op-badge.autopropelido { background:#f0faf0; color:#2d6a2d; }
-.rec-realizar-aplicacao { font-size:11px; font-weight:700; color:#084298;
-  background:#dbeafe; border:1px solid #93c5fd; border-radius:6px;
-  padding:4px 10px; text-align:center; white-space:nowrap; margin-top:2px; }
+.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:6px;
+  font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
+  border:1px solid #fca974; border-radius:6px; padding:3px 9px; }
+.rec-footer-aplicador { font-size:12px; color:#2d6a2d; font-weight:700; }
+.rec-realizar-aplicacao { font-size:12px; font-weight:700; color:#c05a00;
+  background:none; border:none; padding:0; text-align:right;
+  white-space:nowrap; margin-top:8px; letter-spacing:.2px; }
 
 
 /* Remove tooltip nativo do browser nas sugestões de produto */
@@ -806,6 +810,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 .hp-mov .hp-meta { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
 .hp-tipo.t-entrada, .hp-tipo.t-compra { color: var(--verde); }
 .hp-tipo.t-saida, .hp-tipo.t-receita { color: var(--vermelho); }
+.mov-receita-grupo { border-left:4px solid #1a4080; }
 .hp-tipo.t-edicao { color: var(--azul); }
 .hp-tipo.t-exclusao { color: #888; }
 .hp-qtd { font-size: 14px; font-weight: 700; white-space: nowrap; }
@@ -4256,7 +4261,64 @@ function renderHistorico() {
     ? `${historico.length}${sufixoMais} movimentaç${historico.length===1?'ão':'ões'}`
     : `${filtrado.length} de ${historico.length}${sufixoMais} movimentações`;
 
-  lista.innerHTML = filtrado.map(m => {
+  // Agrupar baixas de receita (saídas com receitaNum) em blocos únicos
+  const filtradoAgrupado = [];
+  const receitasAgrupadas = {};
+  filtrado.forEach(m => {
+    if (m.tipo === 'saida' && m.receitaNum != null) {
+      const key = m.receitaNum;
+      if (!receitasAgrupadas[key]) {
+        receitasAgrupadas[key] = {
+          _isGrupoReceita: true,
+          receitaNum: m.receitaNum,
+          receitaId: m.receitaId,
+          fazenda: m.fazenda,
+          resp: m.resp,
+          usuario: m.usuario,
+          data: m.data,
+          dataLocal: m.dataLocal,
+          itens: [],
+          ids: []
+        };
+        filtradoAgrupado.push(receitasAgrupadas[key]);
+      }
+      receitasAgrupadas[key].itens.push(m);
+      receitasAgrupadas[key].ids.push(m.id);
+    } else {
+      filtradoAgrupado.push(m);
+    }
+  });
+
+  lista.innerHTML = filtradoAgrupado.map(m => {
+    if (m._isGrupoReceita) {
+      const recNum = String(m.receitaNum).padStart(4,'0');
+      const rec = recReceitas.find(x => x.id === m.receitaId);
+      const titulo = `Receita #${recNum}${rec ? ' · ' + esc(rec.descricao||rec.cultura||'') : ''}`;
+      const subtitulo = rec ? `${esc(rec.fazenda||'')} · ${CULTURAS_EMOJI[rec.cultura]||''} ${esc(rec.cultura||'')}${rec.safra?' · Safra '+esc(rec.safra):''}` : esc(m.fazenda||'');
+      const data = new Date(m.data);
+      const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      const itensHTML = m.itens.map(it => `
+        <div class="mov-prod-card">
+          <div class="mov-prod-nome">${esc(it.produto)} <span style="color:#999;font-size:10px">${esc(it.classe||'')}</span></div>
+          <div class="mov-prod-pill neg">−${fmt(it.qtd)} ${esc(it.unidade||'')}</div>
+        </div>`).join('');
+      const acoesGrupo = m.ids.map(id =>
+        `<button class="mov-btn ver" onclick="event.stopPropagation();window.AppEstoque.abrirDetalheLancamento('${id}')">👁 Ver</button>
+         <button class="mov-btn pdf" onclick="event.stopPropagation();window.AppEstoque.gerarPDFLancamento('${id}')">📄 PDF</button>`
+      ).join('');
+      return `<div class="mov-item mov-receita-grupo">
+        <div class="mov-icon receita">🧾</div>
+        <div class="mov-detalhe">
+          <div class="mov-produto" style="font-size:14px;font-weight:800">${titulo}</div>
+          <div class="mov-info" style="font-size:12px;color:#5a6472;margin-bottom:2px">${subtitulo}</div>
+          <div class="mov-info">${esc(m.resp||'—')} · ${dataStr}</div>
+          <div class="mov-itens-lista" style="margin-top:8px">${itensHTML}</div>
+          <div class="mov-acoes" style="margin-top:6px">${acoesGrupo}</div>
+        </div>
+        <div class="mov-qtd receita">−${m.itens.length} item${m.itens.length>1?'s':''}</div>
+      </div>`;
+    }
+
     const data = new Date(m.data);
     const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const acoes = `<div class="mov-acoes">
@@ -6113,7 +6175,15 @@ function renderReceitas() {
     }).join('');
     const talhoesTxt = (r.talhoes || []).map(t => t.nome).join(', ');
     const dataFmt = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
-    const impresso = r.impresso ? ' · <span style="color:#2a7a2a;font-weight:600">🖨️ Impresso</span>' : '';
+    // Calcular atraso: aplicacaoFim vs dataFim (prazo do agrônomo)
+    let atrasoDias = 0;
+    if (r.status === 'finalizado' && r.aplicacaoFim && r.dataFim) {
+      const prazo = new Date(r.dataFim + 'T12:00:00');
+      const real  = new Date(r.aplicacaoFim + 'T12:00:00');
+      atrasoDias = Math.round((real - prazo) / 86400000);
+    }
+    const atrasoTag = atrasoDias > 0
+      ? `<div class="rec-atraso-tag">⚠️ ${atrasoDias} dia${atrasoDias>1?'s':''} de atraso</div>` : '';
     return `
     <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${r.id}')">
       <div class="rec-card-header">
@@ -6122,15 +6192,17 @@ function renderReceitas() {
           <div class="rec-card-titulo">${esc(r.descricao || r.cultura || '—')}</div>
           ${(r.talhoes||[]).length ? `<div class="rec-card-talhoes">${(r.talhoes||[]).map(t => `<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>` : ''}
           ${r.impresso ? '<div style="margin-top:4px"><span style="color:#2a7a2a;font-size:11px;font-weight:600">🖨️ Impresso</span></div>' : ''}
+          ${atrasoTag}
         </div>
         <div class="rec-card-right">
           <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
-          ${r.status === 'em_aberto' ? '<div class="rec-realizar-aplicacao">🚜 Realizar a Aplicação!</div>' : ''}
+          ${r.status === 'em_aberto' ? '<div class="rec-realizar-aplicacao">⚡ Realizar a Aplicação!</div>' : ''}
         </div>
       </div>
       <div class="rec-card-footer">
         <div class="rec-card-op">${opBadge}</div>
         <div class="rec-card-footer-meta">
+          ${r.status === 'finalizado' && r.aplicador ? `<span class="rec-footer-aplicador">🧑‍🌾 ${esc(r.aplicador)}</span>` : ''}
           <span class="rec-footer-tecnico">👤 ${esc(r.tecnico||'—')}</span>
           <span class="rec-footer-data">📅 ${dataFmt}</span>
         </div>
@@ -6580,9 +6652,12 @@ function abrirDetReceita(id) {
   if (r.status === 'finalizado') {
     const dIni = r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const dFim = r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
+    const diasAtrasoPdf = r.diasAtraso > 0 ? r.diasAtraso : (r.aplicacaoFim && r.dataFim ? Math.max(0, Math.round((new Date(r.aplicacaoFim+'T12:00:00') - new Date(r.dataFim+'T12:00:00'))/86400000)) : 0);
+    const atrasoPdfHtml = diasAtrasoPdf > 0 ? `<br><span style="color:#7c2d12;font-weight:700;font-size:12px">⚠️ Aplicação realizada com ${diasAtrasoPdf} dia${diasAtrasoPdf>1?'s':''} de atraso em relação ao prazo estipulado.</span>` : '';
     finalizadoHTML = `<div style="margin-top:14px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
       <strong style="color:#0a3622">✔ Finalizado</strong><br>
       <span style="font-size:13px;color:#0a3622">Aplicador: ${esc(r.aplicador||'—')} · ${dIni} a ${dFim}</span>
+      ${atrasoPdfHtml}
       ${r.obsFinalizacao ? `<br><span style="font-size:12px;color:#0a3622">${esc(r.obsFinalizacao)}</span>` : ''}
     </div>`;
   }
@@ -6971,10 +7046,18 @@ async function confirmarFinalizar() {
     mostrarToast('Preencha aplicador e datas.', 'erro'); return;
   }
   try {
+    const r = recReceitas.find(x => x.id === _recFinalizandoId);
+    let diasAtraso = 0;
+    if (r?.dataFim && dataFim) {
+      const prazo = new Date(r.dataFim + 'T12:00:00');
+      const real  = new Date(dataFim + 'T12:00:00');
+      diasAtraso = Math.round((real - prazo) / 86400000);
+    }
     await updateDoc(doc(db, 'receitas', _recFinalizandoId), {
       status: 'finalizado',
       aplicador, aplicacaoInicio: dataInicio, aplicacaoFim: dataFim,
       obsFinalizacao: obs,
+      diasAtraso: diasAtraso > 0 ? diasAtraso : 0,
       finalizadoEm: new Date().toISOString(),
       finalizadoPor: sessaoAtual?.label || sessaoAtual?.email || '',
       atualizadoEm: new Date().toISOString(),
@@ -7053,12 +7136,15 @@ async function imprimirReceita(id) {
     </div>`;
   }
 
+  const diasAtrasoMod = r.diasAtraso > 0 ? r.diasAtraso : (r.aplicacaoFim && r.dataFim ? Math.max(0, Math.round((new Date(r.aplicacaoFim+'T12:00:00') - new Date(r.dataFim+'T12:00:00'))/86400000)) : 0);
+  const atrasoModHtml = diasAtrasoMod > 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#fef2e8;border:1px solid #fca974;border-radius:7px;font-size:12px;color:#7c2d12;font-weight:700">⚠️ Aplicação finalizada com ${diasAtrasoMod} dia${diasAtrasoMod>1?'s':''} de atraso</div>` : '';
   const aplicadorBloco = r.status === 'finalizado' ? `
     <div style="margin-top:16px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
       <strong style="color:#0a3622">✔ Aplicação realizada</strong><br>
       <span style="font-size:13px">Aplicador: ${esc(r.aplicador||'—')} · 
       ${r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : ''} a 
       ${r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : ''}</span>
+      ${atrasoModHtml}
     </div>` : '';
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
