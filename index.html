@@ -556,20 +556,44 @@ header {
 .rec-busca { flex:1; min-width:200px; padding:8px 14px; border:1.5px solid var(--borda);
   border-radius:8px; font-size:13px; }
 
-.rec-lista { display:flex; flex-direction:column; gap:10px; }
+/* ── Cards de Receita ── */
+.rec-lista { display:flex; flex-direction:column; gap:12px; }
 .rec-card { background:white; border:1.5px solid var(--borda); border-radius:12px;
   padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
 .rec-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.10); border-color:#b0c0d8; }
-.rec-card-header { display:flex; align-items:flex-start; gap:12px; }
-.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
-.rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:2px 0 4px; }
-.rec-card-sub { font-size:12px; color:var(--texto-suave); }
-.rec-card-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
-.rec-status { display:inline-block; padding:7px 18px; border-radius:20px; font-size:13px; font-weight:800; letter-spacing:.3px; }
+.rec-card-header { display:flex; align-items:flex-start; gap:16px;
+  padding-bottom:12px; border-bottom:1px solid var(--borda); }
+.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave);
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.rec-card-titulo { font-size:16px; font-weight:800; color:var(--texto); margin:2px 0 8px; }
+.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
+.rec-talhao-chip { background:#eef4ff; color:#1a4080; border:1px solid #c0d0f0;
+  border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; }
+.rec-card-right { margin-left:auto; display:flex; flex-direction:column;
+  align-items:flex-end; gap:6px; flex-shrink:0; padding-left:16px; }
+.rec-status { display:inline-block; padding:9px 22px; border-radius:20px;
+  font-size:13px; font-weight:800; letter-spacing:.3px; white-space:nowrap; }
 .rec-status.pendente   { background:#fff3cd; color:#856404; border:1.5px solid #ffd700; }
 .rec-status.em_aberto  { background:#cfe2ff; color:#084298; border:1.5px solid #84b4f0; }
 .rec-status.finalizado { background:#d1e7dd; color:#0a3622; border:1.5px solid #86c9a0; }
 .rec-status.cancelado  { background:#f8d7da; color:#842029; border:1.5px solid #f0a0a8; }
+.rec-realizar-aplicacao { font-size:12px; font-weight:700; color:#c05a00;
+  background:none; border:none; padding:0; white-space:nowrap; margin-top:6px; }
+.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:6px;
+  font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
+  border:1px solid #fca974; border-radius:6px; padding:3px 9px; }
+.rec-card-footer { display:flex; align-items:center; padding-top:10px;
+  justify-content:space-between; gap:12px; }
+.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+.rec-footer-tecnico { font-size:13px; color:var(--texto-suave); }
+.rec-footer-data { font-size:13px; color:var(--texto); font-weight:700; }
+.rec-footer-operador { font-size:13px; color:#2d5a1e; font-weight:600; }
+
+/* Grupos de status */
+.rec-grupo-header { display:flex; align-items:center; gap:10px; padding:10px 16px;
+  border-radius:10px; margin:20px 0 10px; }
+.rec-grupo-label { font-size:14px; font-weight:800; flex:1; letter-spacing:.3px; }
+.rec-grupo-count { font-size:11px; font-weight:800; padding:2px 9px; border-radius:20px; }
 
 /* Chips de cultura no formulário */
 .rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
@@ -578,18 +602,44 @@ header {
   transition:all .15s; user-select:none; }
 .rec-cultura-chip:hover { border-color:var(--verde); background:#f0faf4; }
 .rec-cultura-chip.selecionado { border-color:var(--verde); background:#e8f5e9; color:#1b5e20; font-weight:700; }
-.rec-card-meta { font-size:11px; color:var(--texto-suave); text-align:right; }
+
+/* Chips de bico */
+.bico-opcoes { display:flex; gap:12px; margin-top:4px; }
+.bico-chip { display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:12px 20px; border:2px solid var(--borda); border-radius:10px;
+  cursor:pointer; background:white; transition:all .15s; min-width:90px; }
+.bico-chip:hover { border-color:var(--verde); background:#f0faf4; }
+.bico-chip.selecionado { border-color:var(--verde); background:#e8f5e9; }
+.bico-chip span { font-size:13px; font-weight:700; color:var(--texto); }
+.bico-chip.selecionado span { color:#1b5e20; }
+
 .rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
   display:flex; flex-wrap:wrap; gap:6px; }
-.rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--texto); }
+.rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--texto); }
 .rec-prod-tag.biologico { background:#e8f5e9; color:#2e7d32; }
 .rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
 .rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
 
-.rec-op-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
-  border-radius:20px; font-size:11px; font-weight:700; }
+.rec-op-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
+  border-radius:10px; font-size:13px; font-weight:700; }
+.rec-op-badge svg { display:block; flex-shrink:0; }
 .rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
-.rec-op-badge.autopropelido { background:#f3e5f5; color:#6a1b9a; }
+.rec-op-badge.autopropelido { background:#f0faf0; color:#2d6a2d; }
+
+/* Histórico receita agrupado */
+.mov-receita-grupo { border-left:4px solid #1a4080; }
+.mov-prod-card { display:flex; align-items:center; justify-content:space-between;
+  padding:4px 0; border-bottom:1px solid #f0f0f0; }
+.mov-prod-card:last-child { border-bottom:none; }
+.mov-prod-nome { font-size:12px; color:var(--texto); }
+.mov-prod-pill { font-size:12px; font-weight:700; }
+.mov-prod-pill.neg { color:var(--vermelho); }
+
+/* PDF talhões grid */
+.talhoes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:10px 0; }
+.talhao-box { background:#f0f4ff; border:1px solid #c0d0f0; border-radius:8px; padding:8px 12px; font-size:12px; }
+.talhao-box-nome { font-weight:700; color:#1a3a6b; margin-bottom:2px; }
+.talhao-box-area { font-size:11px; color:#5a6a8a; }
 
 
 /* Remove tooltip nativo do browser nas sugestões de produto */
