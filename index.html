@@ -560,68 +560,37 @@ header {
 .rec-card { background:white; border:1.5px solid var(--borda); border-radius:12px;
   padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
 .rec-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.10); border-color:#b0c0d8; }
-.rec-card-header { display:flex; align-items:flex-start; gap:16px; padding-bottom:12px; border-bottom:1px solid var(--borda); }
-.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
-.rec-card-titulo { font-size:16px; font-weight:800; color:var(--texto); margin:2px 0 8px; }
-.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
-.rec-talhao-chip { background:#eef4ff; color:#1a4080; border:1px solid #c0d0f0;
-  border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; }
-.rec-card-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:0; flex-shrink:0; padding-left:16px; }
-.rec-status { display:inline-block; padding:9px 22px; border-radius:20px; font-size:13px; font-weight:800; letter-spacing:.3px; white-space:nowrap; }
+.rec-card-header { display:flex; align-items:flex-start; gap:12px; }
+.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.5px; }
+.rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:2px 0 4px; }
+.rec-card-sub { font-size:12px; color:var(--texto-suave); }
+.rec-card-right { margin-left:auto; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.rec-status { display:inline-block; padding:7px 18px; border-radius:20px; font-size:13px; font-weight:800; letter-spacing:.3px; }
 .rec-status.pendente   { background:#fff3cd; color:#856404; border:1.5px solid #ffd700; }
 .rec-status.em_aberto  { background:#cfe2ff; color:#084298; border:1.5px solid #84b4f0; }
 .rec-status.finalizado { background:#d1e7dd; color:#0a3622; border:1.5px solid #86c9a0; }
 .rec-status.cancelado  { background:#f8d7da; color:#842029; border:1.5px solid #f0a0a8; }
-.rec-card-footer { display:flex; align-items:center; padding-top:10px; justify-content:space-between; gap:12px; }
-.rec-card-op-wrap { display:flex; flex-direction:column; gap:4px; }
-.rec-card-op { flex-shrink:0; }
-.rec-footer-operador { font-size:12px; color:#2d5a1e; }
-.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
-.rec-footer-tecnico { font-size:13px; color:var(--texto-suave); }
-.rec-footer-aplicador { font-size:12px; color:#2d6a2d; font-weight:700; }
-.rec-footer-data { font-size:13px; color:var(--texto); font-weight:700; }
-.rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
-  display:flex; flex-wrap:wrap; gap:6px; }
-.rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--texto); }
-.rec-prod-tag.biologico { background:#e8f5e9; color:#2e7d32; }
-.rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
-.rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
-.rec-grupo-header { display:flex; align-items:center; gap:10px; padding:10px 16px;
-  border-radius:10px; margin:20px 0 10px; }
-.rec-grupo-header:first-child { margin-top:0; }
-.rec-grupo-icon { font-size:16px; }
-.rec-grupo-label { font-size:14px; font-weight:800; flex:1; letter-spacing:.3px; }
-.rec-grupo-count { font-size:11px; font-weight:800; padding:2px 9px;
-  border-radius:20px; }
 
-.rec-op-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
-  border-radius:10px; font-size:13px; font-weight:700; }
-.rec-op-badge svg { display:block; flex-shrink:0; }
-.rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
-.rec-op-badge.autopropelido { background:#f0faf0; color:#2d6a2d; }
-.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:6px;
-  font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
-  border:1px solid #fca974; border-radius:6px; padding:3px 9px; }
-.rec-footer-aplicador { font-size:12px; color:#2d6a2d; font-weight:700; }
-.rec-realizar-aplicacao { font-size:12px; font-weight:700; color:#c05a00;
-  background:none; border:none; padding:0; text-align:right;
-  white-space:nowrap; margin-top:8px; letter-spacing:.2px; }
-
-
+/* Chips de cultura no formulário */
 .rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
   border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
   border:1.5px solid var(--borda); background:white; color:var(--texto);
   transition:all .15s; user-select:none; }
 .rec-cultura-chip:hover { border-color:var(--verde); background:#f0faf4; }
 .rec-cultura-chip.selecionado { border-color:var(--verde); background:#e8f5e9; color:#1b5e20; font-weight:700; }
-.bico-opcoes { display:flex; gap:12px; margin-top:4px; }
-.bico-chip { display:flex; flex-direction:column; align-items:center; gap:6px;
-  padding:12px 20px; border:2px solid var(--borda); border-radius:10px;
-  cursor:pointer; background:white; transition:all .15s; min-width:90px; }
-.bico-chip:hover { border-color:var(--verde); background:#f0faf4; }
-.bico-chip.selecionado { border-color:var(--verde); background:#e8f5e9; }
-.bico-chip span { font-size:13px; font-weight:700; color:var(--texto); }
-.bico-chip.selecionado span { color:#1b5e20; }
+.rec-card-meta { font-size:11px; color:var(--texto-suave); text-align:right; }
+.rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
+  display:flex; flex-wrap:wrap; gap:6px; }
+.rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:3px 9px; font-size:11px; color:var(--texto); }
+.rec-prod-tag.biologico { background:#e8f5e9; color:#2e7d32; }
+.rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
+.rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
+
+.rec-op-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px;
+  border-radius:20px; font-size:11px; font-weight:700; }
+.rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
+.rec-op-badge.autopropelido { background:#f3e5f5; color:#6a1b9a; }
+
 
 /* Remove tooltip nativo do browser nas sugestões de produto */
 #recItensLista [onmousedown] { -webkit-user-select:none; user-select:none; }
@@ -827,7 +796,6 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 .hp-mov .hp-meta { font-size: 11px; color: var(--texto-suave); margin-top: 1px; }
 .hp-tipo.t-entrada, .hp-tipo.t-compra { color: var(--verde); }
 .hp-tipo.t-saida, .hp-tipo.t-receita { color: var(--vermelho); }
-.mov-receita-grupo { border-left:4px solid #1a4080; }
 .hp-tipo.t-edicao { color: var(--azul); }
 .hp-tipo.t-exclusao { color: #888; }
 .hp-qtd { font-size: 14px; font-weight: 700; white-space: nowrap; }
@@ -939,7 +907,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     🌧️ Pluviometria
   </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('receitas')" id="tab-receitas">
-    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="10" width="36" height="46" rx="4" fill="white" stroke="#1a5c1a" stroke-width="2.5"/><rect x="20" y="6" width="12" height="8" rx="3" fill="#2d7d32"/><rect x="23" y="4" width="6" height="6" rx="2" fill="#52b788"/><circle cx="26" cy="7" r="2" fill="#1a4a1a"/><path d="M14 24 L24 24" stroke="#2d7d32" stroke-width="2" stroke-linecap="round"/><path d="M14 30 L32 30" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M14 35 L30 35" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M14 40 L28 40" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><rect x="12" y="22" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="28" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="33" width="3" height="3" rx="0.5" fill="#2d7d32"/><path d="M16 14 Q18 10 20 12 L20 14 Z" fill="#52b788"/><path d="M22 12 Q24 8 26 10 L25 14 Z" fill="#2d7d32"/><path d="M28 14 Q31 9 33 12 L32 15 Z" fill="#52b788"/><path d="M36 28 L34 44 Q34 48 38 48 Q42 48 42 44 L40 28 Z" fill="white" stroke="#1a5c1a" stroke-width="2"/><path d="M34 44 Q34 48 38 48 Q42 48 42 44 Z" fill="#52b788"/><path d="M33 28 L43 28" stroke="#1a5c1a" stroke-width="2" stroke-linecap="round"/><circle cx="38" cy="40" r="1.2" fill="white" opacity="0.7"/><circle cx="40" cy="44" r="1" fill="white" opacity="0.6"/><path d="M38 22 Q42 14 48 10 Q50 18 46 24 Q42 26 38 24 Z" fill="#2d7d32"/><path d="M38 22 Q44 16 48 10" stroke="#52b788" stroke-width="1.2" fill="none"/></svg> Receitas
+    <svg width="18" height="18" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="10" width="36" height="46" rx="4" fill="white" stroke="#1a5c1a" stroke-width="2.5"/><rect x="20" y="6" width="12" height="8" rx="3" fill="#2d7d32"/><circle cx="26" cy="7" r="2" fill="#1a4a1a"/><rect x="12" y="22" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="28" width="3" height="3" rx="0.5" fill="#2d7d32"/><rect x="12" y="33" width="3" height="3" rx="0.5" fill="#2d7d32"/><path d="M17 23.5 L28 23.5" stroke="#2d7d32" stroke-width="1.5" stroke-linecap="round"/><path d="M17 29.5 L30 29.5" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M17 34.5 L28 34.5" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/><path d="M36 28 L34 44 Q34 48 38 48 Q42 48 42 44 L40 28 Z" fill="white" stroke="#1a5c1a" stroke-width="2"/><path d="M34 44 Q34 48 38 48 Q42 48 42 44 Z" fill="#52b788"/><path d="M33 28 L43 28" stroke="#1a5c1a" stroke-width="2" stroke-linecap="round"/><circle cx="38" cy="40" r="1.2" fill="#52b788" opacity="0.8"/><path d="M38 18 Q43 12 49 9 Q50 16 46 22 Q42 25 38 22 Z" fill="#2d7d32"/></svg> Receitas
   </button>
   <button class="modulo-tab futuro" title="Em desenvolvimento">
     💰 Custos <span class="modulo-badge em-breve">em breve</span>
@@ -1200,9 +1168,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
         </div>
         <div class="campo-group" id="recSafraGrupo" style="grid-column:1/-1;display:none">
           <label class="label-campo">Safra</label>
-          <select id="recSafra" class="campo-input">
-            <option value="">Selecione...</option>
-          </select>
+          <select id="recSafra" class="campo-input"><option value="">Selecione...</option></select>
         </div>
         <div class="campo-group" style="grid-column:1/-1">
           <label class="label-campo">Descrição da aplicação *</label>
@@ -1233,20 +1199,23 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <label class="label-campo">Tamanho do tanque (L)</label>
           <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
         </div>
-                <div class="campo-group" id="recBicoGrupo" style="display:none">
+        <div class="campo-group" id="recBicoGrupo" style="display:none">
           <label class="label-campo">Tipo de bico</label>
           <input type="hidden" id="recBico">
           <div class="bico-opcoes">
-            <div class="bico-chip" data-val="Cônico" onclick="window.AppEstoque.selecionarBico(&apos;Cônico&apos;)">
-              <svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="25" cy="12" rx="10" ry="6" fill="#f59e0b" stroke="#92400e" stroke-width="2"/><rect x="20" y="8" width="10" height="8" rx="2" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><path d="M15 20 Q25 16 35 20 L28 42 Q25 46 22 42 Z" fill="#fcd34d" stroke="#92400e" stroke-width="1.5"/><path d="M25 20 L25 42" stroke="#f59e0b" stroke-width="1" opacity="0.5"/><circle cx="25" cy="44" r="3" fill="#60a5fa"/><path d="M18 44 Q20 46 22 44" stroke="#93c5fd" stroke-width="1.5" fill="none"/><path d="M28 44 Q30 46 32 44" stroke="#93c5fd" stroke-width="1.5" fill="none"/></svg>
-              <span>Cônico</span>
-            </div>
-            <div class="bico-chip" data-val="Leque" onclick="window.AppEstoque.selecionarBico(&apos;Leque&apos;)">
-              <svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="6" width="14" height="10" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/><rect x="21" y="10" width="8" height="6" rx="1" fill="#64748b"/><path d="M5 22 Q25 14 45 22 L40 30 Q25 18 10 30 Z" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1.5"/><path d="M5 22 Q25 14 45 22" stroke="#3b82f6" stroke-width="2" fill="none"/><line x1="25" y1="16" x2="25" y2="30" stroke="#93c5fd" stroke-width="1"/><line x1="15" y1="18" x2="12" y2="32" stroke="#93c5fd" stroke-width="1"/><line x1="35" y1="18" x2="38" y2="32" stroke="#93c5fd" stroke-width="1"/><line x1="10" y1="21" x2="6" y2="34" stroke="#93c5fd" stroke-width="1"/><line x1="40" y1="21" x2="44" y2="34" stroke="#93c5fd" stroke-width="1"/></svg>
-              <span>Leque</span>
-            </div>
+            <div class="bico-chip" data-val="Conico" onclick="window.AppEstoque.selecionarBico(this)"><svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="25" cy="12" rx="10" ry="6" fill="#f59e0b" stroke="#92400e" stroke-width="2"/><rect x="20" y="8" width="10" height="8" rx="2" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><path d="M15 20 Q25 16 35 20 L28 42 Q25 46 22 42 Z" fill="#fcd34d" stroke="#92400e" stroke-width="1.5"/><circle cx="25" cy="44" r="3" fill="#60a5fa"/></svg><span>Cônico</span></div>
+            <div class="bico-chip" data-val="Leque" onclick="window.AppEstoque.selecionarBico(this)"><svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="6" width="14" height="10" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/><path d="M5 22 Q25 14 45 22 L40 30 Q25 18 10 30 Z" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1.5"/><line x1="25" y1="16" x2="25" y2="30" stroke="#93c5fd" stroke-width="1"/><line x1="15" y1="18" x2="12" y2="32" stroke="#93c5fd" stroke-width="1"/><line x1="35" y1="18" x2="38" y2="32" stroke="#93c5fd" stroke-width="1"/></svg><span>Leque</span></div>
           </div>
         </div>
+        <div class="campo-group">
+          <label class="label-campo">Técnico responsável *</label>
+          <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Observações</label>
+          <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
+        </div>
+      </div>
 
       <!-- Produtos -->
       <div style="border-top:1.5px solid var(--borda);padding-top:16px;margin-top:4px">
@@ -4247,64 +4216,7 @@ function renderHistorico() {
     ? `${historico.length}${sufixoMais} movimentaç${historico.length===1?'ão':'ões'}`
     : `${filtrado.length} de ${historico.length}${sufixoMais} movimentações`;
 
-  // Agrupar baixas de receita (saídas com receitaNum) em blocos únicos
-  const filtradoAgrupado = [];
-  const receitasAgrupadas = {};
-  filtrado.forEach(m => {
-    if (m.tipo === 'saida' && m.receitaNum != null) {
-      const key = m.receitaNum;
-      if (!receitasAgrupadas[key]) {
-        receitasAgrupadas[key] = {
-          _isGrupoReceita: true,
-          receitaNum: m.receitaNum,
-          receitaId: m.receitaId,
-          fazenda: m.fazenda,
-          resp: m.resp,
-          usuario: m.usuario,
-          data: m.data,
-          dataLocal: m.dataLocal,
-          itens: [],
-          ids: []
-        };
-        filtradoAgrupado.push(receitasAgrupadas[key]);
-      }
-      receitasAgrupadas[key].itens.push(m);
-      receitasAgrupadas[key].ids.push(m.id);
-    } else {
-      filtradoAgrupado.push(m);
-    }
-  });
-
-  lista.innerHTML = filtradoAgrupado.map(m => {
-    if (m._isGrupoReceita) {
-      const recNum = String(m.receitaNum).padStart(4,'0');
-      const rec = recReceitas.find(x => x.id === m.receitaId);
-      const titulo = `Receita #${recNum}${rec ? ' · ' + esc(rec.descricao||rec.cultura||'') : ''}`;
-      const subtitulo = rec ? `${esc(rec.fazenda||'')} · ${CULTURAS_EMOJI[rec.cultura]||''} ${esc(rec.cultura||'')}${rec.safra?' · Safra '+esc(rec.safra):''}` : esc(m.fazenda||'');
-      const data = new Date(m.data);
-      const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-      const itensHTML = m.itens.map(it => `
-        <div class="mov-prod-card">
-          <div class="mov-prod-nome">${esc(it.produto)} <span style="color:#999;font-size:10px">${esc(it.classe||'')}</span></div>
-          <div class="mov-prod-pill neg">−${fmt(it.qtd)} ${esc(it.unidade||'')}</div>
-        </div>`).join('');
-      const acoesGrupo = m.ids.map(id =>
-        `<button class="mov-btn ver" onclick="event.stopPropagation();window.AppEstoque.abrirDetalheLancamento('${id}')">👁 Ver</button>
-         <button class="mov-btn pdf" onclick="event.stopPropagation();window.AppEstoque.gerarPDFLancamento('${id}')">📄 PDF</button>`
-      ).join('');
-      return `<div class="mov-item mov-receita-grupo">
-        <div class="mov-icon receita">🧾</div>
-        <div class="mov-detalhe">
-          <div class="mov-produto" style="font-size:14px;font-weight:800">${titulo}</div>
-          <div class="mov-info" style="font-size:12px;color:#5a6472;margin-bottom:2px">${subtitulo}</div>
-          <div class="mov-info">${esc(m.resp||'—')} · ${dataStr}</div>
-          <div class="mov-itens-lista" style="margin-top:8px">${itensHTML}</div>
-          <div class="mov-acoes" style="margin-top:6px">${acoesGrupo}</div>
-        </div>
-        <div class="mov-qtd receita">−${m.itens.length} item${m.itens.length>1?'s':''}</div>
-      </div>`;
-    }
-
+  lista.innerHTML = filtrado.map(m => {
     const data = new Date(m.data);
     const dataStr = data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
     const acoes = `<div class="mov-acoes">
@@ -6150,79 +6062,63 @@ function renderReceitas() {
   }
 
   const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
-  const statusOrdem = ['pendente', 'em_aberto', 'finalizado', 'cancelado'];
-  const statusConfig = {
+  const statusOrdem = ['pendente','em_aberto','finalizado','cancelado'];
+  const statusCfg = {
     pendente:   { label:'Pendentes',   icon:'🕐', cor:'#856404', bg:'#fff8e1', borda:'#ffd54f' },
     em_aberto:  { label:'Em Aberto',   icon:'🚜', cor:'#084298', bg:'#e8f0fe', borda:'#84b4f0' },
     finalizado: { label:'Finalizados', icon:'✅', cor:'#0a3622', bg:'#e8f5ee', borda:'#86c9a0' },
     cancelado:  { label:'Cancelados',  icon:'✕',  cor:'#842029', bg:'#fdf0f0', borda:'#f0a0a8' },
   };
-
-  // Agrupar por status na ordem definida (filtrando quando há filtro de status ativo)
   const filtroStatusAtivo = document.getElementById('recFiltroStatus')?.value || '';
   const grupos = filtroStatusAtivo
     ? [{ status: filtroStatusAtivo, receitas: items }]
     : statusOrdem.map(s => ({ status: s, receitas: items.filter(r => r.status === s) })).filter(g => g.receitas.length > 0);
 
-  lista.innerHTML = grupos.map(grupo => {
-    const cfg = statusConfig[grupo.status] || { label: grupo.status, icon:'', cor:'#333', bg:'#f5f5f5', borda:'#ddd' };
-    const cabecalho = `
-      <div class="rec-grupo-header" style="border-left:4px solid ${cfg.borda};background:${cfg.bg}">
-        <span class="rec-grupo-icon">${cfg.icon}</span>
-        <span class="rec-grupo-label" style="color:${cfg.cor}">${cfg.label}</span>
-        <span class="rec-grupo-count" style="background:${cfg.borda};color:${cfg.cor}">${grupo.receitas.length}</span>
-      </div>`;
-    const cards = grupo.receitas.map(r => {
+  function _renderCard(r) {
     const opBadge = r.operacao === 'drone'
-      ? `<span class="rec-op-badge drone"><svg width="48" height="36" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><circle cx="60" cy="42" r="2.5" fill="#444"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="44" x2="45" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="70" y1="44" x2="75" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/><circle cx="44" cy="65" r="4" fill="#f90"/><circle cx="76" cy="65" r="4" fill="#f90"/></svg> Drone</span>`
-      : `<span class="rec-op-badge autopropelido"><svg width="54" height="36" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><rect x="30" y="48" width="4" height="14" fill="#1a1a1a"/><rect x="96" y="48" width="4" height="14" fill="#1a1a1a"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg> Autopropelido</span>`;
-    const tags = (r.itens || []).map(it => {
-      const isBio = TIPOS_BIOLOGICOS.some(t => (it.tipo||'').toLowerCase().includes(t));
-      const isSub = !!it.substituidoPor;
-      return `<span class="rec-prod-tag ${isBio?'biologico':''} ${isSub?'substituido':''}">${esc(it.nome)}</span>`;
-    }).join('');
-    const talhoesTxt = (r.talhoes || []).map(t => t.nome).join(', ');
+      ? `<span class="rec-op-badge drone"><svg width="48" height="36" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg> Drone</span>`
+      : `<span class="rec-op-badge autopropelido"><svg width="54" height="36" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg> Autopropelido</span>`;
     const dataFmt = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
-    // Calcular atraso: aplicacaoFim vs dataFim (prazo do agrônomo)
     let atrasoDias = 0;
     if (r.status === 'finalizado' && r.aplicacaoFim && r.dataFim) {
-      const prazo = new Date(r.dataFim + 'T12:00:00');
-      const real  = new Date(r.aplicacaoFim + 'T12:00:00');
-      atrasoDias = Math.round((real - prazo) / 86400000);
+      atrasoDias = Math.max(0, Math.round((new Date(r.aplicacaoFim+'T12:00:00') - new Date(r.dataFim+'T12:00:00'))/86400000));
     }
-    const atrasoTag = atrasoDias > 0
-      ? `<div class="rec-atraso-tag">⚠️ ${atrasoDias} dia${atrasoDias>1?'s':''} de atraso</div>` : '';
+    const atrasoTag = atrasoDias > 0 ? `<div class="rec-atraso-tag">⚠️ ${atrasoDias} dia${atrasoDias>1?'s':''} de atraso</div>` : '';
+    const operadorTxt = r.status === 'finalizado' && r.aplicador
+      ? ` &nbsp;—&nbsp; <span class="rec-footer-operador">Operador: <strong>${esc(r.aplicador)}</strong></span>` : '';
     const recId = r.id;
-    const operadorInline = r.status === 'finalizado' && r.aplicador
-      ? ` &nbsp;—&nbsp; <span style="font-size:13px;color:#2d5a1e">Operador: <strong>${esc(r.aplicador)}</strong></span>`
-      : '';
-    return `
-    <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
+    return `<div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
       <div class="rec-card-header">
         <div style="flex:1;min-width:0">
-          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} &nbsp;·&nbsp; ${r.fazenda} &nbsp;·&nbsp; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra ? ' &nbsp;·&nbsp; Safra '+esc(r.safra) : ''}</div>
-          <div class="rec-card-titulo">${esc(r.descricao || r.cultura || '—')}</div>
-          ${(r.talhoes||[]).length ? `<div class="rec-card-talhoes">${(r.talhoes||[]).map(t => `<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>` : ''}
-          ${r.impresso ? '<div style="margin-top:4px"><span style="color:#2a7a2a;font-size:11px;font-weight:600">🖨️ Impresso</span></div>' : ''}
+          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda} · ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' · Safra '+esc(r.safra):''}</div>
+          <div class="rec-card-titulo">${esc(r.descricao||r.cultura||'—')}</div>
+          ${(r.talhoes||[]).length?`<div class="rec-card-talhoes">${(r.talhoes||[]).map(t=>`<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>`:''}
+          ${r.impresso?'<div style="margin-top:4px"><span style="color:#2a7a2a;font-size:11px;font-weight:600">🖨️ Impresso</span></div>':''}
           ${atrasoTag}
         </div>
         <div class="rec-card-right">
-          <span class="rec-status ${r.status}">${statusLabel[r.status] || r.status}</span>
-          ${r.status === 'em_aberto' ? '<div class="rec-realizar-aplicacao">⚡ Realizar a Aplicação!</div>' : ''}
+          <span class="rec-status ${r.status}">${statusLabel[r.status]||r.status}</span>
+          ${r.status==='em_aberto'?'<div class="rec-realizar-aplicacao">⚡ Realizar a Aplicação!</div>':''}
         </div>
       </div>
       <div class="rec-card-footer">
-        <div style="display:flex;align-items:center;gap:0">
-          ${opBadge}${operadorInline}
-        </div>
+        <div style="display:inline-flex;align-items:center">${opBadge}${operadorTxt}</div>
         <div class="rec-card-footer-meta">
-          <span class="rec-footer-tecnico">Responsável pela Receita: <strong>${esc(r.tecnico||'—')}</strong></span>
-          <span class="rec-footer-data"><strong>${dataFmt}</strong></span>
+          <span class="rec-footer-tecnico">Responsável: <strong>${esc(r.tecnico||'—')}</strong></span>
+          <span class="rec-footer-data">${dataFmt}</span>
         </div>
       </div>
     </div>`;
-    }).join('');
-    return cabecalho + cards;
+  }
+
+  lista.innerHTML = grupos.map(grupo => {
+    const cfg = statusCfg[grupo.status] || { label:grupo.status, icon:'', cor:'#333', bg:'#f5f5f5', borda:'#ddd' };
+    const cab = `<div class="rec-grupo-header" style="border-left:4px solid ${cfg.borda};background:${cfg.bg}">
+      <span style="font-size:16px">${cfg.icon}</span>
+      <span class="rec-grupo-label" style="color:${cfg.cor}">${cfg.label}</span>
+      <span class="rec-grupo-count" style="background:${cfg.borda};color:${cfg.cor}">${grupo.receitas.length}</span>
+    </div>`;
+    return cab + grupo.receitas.map(_renderCard).join('');
   }).join('');
 }
 
@@ -6242,20 +6138,10 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = r.operacao || '';
     document.getElementById('recVazao').value      = r.vazao || '';
     document.getElementById('recTanque').value     = r.tanque || '';
-    if(document.getElementById('recBico')) {
-      document.getElementById('recBico').value = r.bico || '';
-      document.querySelectorAll('.bico-chip').forEach(el => {
-        el.classList.toggle('selecionado', el.dataset.val === r.bico);
-      });
-    }
-    const bicoGrpEdit = document.getElementById('recBicoGrupo');
-    if (bicoGrpEdit) bicoGrpEdit.style.display = r.operacao === 'autopropelido' ? '' : 'none';
     document.getElementById('recTecnico').value    = r.tecnico || '';
     document.getElementById('recObs').value        = r.obs || '';
     document.getElementById('recDescricao').value = r.descricao || '';
     document.getElementById('recSafra').value        = r.safra     || '';
-    const sfGrpEdit = document.getElementById('recSafraGrupo');
-    if (sfGrpEdit && r.cultura) sfGrpEdit.style.display = '';
     document.getElementById('recDataInicio').value = r.dataInicio || '';
     document.getElementById('recDataFim').value    = r.dataFim || '';
     _recTalhoesSel = (r.talhoes || []).map(t => ({...t}));
@@ -6268,10 +6154,6 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = '';
     document.getElementById('recVazao').value      = '';
     document.getElementById('recTanque').value     = '';
-    if(document.getElementById('recBico')) {
-      document.getElementById('recBico').value = '';
-      document.querySelectorAll('.bico-chip').forEach(el => el.classList.remove('selecionado'));
-    }
     document.getElementById('recTecnico').value    = sessaoAtual?.label || '';
     document.getElementById('recObs').value        = '';
     document.getElementById('recDescricao').value = '';
@@ -6322,6 +6204,12 @@ function renderCulturaChips() {
   }).join('');
 }
 
+function selecionarBico(el) {
+  const val = el.dataset.val;
+  const inp = document.getElementById('recBico');
+  if (inp) inp.value = val;
+  document.querySelectorAll('.bico-chip').forEach(c => c.classList.toggle('selecionado', c.dataset.val === val));
+}
 function selecionarCulturaReceita(cultura) {
   const sfGrp = document.getElementById('recSafraGrupo');
   if (sfGrp) sfGrp.style.display = cultura ? '' : 'none';
@@ -6330,24 +6218,12 @@ function selecionarCulturaReceita(cultura) {
   renderCulturaChips();
 }
 
-function selecionarBico(val) {
-  document.getElementById('recBico').value = val;
-  document.querySelectorAll('.bico-chip').forEach(el => {
-    el.classList.toggle('selecionado', el.dataset.val === val);
-  });
-}
 function onRecOperacaoChange() {
   const op = document.getElementById('recOperacao').value;
   const grp = document.getElementById('recTanqueGrupo');
-  const bicoGrp = document.getElementById('recBicoGrupo');
   const tanqueInput = document.getElementById('recTanque');
   if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
-  if (bicoGrp) bicoGrp.style.display = op === 'autopropelido' ? '' : 'none';
-  // Preenche com valor padrão apenas se estiver vazio
-  if (tanqueInput && !tanqueInput.value) {
-    if (op === 'drone') tanqueInput.value = 70;
-    else if (op === 'autopropelido') tanqueInput.value = 3000;
-  }
+  if (!tanqueInput.value) { if(op==='drone') tanqueInput.value=70; else if(op==='autopropelido') tanqueInput.value=3000; }
 }
 
 function renderTalhoesSel() {
@@ -6568,8 +6444,8 @@ async function salvarReceita() {
   const cultura  = document.getElementById('recCultura').value.trim();
   const operacao = document.getElementById('recOperacao').value;
   const vazao    = parseFloat(document.getElementById('recVazao').value) || 0;
+  const bico     = document.getElementById('recBico')?.value || '';
   const tanque   = parseFloat(document.getElementById('recTanque').value) || 0;
-  const bico      = document.getElementById('recBico')?.value || '';
   const tecnico  = document.getElementById('recTecnico').value.trim();
   const obs      = document.getElementById('recObs').value.trim();
   const descricao = document.getElementById('recDescricao').value.trim();
@@ -6606,7 +6482,6 @@ async function salvarReceita() {
       fazenda, cultura, safra, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
       talhoes: _recTalhoesSel, itens, areaTotal,
       ...(tanque ? { tanque } : {}),
-      ...(bico   ? { bico }   : {}),
       status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
       atualizadoEm: new Date().toISOString(),
       nomeUsuario: sessaoAtual?.label || sessaoAtual?.email || '—',
@@ -6658,7 +6533,7 @@ function abrirDetReceita(id) {
 
   const talhoesTxt  = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
   const dataEmit    = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—';
-  const opLabel     = r.operacao === 'drone' ? 'Drone' : 'Autopropelido';
+  const opLabel     = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Autopropelido';
   const periodoTxt  = r.dataInicio && r.dataFim
     ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
     : '—';
@@ -6681,12 +6556,9 @@ function abrirDetReceita(id) {
   if (r.status === 'finalizado') {
     const dIni = r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
     const dFim = r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
-    const diasAtrasoPdf = r.diasAtraso > 0 ? r.diasAtraso : (r.aplicacaoFim && r.dataFim ? Math.max(0, Math.round((new Date(r.aplicacaoFim+'T12:00:00') - new Date(r.dataFim+'T12:00:00'))/86400000)) : 0);
-    const atrasoPdfHtml = diasAtrasoPdf > 0 ? `<br><span style="color:#7c2d12;font-weight:700;font-size:12px">⚠️ Aplicação realizada com ${diasAtrasoPdf} dia${diasAtrasoPdf>1?'s':''} de atraso em relação ao prazo estipulado.</span>` : '';
     finalizadoHTML = `<div style="margin-top:14px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
       <strong style="color:#0a3622">✔ Finalizado</strong><br>
       <span style="font-size:13px;color:#0a3622">Aplicador: ${esc(r.aplicador||'—')} · ${dIni} a ${dFim}</span>
-      ${atrasoPdfHtml}
       ${r.obsFinalizacao ? `<br><span style="font-size:12px;color:#0a3622">${esc(r.obsFinalizacao)}</span>` : ''}
     </div>`;
   }
@@ -6704,8 +6576,7 @@ function abrirDetReceita(id) {
       <div><span style="color:var(--texto-suave)">Período:</span> <strong>${periodoTxt}</strong></div>
       <div><span style="color:var(--texto-suave)">Vazão:</span> <strong>${r.vazao||0} L/ha</strong></div>
       <div><span style="color:var(--texto-suave)">Área total:</span> <strong>${(r.areaTotal||0).toFixed(2)} ha</strong></div>
-      ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque:</span> <strong>${r.tanque} L</strong></div>` : ''}
-      ${r.bico ? `<div><span style="color:var(--texto-suave)">Bico:</span> <strong>${esc(r.bico)}</strong></div>` : ''}
+      ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque drone:</span> <strong>${r.tanque} L</strong></div>` : ''}
       <div><span style="color:var(--texto-suave)">Técnico:</span> <strong>${esc(r.tecnico||'—')}</strong></div>
       ${r.safra ? `<div><span style="color:var(--texto-suave)">Safra:</span> <strong>${esc(r.safra)}</strong></div>` : ''}
     </div>
@@ -6798,9 +6669,6 @@ function abrirAceiteReceita(id) {
   const bios = itensComSaldo.filter(it => it.biologico);
 
   const talhoesTxt = (r.talhoes||[]).map(t => `${t.nome} (${t.area} ha)`).join(', ');
-  const talhoesGridHTML = `<div class="talhoes-grid">${(r.talhoes||[]).map(t =>
-    `<div class="talhao-box"><div class="talhao-box-nome">${t.nome}</div><div class="talhao-box-area">${t.area} ha</div></div>`
-  ).join('')}</div>`;
 
   let biosHTML = '';
   if (bios.length) {
@@ -6975,22 +6843,17 @@ async function confirmarAceite() {
           if (atual < (it.qdeTotalArea||0)) throw new Error('ESTOQUE_INSUFICIENTE');
           tx.update(ref, { estoque: increment(-(it.qdeTotalArea||0)) });
         });
-        // Registrar no histórico (formato compatível com renderHistorico)
-        const estoqueAposCalc = Math.round(((prod.estoque||0) - (it.qdeTotalArea||0))*100)/100;
+        // Registrar no histórico
+        const _estoqueApos = Math.round(((prod.estoque||0)-(it.qdeTotalArea||0))*100)/100;
         await addDoc(collection(db, 'historico'), {
           tipo: 'saida',
-          produto: prod.nome,
-          produtoId: prod.id,
-          classe: prod.classe || '',
-          unidade: prod.unidade || '',
-          qtd: it.qdeTotalArea || 0,
-          estoqueApos: estoqueAposCalc,
-          resp: sessaoAtual?.label || sessaoAtual?.email || '',
-          usuario: sessaoAtual?.email || '',
-          obs: `Baixa via Receita #${String(r.numero).padStart(4,'0')}`,
-          receitaId: _recAceitandoId,
-          receitaNum: r.numero,
-          fazenda: r.fazenda,
+          produto: prod.nome, produtoId: prod.id,
+          classe: prod.classe||'', unidade: prod.unidade||'',
+          qtd: it.qdeTotalArea||0, estoqueApos: _estoqueApos,
+          resp: sessaoAtual?.label||sessaoAtual?.email||'',
+          usuario: sessaoAtual?.email||'',
+          obs: 'Baixa via Receita #'+String(r.numero).padStart(4,'0'),
+          receitaId: _recAceitandoId, receitaNum: r.numero, fazenda: r.fazenda,
           dataOrdenacao: serverTimestamp(),
           dataLocal: new Date().getTime(),
           data: new Date().toISOString().split('T')[0],
@@ -7078,18 +6941,10 @@ async function confirmarFinalizar() {
     mostrarToast('Preencha aplicador e datas.', 'erro'); return;
   }
   try {
-    const r = recReceitas.find(x => x.id === _recFinalizandoId);
-    let diasAtraso = 0;
-    if (r?.dataFim && dataFim) {
-      const prazo = new Date(r.dataFim + 'T12:00:00');
-      const real  = new Date(dataFim + 'T12:00:00');
-      diasAtraso = Math.round((real - prazo) / 86400000);
-    }
     await updateDoc(doc(db, 'receitas', _recFinalizandoId), {
       status: 'finalizado',
       aplicador, aplicacaoInicio: dataInicio, aplicacaoFim: dataFim,
       obsFinalizacao: obs,
-      diasAtraso: diasAtraso > 0 ? diasAtraso : 0,
       finalizadoEm: new Date().toISOString(),
       finalizadoPor: sessaoAtual?.label || sessaoAtual?.email || '',
       atualizadoEm: new Date().toISOString(),
@@ -7107,15 +6962,12 @@ async function imprimirReceita(id) {
   if (!r) return;
 
   const numFmt    = `#${String(r.numero||0).padStart(4,'0')}`;
-  const opLabel   = r.operacao === 'drone' ? 'Drone' : 'Pulverização Autopropelido';
+  const opLabel   = r.operacao === 'drone' ? '🚁 Drone' : '🚜 Pulverização Autopropelido';
   const dataEmit  = new Date().toLocaleString('pt-BR');
   const periodoTxt = r.dataInicio && r.dataFim
     ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
     : '—';
   const talhoesTxt = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
-  const talhoesGridHTML = (r.talhoes||[]).map(t =>
-    `<div class="talhao-box"><div class="talhao-box-nome">${t.nome}</div><div class="talhao-box-area">${t.area} ha</div></div>`
-  ).join('');
   const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
   const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
   const statusBg    = { pendente:'#fff3cd', em_aberto:'#cfe2ff', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
@@ -7171,15 +7023,12 @@ async function imprimirReceita(id) {
     </div>`;
   }
 
-  const diasAtrasoMod = r.diasAtraso > 0 ? r.diasAtraso : (r.aplicacaoFim && r.dataFim ? Math.max(0, Math.round((new Date(r.aplicacaoFim+'T12:00:00') - new Date(r.dataFim+'T12:00:00'))/86400000)) : 0);
-  const atrasoModHtml = diasAtrasoMod > 0 ? `<div style="margin-top:6px;padding:6px 10px;background:#fef2e8;border:1px solid #fca974;border-radius:7px;font-size:12px;color:#7c2d12;font-weight:700">⚠️ Aplicação finalizada com ${diasAtrasoMod} dia${diasAtrasoMod>1?'s':''} de atraso</div>` : '';
   const aplicadorBloco = r.status === 'finalizado' ? `
     <div style="margin-top:16px;padding:12px 16px;background:#d1e7dd;border-radius:8px">
       <strong style="color:#0a3622">✔ Aplicação realizada</strong><br>
       <span style="font-size:13px">Aplicador: ${esc(r.aplicador||'—')} · 
       ${r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : ''} a 
       ${r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : ''}</span>
-      ${atrasoModHtml}
     </div>` : '';
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
@@ -7195,11 +7044,6 @@ async function imprimirReceita(id) {
     .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; font-size:12px; }
     .info-item span { color:#6a7a8a; }
     table { width:100%; border-collapse:collapse; margin-top:12px; }
-    .talhoes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:10px 0; }
-    .talhao-box { background:#f0f4ff; border:1px solid #c0d0f0; border-radius:8px;
-      padding:8px 12px; font-size:12px; }
-    .talhao-box-nome { font-weight:700; color:#1a3a6b; margin-bottom:2px; }
-    .talhao-box-area { font-size:11px; color:#5a6a8a; }
     th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #2a5aaa; }
     th.tc { text-align:center; }
     td { font-size:11px; }
@@ -7220,19 +7064,17 @@ async function imprimirReceita(id) {
     </div>
   </div>
 
-  <div style="margin-bottom:12px">
-    <div style="font-size:11px;font-weight:700;color:#6a7a8a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">➜ Talhões</div>
-    <div class="talhoes-grid">${talhoesGridHTML}</div>
-  </div>
   <div class="info-grid">
     <div class="info-item"><span>Fazenda: </span><strong>${esc(r.fazenda)}</strong></div>
     <div class="info-item"><span>Cultura: </span><strong>${esc(r.cultura||'—')}</strong></div>
     <div class="info-item"><span>Operação: </span><strong>${opLabel}</strong></div>
     <div class="info-item"><span>Período: </span><strong>${periodoTxt}</strong></div>
+    <div class="info-item"><span>Talhões: </span><strong>${talhoesTxt}</strong></div>
     <div class="info-item"><span>Área total: </span><strong>${areaTotal.toFixed(2)} ha</strong></div>
     <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
     <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
     ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L</strong></div>` : ''}
+      ${r.bico ? `<div class="info-item"><span>Bico: </span><strong>${esc(r.bico)}</strong></div>` : ''}
     <div class="info-item"><span>Técnico: </span><strong>${esc(r.tecnico||'—')}</strong></div>
   </div>
   ${r.obs ? `<div style="background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:12px">📌 <strong>Observação:</strong> ${esc(r.obs)}</div>` : ''}
