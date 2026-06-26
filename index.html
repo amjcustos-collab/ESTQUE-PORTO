@@ -6177,8 +6177,12 @@ function renderReceitas() {
     }
     const atrasoTag = atrasoDias > 0
       ? `<div class="rec-atraso-tag">⚠️ ${atrasoDias} dia${atrasoDias>1?'s':''} de atraso</div>` : '';
+    const recId = r.id;
+    const operadorInline = r.status === 'finalizado' && r.aplicador
+      ? ` &nbsp;—&nbsp; <span style="font-size:13px;color:#2d5a1e">Operador: <strong>${esc(r.aplicador)}</strong></span>`
+      : '';
     return `
-    <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${r.id}')">
+    <div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
       <div class="rec-card-header">
         <div style="flex:1;min-width:0">
           <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} &nbsp;·&nbsp; ${r.fazenda} &nbsp;·&nbsp; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra ? ' &nbsp;·&nbsp; Safra '+esc(r.safra) : ''}</div>
@@ -6193,11 +6197,8 @@ function renderReceitas() {
         </div>
       </div>
       <div class="rec-card-footer">
-        <div class="rec-card-op-wrap">
-          ${opBadge}
-          ${r.status === 'finalizado' && r.aplicador
-            ? `<span class="rec-footer-operador">Operador: <strong>${esc(r.aplicador)}</strong></span>`
-            : ''}
+        <div style="display:flex;align-items:center;gap:0">
+          ${opBadge}${operadorInline}
         </div>
         <div class="rec-card-footer-meta">
           <span class="rec-footer-tecnico">Responsável pela Receita: <strong>${esc(r.tecnico||'—')}</strong></span>
