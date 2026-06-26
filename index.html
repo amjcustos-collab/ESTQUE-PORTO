@@ -1199,7 +1199,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <input type="number" id="recVazao" class="campo-input" placeholder="Ex: 100" min="1" step="0.1">
         </div>
         <div class="campo-group" id="recTanqueGrupo" style="display:none">
-          <label class="label-campo">Tamanho do tanque (L) — Drone</label>
+          <label class="label-campo">Tamanho do tanque (L)</label>
           <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
         </div>
         <div class="campo-group">
@@ -6190,7 +6190,13 @@ function selecionarCulturaReceita(cultura) {
 function onRecOperacaoChange() {
   const op = document.getElementById('recOperacao').value;
   const grp = document.getElementById('recTanqueGrupo');
-  if (grp) grp.style.display = op === 'drone' ? '' : 'none';
+  const tanqueInput = document.getElementById('recTanque');
+  if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
+  // Preenche com valor padrão apenas se estiver vazio
+  if (tanqueInput && !tanqueInput.value) {
+    if (op === 'drone') tanqueInput.value = 70;
+    else if (op === 'autopropelido') tanqueInput.value = 3000;
+  }
 }
 
 function renderTalhoesSel() {
@@ -6447,7 +6453,7 @@ async function salvarReceita() {
     const dados = {
       fazenda, cultura, safra, operacao, vazao, tecnico, obs, descricao, dataInicio, dataFim,
       talhoes: _recTalhoesSel, itens, areaTotal,
-      ...(operacao === 'drone' ? { tanque } : {}),
+      ...(tanque ? { tanque } : {}),
       status: _recEditandoId ? (recReceitas.find(r=>r.id===_recEditandoId)?.status || 'pendente') : 'pendente',
       atualizadoEm: new Date().toISOString(),
       nomeUsuario: sessaoAtual?.label || sessaoAtual?.email || '—',
@@ -6542,7 +6548,7 @@ function abrirDetReceita(id) {
       <div><span style="color:var(--texto-suave)">Período:</span> <strong>${periodoTxt}</strong></div>
       <div><span style="color:var(--texto-suave)">Vazão:</span> <strong>${r.vazao||0} L/ha</strong></div>
       <div><span style="color:var(--texto-suave)">Área total:</span> <strong>${(r.areaTotal||0).toFixed(2)} ha</strong></div>
-      ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque drone:</span> <strong>${r.tanque} L</strong></div>` : ''}
+      ${r.tanque ? `<div><span style="color:var(--texto-suave)">Tanque:</span> <strong>${r.tanque} L</strong></div>` : ''}
       <div><span style="color:var(--texto-suave)">Técnico:</span> <strong>${esc(r.tecnico||'—')}</strong></div>
       ${r.safra ? `<div><span style="color:var(--texto-suave)">Safra:</span> <strong>\${esc(r.safra)}</strong></div>` : ''}
     </div>
@@ -6619,7 +6625,7 @@ function abrirAceiteReceita(id) {
 
   const vazao     = r.vazao || 0;
   const areaTotal = r.areaTotal || 0;
-  const tanque    = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const tanque    = r.tanque || (r.operacao === 'drone' ? 70 : 3000);
   const capTanque = vazao > 0 ? tanque / vazao : 0;
   const nTanques  = capTanque > 0 ? Math.ceil(areaTotal / capTanque) : 0;
 
@@ -6774,7 +6780,7 @@ function updateBioCalc(i, campo, valor, prefixo) {
   // Recalcula concentração ao editar campos do calculador
   const r = recReceitas.find(x => x.id === _recAceitandoId);
   if (!r) return;
-  const tanque = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const tanque = r.tanque || (r.operacao === 'drone' ? 70 : 3000);
   const ptEl   = document.getElementById(`bio_ptanque_${i}`);
   const concEl = document.getElementById(`bio_conc_${i}`);
   const instEl = document.getElementById(`bio_instrucao_${i}`);
@@ -6941,7 +6947,7 @@ async function imprimirReceita(id) {
 
   const vazao     = r.vazao || 0;
   const areaTotal = r.areaTotal || 0;
-  const tanque    = r.tanque || (r.operacao === 'drone' ? 40 : 3000);
+  const tanque    = r.tanque || (r.operacao === 'drone' ? 70 : 3000);
   const capTanque = vazao > 0 ? tanque / vazao : 0;
   const nTanques  = capTanque > 0 ? Math.ceil(areaTotal / capTanque) : 0;
 
@@ -7040,7 +7046,7 @@ async function imprimirReceita(id) {
     <div class="info-item"><span>Área total: </span><strong>${areaTotal.toFixed(2)} ha</strong></div>
     <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
     <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
-    ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L (Drone)</strong></div>` : ''}
+    ${r.tanque ? `<div class="info-item"><span>Tanque: </span><strong>${r.tanque} L</strong></div>` : ''}
     <div class="info-item"><span>Técnico: </span><strong>${esc(r.tecnico||'—')}</strong></div>
   </div>
   ${r.obs ? `<div style="background:#fff3cd;padding:8px 12px;border-radius:7px;margin-bottom:10px;font-size:12px">📌 <strong>Observação:</strong> ${esc(r.obs)}</div>` : ''}
