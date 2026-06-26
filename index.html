@@ -572,25 +572,27 @@ header {
 .rec-status.em_aberto  { background:#cfe2ff; color:#084298; border:1.5px solid #84b4f0; }
 .rec-status.finalizado { background:#d1e7dd; color:#0a3622; border:1.5px solid #86c9a0; }
 .rec-status.cancelado  { background:#f8d7da; color:#842029; border:1.5px solid #f0a0a8; }
-.rec-card-footer { display:flex; align-items:center; padding-top:10px; justify-content:space-between; }
+.rec-card-footer { display:flex; align-items:center; padding-top:10px; justify-content:space-between; gap:12px; }
+.rec-card-op-wrap { display:flex; flex-direction:column; gap:4px; }
 .rec-card-op { flex-shrink:0; }
-.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
-.rec-footer-tecnico { font-size:12px; color:var(--texto-suave); font-weight:600; }
-.rec-footer-data { font-size:11px; color:var(--texto-suave); }
-
-/* Chips de cultura no formulário */
-.rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
-  border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
-  border:1.5px solid var(--borda); background:white; color:var(--texto);
-  transition:all .15s; user-select:none; }
-.rec-cultura-chip:hover { border-color:var(--verde); background:#f0faf4; }
-.rec-cultura-chip.selecionado { border-color:var(--verde); background:#e8f5e9; color:#1b5e20; font-weight:700; }
+.rec-footer-operador { font-size:12px; color:#2d5a1e; }
+.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+.rec-footer-tecnico { font-size:13px; color:var(--texto-suave); }
+.rec-footer-aplicador { font-size:12px; color:#2d6a2d; font-weight:700; }
+.rec-footer-data { font-size:13px; color:var(--texto); font-weight:700; }
 .rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
   display:flex; flex-wrap:wrap; gap:6px; }
 .rec-prod-tag { background:var(--cinza-claro); border-radius:6px; padding:4px 10px; font-size:12px; color:var(--texto); }
 .rec-prod-tag.biologico { background:#e8f5e9; color:#2e7d32; }
 .rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
 .rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
+.rec-grupo-header { display:flex; align-items:center; gap:10px; padding:10px 16px;
+  border-radius:10px; margin:20px 0 10px; }
+.rec-grupo-header:first-child { margin-top:0; }
+.rec-grupo-icon { font-size:16px; }
+.rec-grupo-label { font-size:14px; font-weight:800; flex:1; letter-spacing:.3px; }
+.rec-grupo-count { font-size:11px; font-weight:800; padding:2px 9px;
+  border-radius:20px; }
 
 .rec-op-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
   border-radius:10px; font-size:13px; font-weight:700; }
@@ -1216,51 +1218,20 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <label class="label-campo">Tamanho do tanque (L)</label>
           <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
         </div>
-        <div class="campo-group" id="recBicoGrupo" style="display:none">
+                <div class="campo-group" id="recBicoGrupo" style="display:none">
           <label class="label-campo">Tipo de bico</label>
-          <select id="recBico" class="campo-input">
-            <option value="">Selecione...</option>
-            <optgroup label="Bicos de Jato Plano">
-              <option value="XR TeeJet 110015">XR TeeJet 110015 — Jato plano padrão</option>
-              <option value="XR TeeJet 11002">XR TeeJet 11002 — Jato plano padrão</option>
-              <option value="XR TeeJet 11003">XR TeeJet 11003 — Jato plano padrão</option>
-              <option value="XR TeeJet 11004">XR TeeJet 11004 — Jato plano padrão</option>
-              <option value="AIXR TeeJet 110015">AIXR TeeJet 110015 — Jato plano antideriva</option>
-              <option value="AIXR TeeJet 11002">AIXR TeeJet 11002 — Jato plano antideriva</option>
-              <option value="AIXR TeeJet 11003">AIXR TeeJet 11003 — Jato plano antideriva</option>
-            </optgroup>
-            <optgroup label="Bicos de Jato Cônico">
-              <option value="TX-8 Albuz">TX-8 Albuz — Cônico vazio laranja</option>
-              <option value="TX-12 Albuz">TX-12 Albuz — Cônico vazio lilás</option>
-              <option value="TXA-80 Magno">TXA-80 Magno — Cônico vazio antideriva</option>
-            </optgroup>
-            <optgroup label="Bicos de Jato Duplo">
-              <option value="TJ60 11002 TeeJet">TJ60 11002 TeeJet — Duplo jato plano</option>
-              <option value="TJ60 11003 TeeJet">TJ60 11003 TeeJet — Duplo jato plano</option>
-              <option value="DF 120-02 Magno">DF 120-02 Magno — Duplo jato plano</option>
-            </optgroup>
-            <optgroup label="Bicos de Indução de Ar">
-              <option value="AVI Twin 110-02">AVI Twin 110-02 — Indução de ar duplo</option>
-              <option value="ID3 120-015 TeeJet">ID3 120-015 TeeJet — Indução de ar</option>
-              <option value="ID3 120-02 TeeJet">ID3 120-02 TeeJet — Indução de ar</option>
-              <option value="Turbo TeeJet 110-02">Turbo TeeJet 110-02 — Indução ar jato plano</option>
-            </optgroup>
-            <optgroup label="Bicos Rotativos">
-              <option value="ConeJet TXA 80-02">ConeJet TXA 80-02 — Rotativo cônico</option>
-            </optgroup>
-            <option value="Outro">Outro (informar em observações)</option>
-          </select>
+          <input type="hidden" id="recBico">
+          <div class="bico-opcoes">
+            <div class="bico-chip" data-val="Cônico" onclick="window.AppEstoque.selecionarBico('Cônico')">
+              <svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="25" cy="12" rx="10" ry="6" fill="#f59e0b" stroke="#92400e" stroke-width="2"/><rect x="20" y="8" width="10" height="8" rx="2" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><path d="M15 20 Q25 16 35 20 L28 42 Q25 46 22 42 Z" fill="#fcd34d" stroke="#92400e" stroke-width="1.5"/><path d="M25 20 L25 42" stroke="#f59e0b" stroke-width="1" opacity="0.5"/><circle cx="25" cy="44" r="3" fill="#60a5fa"/><path d="M18 44 Q20 46 22 44" stroke="#93c5fd" stroke-width="1.5" fill="none"/><path d="M28 44 Q30 46 32 44" stroke="#93c5fd" stroke-width="1.5" fill="none"/></svg>
+              <span>Cônico</span>
+            </div>
+            <div class="bico-chip" data-val="Leque" onclick="window.AppEstoque.selecionarBico('Leque')">
+              <svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="6" width="14" height="10" rx="3" fill="#94a3b8" stroke="#475569" stroke-width="1.5"/><rect x="21" y="10" width="8" height="6" rx="1" fill="#64748b"/><path d="M5 22 Q25 14 45 22 L40 30 Q25 18 10 30 Z" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1.5"/><path d="M5 22 Q25 14 45 22" stroke="#3b82f6" stroke-width="2" fill="none"/><line x1="25" y1="16" x2="25" y2="30" stroke="#93c5fd" stroke-width="1"/><line x1="15" y1="18" x2="12" y2="32" stroke="#93c5fd" stroke-width="1"/><line x1="35" y1="18" x2="38" y2="32" stroke="#93c5fd" stroke-width="1"/><line x1="10" y1="21" x2="6" y2="34" stroke="#93c5fd" stroke-width="1"/><line x1="40" y1="21" x2="44" y2="34" stroke="#93c5fd" stroke-width="1"/></svg>
+              <span>Leque</span>
+            </div>
+          </div>
         </div>
-        <div class="campo-group">
-          <label class="label-campo">Técnico responsável *</label>
-          <input type="text" id="recTecnico" class="campo-input" placeholder="Nome do agrônomo">
-        </div>
-
-        <div class="campo-group">
-          <label class="label-campo">Observações</label>
-          <input type="text" id="recObs" class="campo-input" placeholder="Observações gerais">
-        </div>
-      </div>
 
       <!-- Produtos -->
       <div style="border-top:1.5px solid var(--borda);padding-top:16px;margin-top:4px">
@@ -6164,7 +6135,29 @@ function renderReceitas() {
   }
 
   const statusLabel = { pendente:'Pendente', em_aberto:'Em aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
-  lista.innerHTML = items.map(r => {
+  const statusOrdem = ['pendente', 'em_aberto', 'finalizado', 'cancelado'];
+  const statusConfig = {
+    pendente:   { label:'Pendentes',   icon:'🕐', cor:'#856404', bg:'#fff8e1', borda:'#ffd54f' },
+    em_aberto:  { label:'Em Aberto',   icon:'🚜', cor:'#084298', bg:'#e8f0fe', borda:'#84b4f0' },
+    finalizado: { label:'Finalizados', icon:'✅', cor:'#0a3622', bg:'#e8f5ee', borda:'#86c9a0' },
+    cancelado:  { label:'Cancelados',  icon:'✕',  cor:'#842029', bg:'#fdf0f0', borda:'#f0a0a8' },
+  };
+
+  // Agrupar por status na ordem definida (filtrando quando há filtro de status ativo)
+  const filtroStatusAtivo = document.getElementById('recFiltroStatus')?.value || '';
+  const grupos = filtroStatusAtivo
+    ? [{ status: filtroStatusAtivo, receitas: items }]
+    : statusOrdem.map(s => ({ status: s, receitas: items.filter(r => r.status === s) })).filter(g => g.receitas.length > 0);
+
+  lista.innerHTML = grupos.map(grupo => {
+    const cfg = statusConfig[grupo.status] || { label: grupo.status, icon:'', cor:'#333', bg:'#f5f5f5', borda:'#ddd' };
+    const cabecalho = `
+      <div class="rec-grupo-header" style="border-left:4px solid ${cfg.borda};background:${cfg.bg}">
+        <span class="rec-grupo-icon">${cfg.icon}</span>
+        <span class="rec-grupo-label" style="color:${cfg.cor}">${cfg.label}</span>
+        <span class="rec-grupo-count" style="background:${cfg.borda};color:${cfg.cor}">${grupo.receitas.length}</span>
+      </div>`;
+    const cards = grupo.receitas.map(r => {
     const opBadge = r.operacao === 'drone'
       ? `<span class="rec-op-badge drone"><svg width="48" height="36" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><circle cx="60" cy="42" r="2.5" fill="#444"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="44" x2="45" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="70" y1="44" x2="75" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/><circle cx="44" cy="65" r="4" fill="#f90"/><circle cx="76" cy="65" r="4" fill="#f90"/></svg> Drone</span>`
       : `<span class="rec-op-badge autopropelido"><svg width="54" height="36" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><rect x="30" y="48" width="4" height="14" fill="#1a1a1a"/><rect x="96" y="48" width="4" height="14" fill="#1a1a1a"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg> Autopropelido</span>`;
@@ -6200,14 +6193,20 @@ function renderReceitas() {
         </div>
       </div>
       <div class="rec-card-footer">
-        <div class="rec-card-op">${opBadge}</div>
+        <div class="rec-card-op-wrap">
+          ${opBadge}
+          ${r.status === 'finalizado' && r.aplicador
+            ? `<span class="rec-footer-operador">Operador: <strong>${esc(r.aplicador)}</strong></span>`
+            : ''}
+        </div>
         <div class="rec-card-footer-meta">
-          ${r.status === 'finalizado' && r.aplicador ? `<span class="rec-footer-aplicador">🧑‍🌾 ${esc(r.aplicador)}</span>` : ''}
-          <span class="rec-footer-tecnico">👤 ${esc(r.tecnico||'—')}</span>
-          <span class="rec-footer-data">📅 ${dataFmt}</span>
+          <span class="rec-footer-tecnico">Responsável pela Receita: <strong>${esc(r.tecnico||'—')}</strong></span>
+          <span class="rec-footer-data"><strong>${dataFmt}</strong></span>
         </div>
       </div>
     </div>`;
+    }).join('');
+    return cabecalho + cards;
   }).join('');
 }
 
@@ -6227,7 +6226,12 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = r.operacao || '';
     document.getElementById('recVazao').value      = r.vazao || '';
     document.getElementById('recTanque').value     = r.tanque || '';
-    if(document.getElementById('recBico')) document.getElementById('recBico').value = r.bico || '';
+    if(document.getElementById('recBico')) {
+      document.getElementById('recBico').value = r.bico || '';
+      document.querySelectorAll('.bico-chip').forEach(el => {
+        el.classList.toggle('selecionado', el.dataset.val === r.bico);
+      });
+    }
     const bicoGrpEdit = document.getElementById('recBicoGrupo');
     if (bicoGrpEdit) bicoGrpEdit.style.display = r.operacao === 'autopropelido' ? '' : 'none';
     document.getElementById('recTecnico').value    = r.tecnico || '';
@@ -6248,7 +6252,10 @@ function abrirNovaReceita(receitaId = null) {
     document.getElementById('recOperacao').value   = '';
     document.getElementById('recVazao').value      = '';
     document.getElementById('recTanque').value     = '';
-    if(document.getElementById('recBico')) document.getElementById('recBico').value = '';
+    if(document.getElementById('recBico')) {
+      document.getElementById('recBico').value = '';
+      document.querySelectorAll('.bico-chip').forEach(el => el.classList.remove('selecionado'));
+    }
     document.getElementById('recTecnico').value    = sessaoAtual?.label || '';
     document.getElementById('recObs').value        = '';
     document.getElementById('recDescricao').value = '';
@@ -6307,6 +6314,12 @@ function selecionarCulturaReceita(cultura) {
   renderCulturaChips();
 }
 
+function selecionarBico(val) {
+  document.getElementById('recBico').value = val;
+  document.querySelectorAll('.bico-chip').forEach(el => {
+    el.classList.toggle('selecionado', el.dataset.val === val);
+  });
+}
 function onRecOperacaoChange() {
   const op = document.getElementById('recOperacao').value;
   const grp = document.getElementById('recTanqueGrupo');
@@ -6769,6 +6782,9 @@ function abrirAceiteReceita(id) {
   const bios = itensComSaldo.filter(it => it.biologico);
 
   const talhoesTxt = (r.talhoes||[]).map(t => `${t.nome} (${t.area} ha)`).join(', ');
+  const talhoesGridHTML = `<div class="talhoes-grid">${(r.talhoes||[]).map(t =>
+    `<div class="talhao-box"><div class="talhao-box-nome">${t.nome}</div><div class="talhao-box-area">${t.area} ha</div></div>`
+  ).join('')}</div>`;
 
   let biosHTML = '';
   if (bios.length) {
@@ -7081,6 +7097,9 @@ async function imprimirReceita(id) {
     ? `${new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR')} a ${new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')}`
     : '—';
   const talhoesTxt = (r.talhoes||[]).map(t=>`${t.nome} (${t.area} ha)`).join(', ');
+  const talhoesGridHTML = (r.talhoes||[]).map(t =>
+    `<div class="talhao-box"><div class="talhao-box-nome">${t.nome}</div><div class="talhao-box-area">${t.area} ha</div></div>`
+  ).join('');
   const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
   const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
   const statusBg    = { pendente:'#fff3cd', em_aberto:'#cfe2ff', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
@@ -7160,6 +7179,11 @@ async function imprimirReceita(id) {
     .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:14px 0; font-size:12px; }
     .info-item span { color:#6a7a8a; }
     table { width:100%; border-collapse:collapse; margin-top:12px; }
+    .talhoes-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:10px 0; }
+    .talhao-box { background:#f0f4ff; border:1px solid #c0d0f0; border-radius:8px;
+      padding:8px 12px; font-size:12px; }
+    .talhao-box-nome { font-weight:700; color:#1a3a6b; margin-bottom:2px; }
+    .talhao-box-area { font-size:11px; color:#5a6a8a; }
     th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:left; border:1px solid #2a5aaa; }
     th.tc { text-align:center; }
     td { font-size:11px; }
@@ -7180,12 +7204,15 @@ async function imprimirReceita(id) {
     </div>
   </div>
 
+  <div style="margin-bottom:12px">
+    <div style="font-size:11px;font-weight:700;color:#6a7a8a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">➜ Talhões</div>
+    <div class="talhoes-grid">${talhoesGridHTML}</div>
+  </div>
   <div class="info-grid">
     <div class="info-item"><span>Fazenda: </span><strong>${esc(r.fazenda)}</strong></div>
     <div class="info-item"><span>Cultura: </span><strong>${esc(r.cultura||'—')}</strong></div>
     <div class="info-item"><span>Operação: </span><strong>${opLabel}</strong></div>
     <div class="info-item"><span>Período: </span><strong>${periodoTxt}</strong></div>
-    <div class="info-item"><span>Talhões: </span><strong>${talhoesTxt}</strong></div>
     <div class="info-item"><span>Área total: </span><strong>${areaTotal.toFixed(2)} ha</strong></div>
     <div class="info-item"><span>Vazão: </span><strong>${vazao} L/ha</strong></div>
     <div class="info-item"><span>Cap. tanque: </span><strong>${capTanque.toFixed(2)} ha/tanque · ${nTanques} tanques</strong></div>
@@ -8258,7 +8285,7 @@ window.AppEstoque = {
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
   confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
   // Receitas
-  abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas,
+  abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas, selecionarBico,
   onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita, popularSafrasReceita,
   toggleTalhao, renderTalhoesSel,
   adicionarItemReceita, removerItemReceita, updateItemReceita, updateDoseHa, recalcularTodasQdes,
