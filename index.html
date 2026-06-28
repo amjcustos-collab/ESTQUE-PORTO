@@ -7161,180 +7161,236 @@ async function imprimirReceita(id) {
   const r = recReceitas.find(x => x.id === id);
   if (!r) return;
 
-  const numFmt     = '#' + String(r.numero||0).padStart(4,'0');
-  const isDrone    = r.operacao === 'drone';
-  const opLabel    = isDrone ? 'Drone' : 'Pulverização Autopropelido';
-  const opSVG      = isDrone
-    ? '<svg width="28" height="21" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
-    : '<svg width="32" height="21" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
-  const dataEmit   = new Date().toLocaleDateString('pt-BR');
-  const dataLanc   = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : dataEmit;
-  const periodoTxt = r.dataInicio && r.dataFim
-    ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')
-    : '—';
-  const talhoesTxt = (r.talhoes||[]).map(t => t.nome).join(' , ');
-  const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
-  const statusCor   = { pendente:'#856404', em_aberto:'#084298', finalizado:'#0a3622', cancelado:'#842029' };
-  const statusBg    = { pendente:'#fff3cd', em_aberto:'#cfe2ff', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
-
-  const vazao     = r.vazao || 0;
+  const numFmt    = '#' + String(r.numero||0).padStart(4,'0');
+  const isDrone   = r.operacao === 'drone';
+  const opLabel   = isDrone ? 'Drone' : 'Pulverização<br>Autopropelido';
+  const dataEmit  = new Date().toLocaleDateString('pt-BR');
+  const dataLanc  = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : dataEmit;
+  const dIni      = r.dataInicio ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
+  const dFim      = r.dataFim   ? new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
+  const talhoesTxt = (r.talhoes||[]).map(t => t.nome).join(', ');
   const areaTotal = r.areaTotal || 0;
+  const vazao     = r.vazao || 0;
   const tanque    = r.tanque || (isDrone ? 70 : 3000);
   const capTanque = vazao > 0 ? tanque / vazao : 0;
   const nTanques  = capTanque > 0 ? (areaTotal / capTanque).toFixed(2) : '—';
   const capHaTxt  = capTanque > 0 ? capTanque.toFixed(2) : '—';
+  const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
+  const statusCor   = { pendente:'#856404', em_aberto:'#1a4080', finalizado:'#0a3622', cancelado:'#842029' };
+  const statusBg    = { pendente:'#fff3cd', em_aberto:'#e8f0fe', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
 
-  // Linhas da tabela de produtos
-  const linhasProd = (r.itens||[]).map(it => {
-    const isBio = it.biologico;
-    const isSub = !!it.substituidoPor;
-    const nomeTxt = isSub
-      ? esc(it.nome) + '<br><span style="font-size:11px;color:#e65100">↔ Substituiu: ' + esc(it.nomeOriginal||'') + '</span>'
-      : esc(it.nome);
-    const doseHa   = it.doseHa || 0;
-    const qdeTot   = it.qdeTotalArea || 0;
-    const doseCarga = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
-    // Dose parcial = último tanque
-    const restHa = capTanque > 0 ? areaTotal % capTanque : 0;
-    const doseParcial = restHa > 0 ? Math.round(doseHa * restHa * 1000)/1000 : doseCarga;
-    const bg = isBio ? 'background:#f1f8e9' : (it._idx%2===0 ? '' : 'background:#f7f9fc');
-    return '<tr style="' + bg + '">'
-      + '<td>' + nomeTxt + '</td>'
+  // SVG ilustração da máquina
+  const opSVG = isDrone
+    ? '<svg width="90" height="68" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="44" x2="45" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="70" y1="44" x2="75" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/><circle cx="44" cy="65" r="4" fill="#f90"/><circle cx="76" cy="65" r="4" fill="#f90"/></svg>'
+    : '<svg width="110" height="68" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
+
+  // Linhas de produtos
+  const linhasProd = (r.itens||[]).map((it, idx) => {
+    const isBio  = it.biologico;
+    const isSub  = !!it.substituidoPor;
+    const nome   = isSub ? esc(it.nome) + ' <span style="font-size:10px;color:#e65100">(↔ ' + esc(it.nomeOriginal||'') + ')</span>' : esc(it.nome);
+    const doseHa = it.doseHa || 0;
+    const qdeTot = it.qdeTotalArea || 0;
+    const doseCarga   = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
+    const restHa      = capTanque > 0 ? areaTotal % capTanque : 0;
+    const doseParcial = restHa > 0.01 ? Math.round(doseHa * restHa * 1000)/1000 : doseCarga;
+    const rowBg = isBio ? '#e8f5e9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafd');
+    const nomeStyle = isBio ? 'font-weight:700;color:#1b5e20' : '';
+    return '<tr style="background:' + rowBg + '">'
+      + '<td style="' + nomeStyle + '">' + nome + '</td>'
       + '<td class="tc">' + esc(it.tipo||'—') + '</td>'
+      + '<td class="tc">' + esc(it.unidade||'L') + '</td>'
       + '<td class="tc">' + doseHa + '</td>'
-      + '<td class="tc bold">' + doseCarga.toFixed(3) + '</td>'
-      + '<td class="tc bold" style="color:#c05a00">' + doseParcial.toFixed(3) + '</td>'
-      + '<td class="tc bold" style="color:#1a4a9a">' + qdeTot.toFixed(3) + '</td>'
+      + '<td class="tc fw">' + doseCarga.toFixed(3) + '</td>'
+      + '<td class="tc fw ora">' + doseParcial.toFixed(3) + '</td>'
+      + '<td class="tc fw blu">' + qdeTot.toFixed(3) + '</td>'
       + '</tr>';
   }).join('');
 
   // Bloco biológicos
   const bios = (r.itens||[]).filter(it => it.biologico);
   let biosBloco = '';
-  if (bios.length) {
-    const biosLinhas = bios.map(it => {
-      const vPt  = capTanque > 0 ? Math.round(it.doseHa * capTanque * 1000)/1000 : 0;
+  if (bios.length && capTanque > 0) {
+    const bl = bios.map(it => {
+      const vPt  = Math.round(it.doseHa * capTanque * 1000)/1000;
       const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
       return '<tr><td>' + esc(it.nome) + '</td>'
-        + '<td class="tc bold">' + (it.qdeTotalArea||0).toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
-        + '<td class="tc bold" style="color:#1b5e20">' + vPt.toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
+        + '<td class="tc fw">' + (it.qdeTotalArea||0).toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
+        + '<td class="tc fw grn">' + vPt.toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
         + '<td class="tc">' + conc.toFixed(2) + '%</td></tr>';
     }).join('');
-    biosBloco = '<div class="secao-bio"><div class="secao-bio-titulo">🧬 Diluição de Biológicos</div>'
-      + '<table><thead><tr style="background:#2e7d32;color:white">'
-      + '<th>Produto</th><th class="tc">Vol. Total</th><th class="tc">Por Tanque (' + tanque + 'L)</th><th class="tc">Concentração</th>'
-      + '</tr></thead><tbody>' + biosLinhas + '</tbody></table></div>';
+    biosBloco = '<div class="card" style="border:1.5px solid #a5d6a7;background:#f1f8f2;margin-top:20px">'
+      + '<div style="font-size:13px;font-weight:800;color:#1b5e20;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🧬 Diluição de Biológicos</div>'
+      + '<table><thead><tr><th>Produto</th><th class="tc">Vol. Total</th><th class="tc">Por Tanque (' + tanque + 'L)</th><th class="tc">Concentração</th></tr></thead>'
+      + '<tbody>' + bl + '</tbody></table></div>';
   }
 
   // Bloco finalizado
-  let finalizadoHTML = '';
+  let finBloco = '';
   if (r.status === 'finalizado' && r.aplicador) {
-    const dIni = r.aplicacaoInicio ? new Date(r.aplicacaoInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
-    const dFim = r.aplicacaoFim   ? new Date(r.aplicacaoFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
     const diasAtr = r.diasAtraso > 0 ? r.diasAtraso : 0;
-    finalizadoHTML = '<div class="bloco-fin">✔ Aplicação realizada — Aplicador: <strong>' + esc(r.aplicador) + '</strong> · ' + dIni + ' a ' + dFim
-      + (diasAtr > 0 ? ' <span style="color:#7c2d12;font-weight:700">⚠️ ' + diasAtr + ' dia' + (diasAtr>1?'s':'') + ' de atraso</span>' : '')
+    finBloco = '<div class="card" style="border:1.5px solid #86c9a0;background:#e8f5ee;margin-top:20px">'
+      + '<span style="font-weight:800;color:#0a3622">✔ Aplicação Realizada</span><br>'
+      + '<span style="font-size:13px">Aplicador: <strong>' + esc(r.aplicador) + '</strong> &nbsp;·&nbsp; ' + dIni + ' a ' + dFim + '</span>'
+      + (diasAtr > 0 ? '<br><span style="color:#7c2d12;font-weight:700;font-size:12px">⚠️ ' + diasAtr + ' dia' + (diasAtr>1?'s':'') + ' de atraso</span>' : '')
       + '</div>';
   }
 
-  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    + '<title>Receita ' + numFmt + ' — ' + esc(r.fazenda) + '</title>'
-    + '<style>'
-    + '* { box-sizing:border-box; margin:0; padding:0; }'
-    + 'body { font-family:Arial,sans-serif; margin:22px 30px; color:#1a2535; font-size:15px; line-height:1.5; }'
-    + '.header { display:flex; align-items:center; gap:18px; border-bottom:3px solid #1a3a6b; padding-bottom:14px; margin-bottom:18px; }'
-    + '.header img { height:60px; }'
-    + '.h-empresa { font-size:13px; font-weight:700; color:#1a3a6b; }'
-    + '.h-titulo { font-size:15px; font-weight:600; color:#5a6472; font-style:italic; text-decoration:underline; letter-spacing:.3px; }'
-    + '.h-badge { margin-left:auto; display:inline-block; padding:5px 18px; border-radius:20px; font-size:14px; font-weight:800; }'
-    + '.data-linha { display:flex; justify-content:space-between; font-size:14px; margin-bottom:16px; }'
-    + '.data-linha strong { color:#c05a00; font-size:15px; }'
-    + '.data-linha .aprov { font-weight:700; color:#166534; font-size:15px; }'
-    + '.bloco { margin-bottom:6px; font-size:15px; }'
-    + '.bloco .arr { color:#c05a00; font-weight:900; margin-right:4px; font-size:16px; }'
-    + '.bloco .label { font-weight:700; text-decoration:underline; margin-right:4px; }'
-    + '.bloco.sub1 { margin-left:20px; }'
-    + '.bloco.sub2 { margin-left:40px; }'
-    + '.bloco.sub3 { margin-left:60px; }'
-    + '.bloco.sub4 { margin-left:80px; }'
-    + '.op-bloco { margin:18px 0 10px; }'
-    + '.op-linha { display:flex; align-items:center; gap:10px; font-size:16px; font-weight:700; margin-bottom:8px; }'
-    + '.op-linha svg { vertical-align:middle; }'
-    + '.op-sub { font-size:14px; margin:3px 0 3px 14px; color:#2a3a4a; }'
-    + '.op-sub .arr2 { color:#1a7a2a; font-weight:700; margin-right:4px; }'
-    + 'table { width:100%; border-collapse:collapse; margin-top:12px; }'
-    + 'th { background:#2a4a7a; color:white; padding:10px 12px; font-size:14px; text-align:left; border:1px solid #3a5a9a; }'
-    + 'th.tc { text-align:center; }'
-    + 'td { font-size:14px; padding:8px 12px; border:1px solid #d0d8e0; vertical-align:middle; }'
-    + 'td.tc { text-align:center; }'
-    + 'td.bold { font-weight:700; }'
-    + 'tr:nth-child(even) td { background:#f7f9fc; }'
-    + '.obs-bloco { margin-top:20px; padding:10px 0; border-top:1px solid #e0e4e8; font-size:16px; }'
-    + '.obs-label { font-weight:900; color:#c00; margin-right:6px; }'
-    + '.tec-linha { margin-top:10px; text-align:center; font-size:14px; color:#444; }'
-    + '.tec-linha strong { font-style:italic; }'
-    + '.secao-bio { margin-top:16px; padding:12px 16px; background:#e8f5e9; border-radius:8px; border:1.5px solid #a5d6a7; }'
-    + '.secao-bio-titulo { font-weight:700; color:#1b5e20; margin-bottom:8px; font-size:15px; }'
-    + '.bloco-fin { margin-top:14px; padding:10px 14px; background:#d1e7dd; border-radius:8px; font-size:14px; color:#0a3622; }'
-    + '.rodape { margin-top:20px; font-size:12px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:10px; }'
-    + '</style></head><body>'
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
+  + '<title>Receita ' + numFmt + '</title><style>'
+  + '* { box-sizing:border-box; margin:0; padding:0; }'
+  + 'body { font-family:Arial,sans-serif; background:#f0f4f8; color:#1a2535; font-size:13px; }'
+  + '.page { background:white; max-width:900px; margin:0 auto; padding:28px 32px; }'
+  + '@media print { body{background:white} .page{padding:20px 24px} }'
 
-    // Cabeçalho
-    + '<div class="header">'
-    + '<img src="' + LOGO_AMJ + '" alt="' + esc(configGlobal.empresa) + '">'
-    + '<div><div class="h-empresa">' + esc(configGlobal.empresa) + '</div>'
-    + '<div class="h-titulo">RELATÓRIO DE RECOMENDAÇÃO AGRÍCOLA</div></div>'
-    + '<span class="h-badge" style="background:' + (statusBg[r.status]||'#eee') + ';color:' + (statusCor[r.status]||'#333') + '">' + (statusLabel[r.status]||r.status) + '</span>'
-    + '</div>'
+  /* HEADER */
+  + '.header { display:flex; align-items:center; gap:20px; border-bottom:3px solid #1a3a6b; padding-bottom:18px; margin-bottom:20px; }'
+  + '.header img { height:64px; }'
+  + '.h-titles { flex:1; }'
+  + '.h-empresa { font-size:13px; font-weight:700; color:#1a3a6b; letter-spacing:.5px; }'
+  + '.h-relatorio { font-size:22px; font-weight:900; color:#1a2535; line-height:1.1; }'
+  + '.h-right { text-align:right; }'
+  + '.h-data { font-size:12px; color:#6a7a8a; margin-top:8px; }'
+  + '.h-data strong { color:#1a2535; }'
+  + '.badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:800; margin-bottom:6px; }'
+  + '.badge-ok { background:#e8f5ee; color:#0a3622; border:1.5px solid #86c9a0; }'
 
-    // Data e aprovação
-    + '<div class="data-linha">'
-    + '<span>📅 Data do Lançamento: <strong>' + dataLanc + '</strong></span>'
-    + '<span class="aprov">Aprovação: OK!</span>'
-    + '</div>'
+  /* CARDS */
+  + '.card { background:#f8fafd; border:1.5px solid #e0e8f0; border-radius:12px; padding:16px 20px; margin-bottom:16px; }'
+  + '.card-title { font-size:11px; font-weight:800; color:#1a3a6b; text-transform:uppercase; letter-spacing:.8px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }'
+  + '.card-title::before { content:""; display:block; width:4px; height:16px; background:#1a3a6b; border-radius:2px; }'
 
-    // Hierarquia: Cliente → Fazenda → Talhões → Cultura → Área
-    + '<div class="bloco"><span class="arr">➨</span><span class="label">CLIENTE:</span>' + esc(configGlobal.empresa) + '</div>'
-    + '<div class="bloco sub1"><span class="arr">➨</span><span class="label">FAZENDA:</span>' + esc(r.fazenda) + '</div>'
-    + '<div class="bloco sub2"><span class="arr">➨</span><span class="label">TALHÕES:</span>' + talhoesTxt + '</div>'
-    + '<div class="bloco sub3"><span class="arr">➨</span><span class="label">CULTURA:</span>' + esc(r.cultura||'—') + (r.safra ? ' | ' + esc(r.safra) : '') + '</div>'
-    + '<div class="bloco sub4"><span class="arr">➨</span><span class="label">Área Total:</span>' + areaTotal.toFixed(2) + ' Hectares</div>'
+  /* LOCAL DA OPERAÇÃO */
+  + '.local-grid { display:grid; grid-template-columns:1fr 1fr 1.4fr 1fr; gap:16px; }'
+  + '.local-item .lbl { font-size:11px; color:#6a7a8a; display:flex; align-items:center; gap:5px; margin-bottom:4px; }'
+  + '.local-item .val { font-size:14px; font-weight:700; color:#1a2535; line-height:1.4; }'
+  + '.local-item .val-big { font-size:28px; font-weight:900; color:#1a3a6b; line-height:1; }'
+  + '.local-item .val-unit { font-size:13px; color:#6a7a8a; font-weight:600; }'
 
-    // Operação
-    + '<div class="op-bloco">'
-    + '<div class="op-linha">' + opSVG + '<span style="text-decoration:underline;font-weight:900">OPERAÇÃO:</span>&nbsp;' + opLabel + '&nbsp;&nbsp;&nbsp;<span style="text-decoration:underline;font-weight:700">Período:</span>&nbsp;' + periodoTxt + '</div>'
-    + '<div class="op-sub"><span class="arr2">➤</span>Tamanho do Tanque - ' + tanque + ' Litros</div>'
-    + '<div class="op-sub" style="margin-left:40px"><span class="arr2">➤</span>Vazão por Hectare - ' + vazao + ' L/Ha</div>'
-    + '<div class="op-sub" style="margin-left:60px"><span class="arr2">➤</span>Capacidade do Tanque - ' + capHaTxt + ' Hectares</div>'
-    + '<div class="op-sub" style="margin-left:80px;font-weight:700">Quantidade Total de Tanque - ' + nTanques + '</div>'
-    + (r.bico ? '<div class="op-sub" style="margin-left:60px"><span class="arr2">➤</span>Tipo de Bico - ' + esc(r.bico) + '</div>' : '')
-    + '</div>'
+  /* OPERAÇÃO */
+  + '.op-grid { display:grid; grid-template-columns:200px 1fr; gap:20px; align-items:start; }'
+  + '.op-maquina { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:12px; background:white; border-radius:10px; border:1.5px solid #e0e8f0; }'
+  + '.op-maquina-nome { font-size:15px; font-weight:900; color:#1a2535; text-align:center; line-height:1.2; }'
+  + '.op-periodo { margin-top:10px; font-size:12px; color:#6a7a8a; text-align:center; }'
+  + '.op-periodo strong { color:#1a3a6b; font-size:13px; display:block; margin-top:2px; }'
+  + '.params-titulo { font-size:11px; font-weight:800; color:#2d6a2d; text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; }'
+  + '.params-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }'
+  + '.param-box { background:white; border:1.5px solid #e0e8f0; border-radius:10px; padding:10px 8px; text-align:center; }'
+  + '.param-box .p-icon { font-size:18px; margin-bottom:4px; }'
+  + '.param-box .p-lbl { font-size:10px; color:#6a7a8a; line-height:1.3; margin-bottom:4px; }'
+  + '.param-box .p-val { font-size:20px; font-weight:900; color:#1a3a6b; line-height:1; }'
+  + '.param-box .p-val.grn { color:#2d7d32; }'
+  + '.param-box .p-unit { font-size:11px; color:#6a7a8a; margin-top:2px; }'
+  + '.param-box.bico .p-val { font-size:16px; }'
 
-    // Tabela de produtos
-    + '<table><thead><tr>'
-    + '<th>Insumo Recom.</th><th class="tc">Tipo</th><th class="tc">Dose / ha</th>'
-    + '<th class="tc" style="color:#ffe082">Dose / Bomba<br>(Carga Cheia)</th>'
-    + '<th class="tc" style="color:#ffb74d">Dose / Bomba<br>(Carga Parcial)</th>'
-    + '<th class="tc">Qde Total<br>na Área</th>'
-    + '</tr></thead><tbody>' + linhasProd + '</tbody></table>'
+  /* TABELA */
+  + '.table-titulo { font-size:13px; font-weight:900; color:#1a2535; text-transform:uppercase; letter-spacing:.8px; margin:20px 0 10px; padding-left:4px; border-left:4px solid #1a3a6b; padding-left:10px; }'
+  + 'table { width:100%; border-collapse:collapse; border-radius:10px; overflow:hidden; }'
+  + 'thead tr { background:#1a3a6b; }'
+  + 'th { color:white; padding:11px 12px; font-size:12px; font-weight:700; text-align:left; }'
+  + 'th.tc { text-align:center; }'
+  + 'td { padding:10px 12px; font-size:13px; border-bottom:1px solid #eef2f7; }'
+  + 'td.tc { text-align:center; }'
+  + 'td.fw { font-weight:700; }'
+  + 'td.blu { color:#1a4a9a; }'
+  + 'td.ora { color:#c05a00; }'
+  + 'td.grn { color:#1b5e20; }'
+  + '.table-note { font-size:11px; color:#9aa5b0; font-style:italic; margin-top:6px; padding-left:4px; }'
 
-    + biosBloco
-    + finalizadoHTML
+  /* OBS + TÉCNICO */
+  + '.obs-card { background:#fffbe8; border:1.5px solid #f0d060; border-radius:10px; padding:14px 18px; margin-top:20px; display:flex; gap:14px; align-items:flex-start; }'
+  + '.obs-icon { font-size:24px; flex-shrink:0; }'
+  + '.obs-titulo { font-size:12px; font-weight:800; color:#92600a; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }'
+  + '.obs-texto { font-size:14px; color:#3a2a0a; }'
+  + '.footer { margin-top:24px; padding-top:16px; border-top:2px solid #e0e8f0; display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; }'
+  + '.tec-bloco .tec-titulo { font-size:11px; font-weight:800; color:#1a3a6b; text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; display:flex; align-items:center; gap:6px; }'
+  + '.tec-bloco .tec-nome { font-size:14px; font-weight:700; font-style:italic; color:#1a2535; }'
+  + '.tec-bloco .tec-crea { font-size:12px; color:#6a7a8a; margin-top:2px; }'
+  + '.footer-mid { text-align:center; }'
+  + '.footer-mid .fm-logo { font-size:12px; font-weight:700; color:#1a3a6b; }'
+  + '.footer-mid .fm-sub { font-size:11px; color:#6a7a8a; margin-top:2px; }'
+  + '.rec-bloco { text-align:right; }'
+  + '.rec-bloco .rb-titulo { font-size:11px; font-weight:800; color:#2d7d32; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }'
+  + '.rec-bloco .rb-texto { font-size:12px; color:#3a4a3a; line-height:1.5; }'
+  + '</style></head><body><div class="page">'
 
-    // Observações = descricao da receita
-    + (r.descricao ? '<div class="obs-bloco"><span class="obs-label">OBSERVAÇÕES:</span>' + esc(r.descricao) + '</div>' : '')
-    + (r.obs ? '<div class="obs-bloco" style="margin-top:6px"><span class="obs-label" style="color:#856404">OBS. ADICIONAIS:</span>' + esc(r.obs) + '</div>' : '')
+  // ── HEADER ───────────────────────────────────────────────────────
+  + '<div class="header">'
+  + '<img src="' + LOGO_AMJ + '" alt="AMJ">'
+  + '<div class="h-titles">'
+  + '<div class="h-empresa">AMJ AGROPECUÁRIA</div>'
+  + '<div class="h-relatorio">RELATÓRIO DE<br>RECOMENDAÇÃO AGRÍCOLA</div>'
+  + '</div>'
+  + '<div class="h-right">'
+  + '<span class="badge" style="background:' + (statusBg[r.status]||'#eee') + ';color:' + (statusCor[r.status]||'#333') + ';border:1.5px solid currentColor">'
+  + '📋 ' + (statusLabel[r.status]||r.status).toUpperCase() + '</span><br>'
+  + '<span class="badge badge-ok">✅ APROVAÇÃO: OK!</span>'
+  + '<div class="h-data">📅 Data do Lançamento: <strong>' + dataLanc + '</strong></div>'
+  + '</div>'
+  + '</div>'
 
-    // Técnico
-    + '<div class="tec-linha">✒️&nbsp;<strong>Técnico Responsável: ' + esc(r.tecnico||'—') + '</strong></div>'
+  // ── LOCAL DA OPERAÇÃO ─────────────────────────────────────────────
+  + '<div class="card">'
+  + '<div class="card-title">📍 Local da Operação</div>'
+  + '<div class="local-grid">'
+  + '<div class="local-item"><div class="lbl">👤 Cliente</div><div class="val">' + esc(configGlobal.empresa) + '</div>'
+  + '<div class="lbl" style="margin-top:12px">🏠 Fazenda</div><div class="val">' + esc(r.fazenda) + '</div></div>'
+  + '<div class="local-item"><div class="lbl">⬛ Talhões</div><div class="val">' + talhoesTxt + '</div></div>'
+  + '<div class="local-item"><div class="lbl">🌿 Cultura</div><div class="val">' + esc(r.cultura||'—') + (r.safra ? ' | ' + esc(r.safra) : '') + '</div></div>'
+  + '<div class="local-item"><div class="lbl">📐 Área Total</div><div class="val-big">' + areaTotal.toFixed(2) + '</div><div class="val-unit">Hectares</div></div>'
+  + '</div></div>'
 
-    + '<div class="rodape">' + esc(configGlobal.empresa) + ' · Receita ' + numFmt + ' · Gerado em ' + dataEmit + '</div>'
-    + '<script>window.onload = () => window.print()<\/script>'
-    + '</body></html>';
+  // ── OPERAÇÃO ──────────────────────────────────────────────────────
+  + '<div class="card">'
+  + '<div class="op-grid">'
+  + '<div class="op-maquina">'
+  + '<div style="font-size:10px;font-weight:800;color:#2d7d32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">OPERAÇÃO</div>'
+  + opSVG
+  + '<div class="op-maquina-nome">' + opLabel + '</div>'
+  + '<div class="op-periodo">Período da Aplicação<strong>' + dIni + ' a ' + dFim + '</strong></div>'
+  + '</div>'
+  + '<div>'
+  + '<div class="params-titulo">⚙ Parâmetros da Aplicação</div>'
+  + '<div class="params-grid">'
+  + '<div class="param-box"><div class="p-icon">💧</div><div class="p-lbl">Tanque</div><div class="p-val grn">' + tanque.toLocaleString('pt-BR') + '</div><div class="p-unit">Litros</div></div>'
+  + '<div class="param-box"><div class="p-icon">⏱</div><div class="p-lbl">Vazão<br>por Hectare</div><div class="p-val grn">' + vazao + '</div><div class="p-unit">L/ha</div></div>'
+  + '<div class="param-box"><div class="p-icon">📐</div><div class="p-lbl">Capacidade<br>do Tanque</div><div class="p-val grn">' + capHaTxt + '</div><div class="p-unit">Hectares</div></div>'
+  + '<div class="param-box"><div class="p-icon">🪣</div><div class="p-lbl">Qtd. Total<br>de Tanque</div><div class="p-val grn">' + nTanques + '</div><div class="p-unit">Tanques</div></div>'
+  + (r.bico ? '<div class="param-box bico"><div class="p-icon">💦</div><div class="p-lbl">Tipo de Bico</div><div class="p-val" style="color:#1a3a6b">' + esc(r.bico) + '</div></div>' : '')
+  + '</div>'
+  + '</div>'
+  + '</div></div>'
 
-  // Marcar como impresso
+  // ── TABELA DE INSUMOS ─────────────────────────────────────────────
+  + '<div class="table-titulo">Insumos Recomendados</div>'
+  + '<table><thead><tr>'
+  + '<th>Insumo Recomendado</th><th class="tc">Tipo</th><th class="tc">Unid.</th><th class="tc">Dose / ha</th>'
+  + '<th class="tc" style="color:#ffe082">Dose / Bomba<br>(Carga Cheia)</th>'
+  + '<th class="tc" style="color:#ffb74d">Dose / Bomba<br>(Carga Parcial)</th>'
+  + '<th class="tc">Qde Total<br>na Área</th>'
+  + '</tr></thead><tbody>' + linhasProd + '</tbody></table>'
+  + '<div class="table-note">* Valores calculados com base na área total informada e parâmetros de aplicação.</div>'
+
+  + biosBloco
+  + finBloco
+
+  // ── OBSERVAÇÕES ───────────────────────────────────────────────────
+  + (r.descricao || r.obs ? '<div class="obs-card"><div class="obs-icon">📋</div><div><div class="obs-titulo">Observações</div><div class="obs-texto">' + esc(r.descricao||r.obs||'') + '</div>' + (r.obs && r.descricao ? '<div class="obs-texto" style="margin-top:6px;color:#856404">' + esc(r.obs) + '</div>' : '') + '</div></div>' : '')
+
+  // ── RODAPÉ ────────────────────────────────────────────────────────
+  + '<div class="footer">'
+  + '<div class="tec-bloco"><div class="tec-titulo">👤 Técnico Responsável</div>'
+  + '<div class="tec-nome">' + esc(r.tecnico||'—') + '</div>'
+  + '</div>'
+  + '<div class="footer-mid"><div class="fm-logo">AMJ Agro Gestão</div><div class="fm-sub">Documento gerado em ' + dataEmit + '</div><div class="fm-sub" style="margin-top:4px">🔒 Sistema seguro e rastreável</div></div>'
+  + '<div class="rec-bloco"><div class="rb-titulo">✅ Recomendação Técnica</div><div class="rb-texto">Siga rigorosamente as doses e<br>recomendações para garantir a<br>eficácia da aplicação.</div></div>'
+  + '</div>'
+
+  + '</div>' // .page
+  + '<script>window.onload = () => window.print()<\/script>'
+  + '</body></html>';
+
   await updateDoc(doc(db, 'receitas', id), { impresso: true, impressoEm: new Date().toISOString() });
-
   const w = window.open('', '_blank');
   if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
   w.document.write(html);
