@@ -7181,8 +7181,8 @@ async function imprimirReceita(id) {
   const sBg      = {pendente:'#fefce8',em_aberto:'#eff6ff',finalizado:'#f0fdf4',cancelado:'#fef2f2'}[s]||'#f8f8f8';
 
   const opSVG = isDrone
-    ? '<svg width="100" height="66" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
-    : '<svg width="120" height="72" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
+    ? '<svg width="78" height="52" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
+    : '<svg width="90" height="54" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
 
   // Talhões grid 5 colunas
   const talhGrid = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px">'
@@ -7193,6 +7193,18 @@ async function imprimirReceita(id) {
         + '</div>'
       ).join('')
     + '</div>';
+
+  // Ícone por tipo de produto
+  function tipoIcone(tipo) {
+    const t = (tipo||'').toLowerCase();
+    if (t.includes('herbicida'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#dcfce7;font-size:12px;margin-right:6px">&#127807;</span>';
+    if (t.includes('inseticida'))    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef3c7;font-size:12px;margin-right:6px">&#128027;</span>';
+    if (t.includes('fungicida'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f3e8ff;font-size:12px;margin-right:6px">&#128307;</span>';
+    if (t.includes('biologico')||t.includes('biológico')) return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d1fae5;font-size:12px;margin-right:6px">&#127822;</span>';
+    if (t.includes('adjuvante'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#dbeafe;font-size:12px;margin-right:6px">&#128167;</span>';
+    if (t.includes('nutri'))         return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fce7f3;font-size:12px;margin-right:6px">&#127807;</span>';
+    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:12px;margin-right:6px">&#8226;</span>';
+  }
 
   // Linhas da tabela
   const rows = (r.itens||[]).map((it, i) => {
@@ -7206,7 +7218,7 @@ async function imprimirReceita(id) {
     const rowBg     = isBio ? '#eff6ff' : (i%2===0 ? '#fff' : '#f8fafc');
     const bioStyle  = isBio ? 'font-weight:700;color:#1e40af' : '';
     return '<tr style="background:'+rowBg+'">'
-      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;'+bioStyle+'">'+nome+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;'+bioStyle+';display:flex;align-items:center">'+tipoIcone(it.tipo)+nome+'</td>'
       + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-size:12px;color:#475569">'+esc(it.tipo||'--')+'</td>'
       + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:600">'+doseHa+'</td>'
       + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700">'+doseCarga.toFixed(3)+'</td>'
@@ -7255,8 +7267,8 @@ async function imprimirReceita(id) {
     +'</svg>';
 
   // CSS
-  const C = '*{box-sizing:border-box;margin:0;padding:0}'
-    +'body{font-family:Arial,sans-serif;background:#e8edf2;color:#1a2535;font-size:13px}'
+  const C = '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Dancing+Script:wght@700&display=swap");*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:"Inter",Arial,sans-serif;background:#e8edf2;color:#1a2535;font-size:13px}'
     +'.pg{background:white;max-width:920px;margin:16px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}'
     +'@media print{body{background:#fff}.pg{margin:0;box-shadow:none;border-radius:0}@page{margin:.8cm}}'
     // header
@@ -7292,19 +7304,19 @@ async function imprimirReceita(id) {
     +'.talh-area{font-size:11px;color:#64748b;white-space:nowrap}'
     // operacao
     +'.op-grid{display:grid;grid-template-columns:190px 1fr;gap:0}'
-    +'.op-esq{background:#f8fafc;border-right:1px solid #e2e8f0;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center}'
-    +'.op-nome{font-size:16px;font-weight:900;color:#1a2535;text-align:center;line-height:1.2}'
+    +'.op-esq{background:#f8fafc;border-right:1px solid #e2e8f0;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;justify-content:center;min-width:150px;max-width:150px}'
+    +'.op-nome{font-size:13px;font-weight:900;color:#1a2535;text-align:center;line-height:1.2}'
     +'.op-periodo{text-align:center;margin-top:6px}'
     +'.op-periodo-lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}'
-    +'.op-periodo-val{font-size:12px;font-weight:700;color:#1e3a8a}'
+    +'.op-periodo-val{font-size:11px;font-weight:700;color:#1e3a8a}'
     +'.params-bd{padding:16px}'
     +'.params-lbl{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}'
     +'.pgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}'
-    +'.pb{border:1px solid #e2e8f0;border-radius:8px;padding:10px 8px;text-align:center;background:white}'
-    +'.pb-lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;line-height:1.3;margin-bottom:6px}'
-    +'.pb-val{font-size:22px;font-weight:900;color:#2563eb;line-height:1}'
-    +'.pb-val.bico{font-size:16px;color:#1e3a8a}'
-    +'.pb-unit{font-size:10px;color:#94a3b8;margin-top:2px}'
+    +'.pb{border:1px solid #e2e8f0;border-radius:8px;padding:10px 10px;text-align:center;background:white}'
+    +'.pb-lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;line-height:1.3;margin-bottom:4px}'
+    +'.pb-val{font-size:20px;font-weight:900;color:#2563eb;line-height:1;display:inline}'
+    +'.pb-val.bico{font-size:15px;color:#1e3a8a}'+'.pb-val-wrap{display:flex;align-items:baseline;justify-content:center;gap:3px;flex-wrap:wrap}'
+    +'.pb-unit{font-size:10px;color:#94a3b8;margin-left:3px;display:inline;font-weight:600}'
     // tabela
     +'.tbl-wrap{display:flex;gap:14px;align-items:flex-start}'
     +'table{width:100%;border-collapse:collapse;font-size:13px}'
@@ -7325,7 +7337,7 @@ async function imprimirReceita(id) {
     +'.footer{background:#1e3a8a;padding:12px 22px;display:flex;justify-content:space-between;align-items:center}'
     +'.ft-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#bfdbfe}'
     +'.ft-amj{font-size:14px;font-weight:700;color:white}'
-    +'.ft-rec{font-size:11px;color:#bfdbfe;text-align:right;max-width:240px;line-height:1.5}';
+    +'.ft-rec{font-size:11px;color:#bfdbfe;text-align:right;max-width:240px;line-height:1.5}'+'+.sig-cursive{font-family:"Dancing Script",Georgia,serif;font-size:28px;color:#1a2535;opacity:.8;line-height:1.4}'+'+.sig-line{height:1.5px;background:#1e3a8a;margin-top:4px;width:220px}';
 
   const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Receita '+numFmt+'</title>'
     +'<style>'+C+'</style></head><body><div class="pg">'
@@ -7379,13 +7391,13 @@ async function imprimirReceita(id) {
     +'</div></div>'
     +'<div class="params-bd"><div class="params-lbl">Parametros da Aplicacao</div>'
     +'<div class="pgrid">'
-    +'<div class="pb"><div class="pb-lbl">Tanque</div><div class="pb-val">'+tanque.toLocaleString('pt-BR')+'</div><div class="pb-unit">Litros</div></div>'
-    +'<div class="pb"><div class="pb-lbl">Vazao<br>por Hectare</div><div class="pb-val">'+vazao+'</div><div class="pb-unit">L/ha</div></div>'
-    +'<div class="pb"><div class="pb-lbl">Capacidade<br>do Tanque</div><div class="pb-val">'+capTxt+'</div><div class="pb-unit">Hectares</div></div>'
-    +'<div class="pb"><div class="pb-lbl">Qtd. Total<br>de Tanques</div><div class="pb-val">'+nTanques+'</div><div class="pb-unit">Tanques</div></div>'
+    +'<div class="pb"><div class="pb-lbl">Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+tanque.toLocaleString('pt-BR')+'</span> <span class="pb-unit">Litros</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Vazao<br>por Hectare</div><div class="pb-val-wrap"><span class="pb-val">'+vazao+'</span> <span class="pb-unit">L/ha</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Capacidade<br>do Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+capTxt+'</span> <span class="pb-unit">Hectares</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Qtd. Total<br>de Tanques</div><div class="pb-val-wrap"><span class="pb-val">'+nTanques+'</span> <span class="pb-unit">Tanques</span></div></div>'
     +(r.bico
-      ? '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val bico">'+esc(r.bico)+'</div></div>'
-      : '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val" style="color:#cbd5e1">--</div></div>')
+      ? '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val-wrap"><span class="pb-val bico">'+esc(r.bico)+'</span></div></div>'
+      : '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val-wrap"><span class="pb-val" style="color:#cbd5e1">--</span></div></div>')
     +'</div></div></div></div>'
 
     // INSUMOS
@@ -7432,6 +7444,7 @@ async function imprimirReceita(id) {
     +'<div class="ft-rec">Siga rigorosamente as doses e recomendacoes para garantir a eficacia da aplicacao.</div>'
     +'</div>'
 
+    +'<div style="height:6px;background:#1e3a8a"></div>'
     +'</div>' // .pg
     +'<script>window.onload=()=>window.print()<\/script>'
     +'</body></html>';
