@@ -7161,243 +7161,287 @@ async function imprimirReceita(id) {
   const r = recReceitas.find(x => x.id === id);
   if (!r) return;
 
-  const numFmt    = "#" + String(r.numero||0).padStart(4,"0");
-  const isDrone   = r.operacao === "drone";
-  const opNome    = isDrone ? "Drone" : "Pulverizacao Autopropelido";
-  const dataEmit  = new Date().toLocaleDateString("pt-BR");
-  const dataLanc  = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString("pt-BR") : dataEmit;
-  const dIni      = r.dataInicio ? new Date(r.dataInicio+"T12:00:00").toLocaleDateString("pt-BR") : "--";
-  const dFim      = r.dataFim   ? new Date(r.dataFim+"T12:00:00").toLocaleDateString("pt-BR")   : "--";
-  const talhoes   = r.talhoes || [];
-  const areaTotal = r.areaTotal || 0;
-  const vazao     = r.vazao || 0;
-  const tanque    = r.tanque || (isDrone ? 70 : 3000);
-  const capHa     = vazao > 0 ? tanque / vazao : 0;
-  const nTanques  = capHa > 0 ? (areaTotal / capHa).toFixed(2) : "--";
-  const capHaTxt  = capHa > 0 ? capHa.toFixed(2) : "--";
-  const sMap = { pendente:"Pendente", em_aberto:"Em Aberto", finalizado:"Finalizado", cancelado:"Cancelado" };
-  const s = r.status || "pendente";
-  const sBg  = { pendente:"#fefce8", em_aberto:"#eff6ff", finalizado:"#f0fdf4", cancelado:"#fef2f2" }[s]||"#f8f8f8";
-  const sCor = { pendente:"#854d0e", em_aberto:"#1e40af", finalizado:"#166534", cancelado:"#991b1b" }[s]||"#333";
-  const sBrd = { pendente:"#fde047", em_aberto:"#93c5fd", finalizado:"#86efac", cancelado:"#fca5a5" }[s]||"#ddd";
+  const numFmt   = String(r.numero||0).padStart(4,'0');
+  const isDrone  = r.operacao === 'drone';
+  const opNome   = isDrone ? 'Drone' : 'Pulverizacao<br>Autopropelido';
+  const dataEmit = new Date().toLocaleDateString('pt-BR');
+  const dataLanc = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : dataEmit;
+  const dIni     = r.dataInicio ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') : '--';
+  const dFim     = r.dataFim   ? new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')   : '--';
+  const talhoes  = r.talhoes || [];
+  const area     = r.areaTotal || 0;
+  const vazao    = r.vazao || 0;
+  const tanque   = r.tanque || (isDrone ? 70 : 3000);
+  const capHa    = vazao > 0 ? tanque / vazao : 0;
+  const nTanques = capHa > 0 ? (area / capHa).toFixed(2) : '--';
+  const capTxt   = capHa > 0 ? capHa.toFixed(2) : '--';
+  const sMap     = {pendente:'Pendente',em_aberto:'Em Aberto',finalizado:'Finalizado',cancelado:'Cancelado'};
+  const s        = r.status || 'pendente';
+  const sCor     = {pendente:'#854d0e',em_aberto:'#1e3a8a',finalizado:'#166534',cancelado:'#991b1b'}[s]||'#333';
+  const sBg      = {pendente:'#fefce8',em_aberto:'#eff6ff',finalizado:'#f0fdf4',cancelado:'#fef2f2'}[s]||'#f8f8f8';
 
   const opSVG = isDrone
-    ? '<svg width="90" height="60" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
-    : '<svg width="110" height="66" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
+    ? '<svg width="100" height="66" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>'
+    : '<svg width="120" height="72" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
 
-  // Talhoes em grid de chips
-  const talhChips = talhoes.map(t =>
-    "<div style=\"display:block;background:#eff6ff;color:#1e3a5f;border:1px solid #bfdbfe;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;margin-bottom:5px\">"
-    + esc(t.nome) + " <span style=\"color:#6b7280;font-weight:400\">" + t.area + " ha</span></div>"
-  ).join("");
+  // Talhões grid 5 colunas
+  const talhGrid = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px">'
+    + talhoes.map(t =>
+        '<div style="border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center">'
+        + '<span style="font-size:11px;font-weight:700;color:#1e3a8a">' + esc(t.nome) + '</span>'
+        + '<span style="font-size:11px;color:#64748b;margin-left:6px;white-space:nowrap">' + t.area + ' ha</span>'
+        + '</div>'
+      ).join('')
+    + '</div>';
 
-  // Tabela de produtos
+  // Linhas da tabela
   const rows = (r.itens||[]).map((it, i) => {
     const isBio = it.biologico;
-    const doseHa = it.doseHa || 0;
-    const qdeTot = it.qdeTotalArea || 0;
-    const doseCarga   = capHa > 0 ? Math.round(doseHa*capHa*1000)/1000 : 0;
-    const restHa      = capHa > 0 ? areaTotal % capHa : 0;
-    const doseParcial = restHa > 0.01 ? Math.round(doseHa*restHa*1000)/1000 : doseCarga;
-    const nome = it.substituidoPor
-      ? esc(it.nome) + "<br><span style=\"font-size:11px;color:#ea580c\">Substituiu: " + esc(it.nomeOriginal||"") + "</span>"
+    const nome  = it.substituidoPor
+      ? esc(it.nome)+'<br><span style="font-size:10px;color:#ea580c">Sub: '+esc(it.nomeOriginal||'')+'</span>'
       : esc(it.nome);
-    const rowBg = isBio ? "background:#eff6ff" : (i%2===0?"background:#fff":"background:#f9fafb");
-    const nomeStyle = isBio ? "font-weight:700;color:#1e40af" : "";
-    return "<tr style=\"" + rowBg + "\">"
-      + "<td style=\"padding:10px 14px;border-bottom:1px solid #f0f0f0;" + nomeStyle + "\">" + nome + "</td>"
-      + "<td style=\"padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center\">" + esc(it.tipo||"--") + "</td>"
-      + "<td style=\"padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center\">" + doseHa + "</td>"
-      + "<td style=\"padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:center;font-weight:700\">" + doseCarga.toFixed(3) + "</td>"
-      + "<td style=\"padding:10px 14px;border-bottom:1px solid #f0f0f0;text-align:right;font-weight:700;color:#1d4ed8\">" + qdeTot.toLocaleString("pt-BR",{minimumFractionDigits:3}) + "</td>"
-      + "</tr>";
-  }).join("");
+    const doseHa    = it.doseHa || 0;
+    const qdeTot    = it.qdeTotalArea || 0;
+    const doseCarga = capHa > 0 ? Math.round(doseHa*capHa*1000)/1000 : 0;
+    const rowBg     = isBio ? '#eff6ff' : (i%2===0 ? '#fff' : '#f8fafc');
+    const bioStyle  = isBio ? 'font-weight:700;color:#1e40af' : '';
+    return '<tr style="background:'+rowBg+'">'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;'+bioStyle+'">'+nome+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-size:12px;color:#475569">'+esc(it.tipo||'--')+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:600">'+doseHa+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:center;font-weight:700">'+doseCarga.toFixed(3)+'</td>'
+      + '<td style="padding:9px 12px;border-bottom:1px solid #f1f5f9;text-align:right;font-weight:700;color:'+( isBio?'#1e40af':'#1e3a8a')+'">'+qdeTot.toLocaleString('pt-BR',{minimumFractionDigits:3})+'</td>'
+      + '</tr>';
+  }).join('');
 
-  // Biologicos
+  // Diluição biológicos (card lateral)
   const bios = (r.itens||[]).filter(it => it.biologico);
-  let biosBloco = "";
+  let bioCard = '';
   if (bios.length && capHa > 0) {
-    const brows = bios.map(it => {
+    const bioRows = bios.map(it => {
       const vPt  = Math.round(it.doseHa*capHa*1000)/1000;
       const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
-      return "<tr><td style=\"padding:8px 12px;border-bottom:1px solid #dcfce7\">" + esc(it.nome) + "</td>"
-        + "<td style=\"padding:8px 12px;border-bottom:1px solid #dcfce7;text-align:center;font-weight:700\">" + (it.qdeTotalArea||0).toFixed(3) + " " + esc(it.unidade||"L") + "</td>"
-        + "<td style=\"padding:8px 12px;border-bottom:1px solid #dcfce7;text-align:center;font-weight:700;color:#166534\">" + vPt.toFixed(3) + " " + esc(it.unidade||"L") + "</td>"
-        + "<td style=\"padding:8px 12px;border-bottom:1px solid #dcfce7;text-align:center\">" + conc.toFixed(2) + "%</td></tr>";
-    }).join("");
-    biosBloco = "<div style=\"margin-top:20px;border:1.5px solid #86efac;border-radius:10px;overflow:hidden\">"
-      + "<div style=\"background:#166534;color:white;padding:10px 16px;font-size:13px;font-weight:700\">Diluicao de Biologicos</div>"
-      + "<table style=\"width:100%;border-collapse:collapse;background:white\">"
-      + "<thead><tr style=\"background:#f0fdf4\"><th style=\"padding:8px 12px;text-align:left;font-size:12px;color:#166534;font-weight:700\">Produto</th>"
-      + "<th style=\"padding:8px 12px;text-align:center;font-size:12px;color:#166534;font-weight:700\">Vol. Total</th>"
-      + "<th style=\"padding:8px 12px;text-align:center;font-size:12px;color:#166534;font-weight:700\">Por Tanque (" + tanque + "L)</th>"
-      + "<th style=\"padding:8px 12px;text-align:center;font-size:12px;color:#166534;font-weight:700\">Concentracao</th></tr></thead>"
-      + "<tbody>" + brows + "</tbody></table></div>";
+      return '<tr>'
+        +'<td colspan="2" style="padding:6px 10px;font-weight:700;color:#1e3a8a;font-size:12px;border-bottom:1px solid #e2e8f0">'+esc(it.nome)+'</td></tr>'
+        +'<tr><td style="padding:4px 10px;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0">Vol. Total</td>'
+        +'<td style="padding:4px 10px;font-size:12px;font-weight:700;color:#1e3a8a;text-align:right;border-bottom:1px solid #e2e8f0">'+(it.qdeTotalArea||0).toFixed(3)+' '+(it.unidade||'L')+'</td></tr>'
+        +'<tr><td style="padding:4px 10px;font-size:11px;color:#64748b;border-bottom:1px solid #e2e8f0">Por Tanque ('+tanque+'L)</td>'
+        +'<td style="padding:4px 10px;font-size:13px;font-weight:900;color:#1e3a8a;text-align:right;border-bottom:1px solid #e2e8f0">'+vPt.toFixed(3)+' L</td></tr>'
+        +'<tr><td style="padding:4px 10px;font-size:11px;color:#64748b">Concentracao</td>'
+        +'<td style="padding:4px 10px;font-size:13px;font-weight:700;text-align:right">'+conc.toFixed(2)+'%</td></tr>';
+    }).join('');
+    bioCard = '<div style="border:1.5px solid #bfdbfe;border-radius:10px;overflow:hidden;min-width:200px;flex-shrink:0">'
+      + '<div style="background:#1e3a8a;color:white;padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:7px">'
+      + '&#9878; Diluicao de Biologicos</div>'
+      + '<table style="width:100%;border-collapse:collapse;background:white"><tbody>'+bioRows+'</tbody></table>'
+      + '</div>';
   }
 
-  // Finalizado
-  let finBloco = "";
-  if (r.status === "finalizado" && r.aplicador) {
+  // Bloco finalizado
+  let finBloco = '';
+  if (r.status === 'finalizado' && r.aplicador) {
     const diasAtr = r.diasAtraso > 0 ? r.diasAtraso : 0;
-    finBloco = "<div style=\"margin-top:16px;padding:12px 16px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:13px;color:#166534\">"
-      + "<strong>Aplicacao Realizada</strong> &mdash; Aplicador: <strong>" + esc(r.aplicador) + "</strong> &nbsp;&middot;&nbsp; " + dIni + " a " + dFim
-      + (diasAtr > 0 ? " <span style=\"color:#991b1b;font-weight:700\">" + diasAtr + " dia" + (diasAtr>1?"s":"") + " de atraso</span>" : "")
-      + "</div>";
+    finBloco = '<div style="padding:10px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;font-size:13px;color:#166534;margin-top:14px">'
+      +'<strong>Aplicacao Realizada</strong> &mdash; Aplicador: <strong>'+esc(r.aplicador)+'</strong> &middot; '+dIni+' a '+dFim
+      +(diasAtr>0 ? ' <span style="color:#991b1b;font-weight:700">&#9888; '+diasAtr+' dia'+(diasAtr>1?'s':'')+' de atraso</span>' : '')
+      +'</div>';
   }
 
-  const CSS = [
-    "*{box-sizing:border-box;margin:0;padding:0}",
-    "body{font-family:Arial,sans-serif;background:#eef2f7;color:#1a2535;font-size:14px;line-height:1.5}",
-    ".page{background:white;max-width:900px;margin:20px auto;border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,.12)}",
-    "@media print{body{background:white}.page{margin:0;box-shadow:none;border-radius:0}@page{margin:1cm}}",
-    ".hdr{background:white;padding:20px 28px;display:flex;align-items:center;gap:20px;border-bottom:3px solid #0f2d5c}",
-    ".hdr img{height:62px;flex-shrink:0}",
-    ".hdr-mid{flex:1}",
-    ".hdr-empresa{font-size:11px;font-weight:700;color:#1e40af;letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px}",
-    ".hdr-titulo{font-size:20px;font-weight:900;color:#0f172a;line-height:1.15;text-transform:uppercase;letter-spacing:.3px}",
-    ".hdr-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}",
-    ".badges{display:flex;gap:8px}",
-    ".badge{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:6px;font-size:12px;font-weight:700;border:1.5px solid}",
-    ".badge-aprov{background:#f0fdf4;color:#166534;border-color:#86efac}",
-    ".hdr-data{font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px}",
-    ".hdr-data strong{font-size:14px;color:#0f172a;font-weight:700}",
-    ".stripe{height:4px;background:linear-gradient(90deg,#1e3a8a,#2563eb,#0f2d5c)}",
-    ".body{padding:20px 24px;background:#f8fafc;display:flex;flex-direction:column;gap:16px}",
-    ".sec{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}",
-    ".sec-head{background:#0f2d5c;color:white;padding:10px 16px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:8px}",
-    ".sec-body{padding:16px}",
-    ".local-grid{display:grid;grid-template-columns:1fr 1.6fr 1.2fr auto;gap:0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}",
-    ".lc{padding:14px 16px;border-right:1px solid #e2e8f0}",
-    ".lc:last-child{border-right:none}",
-    ".lc-lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;display:flex;align-items:center;gap:5px}",
-    ".lc-val{font-size:14px;font-weight:600;color:#0f172a;line-height:1.4}",
-    ".lc-big{font-size:30px;font-weight:900;color:#1e3a8a;line-height:1}",
-    ".lc-unit{font-size:12px;color:#64748b;margin-top:2px}",
-    ".op-grid{display:grid;grid-template-columns:200px 1fr;gap:0;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden}",
-    ".op-esq{background:#f8fafc;border-right:1px solid #e2e8f0;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;justify-content:center}",
-    ".op-lbl{font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.8px}",
-    ".op-nome{font-size:16px;font-weight:900;color:#0f172a;text-align:center;line-height:1.2}",
-    ".op-periodo{text-align:center;margin-top:6px}",
-    ".op-periodo-l{font-size:10px;color:#94a3b8;display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:3px}",
-    ".op-periodo-v{font-size:13px;font-weight:700;color:#1e3a8a}",
-    ".params{padding:16px}",
-    ".params-titulo{font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}",
-    ".params-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}",
-    ".pb{border:1px solid #e2e8f0;border-radius:8px;padding:10px 8px;text-align:center;background:#fafbfc}",
-    ".pb-ico{font-size:18px;margin-bottom:4px}",
-    ".pb-lbl{font-size:10px;color:#94a3b8;line-height:1.3;margin-bottom:4px}",
-    ".pb-val{font-size:20px;font-weight:900;color:#16a34a;line-height:1}",
-    ".pb-val.bico{font-size:15px;color:#1e3a8a}",
-    ".pb-unit{font-size:10px;color:#94a3b8;margin-top:2px}",
-    "table{width:100%;border-collapse:collapse}",
-    "thead tr{background:#0f2d5c}",
-    "th{color:white;padding:11px 14px;font-size:12px;font-weight:700;text-align:left}",
-    "th.tc{text-align:center}",
-    "td{font-size:13px}",
-    ".tbl-note{font-size:11px;color:#94a3b8;font-style:italic;padding:8px 14px}",
-    ".obs-card{background:#fefce8;border:1.5px solid #fde047;border-radius:8px;padding:14px 16px;display:flex;gap:12px}",
-    ".obs-ico{width:34px;height:34px;background:#fef9c3;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}",
-    ".obs-titulo{font-size:11px;font-weight:700;color:#854d0e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}",
-    ".obs-texto{font-size:14px;color:#1a1a1a}",
-    ".footer{background:#0f2d5c;padding:18px 24px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}",
-    ".ft-tec-titulo{font-size:10px;font-weight:700;color:#93c5fd;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}",
-    ".ft-tec-nome{font-size:14px;font-weight:700;color:white;line-height:1.4}",
-    ".ft-tec-sub{font-size:12px;color:#93c5fd;margin-top:2px}",
-    ".ft-mid{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}",
-    ".ft-mid-titulo{font-size:13px;font-weight:700;color:white}",
-    ".ft-mid-sub{font-size:11px;color:#93c5fd;display:flex;align-items:center;gap:4px}",
-    ".ft-rec-titulo{font-size:10px;font-weight:700;color:#6ee7b7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;text-align:right}",
-    ".ft-rec-texto{font-size:12px;color:#bfdbfe;line-height:1.6;text-align:right}",
-  ].join("");
+  // Assinatura cursiva simulada com SVG text
+  const nomeAssinatura = esc(r.tecnico||'');
+  const sigSVG = '<svg width="220" height="50" xmlns="http://www.w3.org/2000/svg">'
+    +'<text x="10" y="40" font-family="Georgia,serif" font-style="italic" font-size="28" fill="#1a2535" opacity="0.8">'+nomeAssinatura+'</text>'
+    +'<line x1="10" y1="46" x2="210" y2="46" stroke="#1e3a8a" stroke-width="1.5"/>'
+    +'</svg>';
 
-  const html = "<!DOCTYPE html><html lang=\"pt-BR\"><head><meta charset=\"UTF-8\"><title>Receita " + numFmt + "</title>"
-    + "<style>" + CSS + "</style></head><body><div class=\"page\">"
+  // CSS
+  const C = '*{box-sizing:border-box;margin:0;padding:0}'
+    +'body{font-family:Arial,sans-serif;background:#e8edf2;color:#1a2535;font-size:13px}'
+    +'.pg{background:white;max-width:920px;margin:16px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.12)}'
+    +'@media print{body{background:#fff}.pg{margin:0;box-shadow:none;border-radius:0}@page{margin:.8cm}}'
+    // header
+    +'.hdr{background:white;padding:18px 24px;display:grid;grid-template-columns:auto 1fr auto;gap:20px;align-items:center;border-bottom:3px solid #1e3a8a}'
+    +'.hdr-logo img{height:58px}'
+    +'.hdr-title .ht-emp{font-size:11px;font-weight:700;color:#1e3a8a;letter-spacing:.8px;text-transform:uppercase;margin-bottom:2px}'
+    +'.hdr-title .ht-rec{font-size:26px;font-weight:900;color:#1a2535;line-height:1;letter-spacing:-.3px}'
+    +'.hdr-title .ht-sub{font-size:20px;font-weight:700;color:#2563eb;line-height:1.2}'
+    +'.hdr-badges{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
+    +'.bdg{border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;min-width:120px}'
+    +'.bdg-lbl{font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:2px}'
+    +'.bdg-val{font-size:14px;font-weight:800;color:#1e3a8a}'
+    +'.bdg-val.ok{color:#166534}'
+    +'.bdg-val.status{color:'+sCor+'}'
+    // sections
+    +'.body{padding:16px 20px;background:#f8fafc;display:flex;flex-direction:column;gap:14px}'
+    +'.sec{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden}'
+    +'.sec-hd{padding:11px 16px;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#1e3a8a;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid #e2e8f0}'
+    +'.sec-bd{padding:14px 16px}'
+    // local top grid
+    +'.local-top{display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:0;border-bottom:1px solid #e2e8f0}'
+    +'.lc{padding:12px 14px;border-right:1px solid #e2e8f0}'
+    +'.lc:last-child{border-right:none}'
+    +'.lc-lbl{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;display:flex;align-items:center;gap:5px}'
+    +'.lc-val{font-size:14px;font-weight:700;color:#1a2535}'
+    +'.area-big{font-size:32px;font-weight:900;color:#1e3a8a;line-height:1}'
+    +'.area-unit{font-size:14px;font-weight:700;color:#64748b}'
+    // talhões
+    +'.talh-hd{padding:10px 14px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:6px}'
+    +'.talh-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:0 14px 14px}'
+    +'.talh-chip{border:1px solid #cbd5e1;border-radius:6px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center}'
+    +'.talh-nome{font-size:11px;font-weight:700;color:#1e3a8a}'
+    +'.talh-area{font-size:11px;color:#64748b;white-space:nowrap}'
+    // operacao
+    +'.op-grid{display:grid;grid-template-columns:190px 1fr;gap:0}'
+    +'.op-esq{background:#f8fafc;border-right:1px solid #e2e8f0;padding:16px;display:flex;flex-direction:column;align-items:center;gap:8px;justify-content:center}'
+    +'.op-nome{font-size:16px;font-weight:900;color:#1a2535;text-align:center;line-height:1.2}'
+    +'.op-periodo{text-align:center;margin-top:6px}'
+    +'.op-periodo-lbl{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}'
+    +'.op-periodo-val{font-size:12px;font-weight:700;color:#1e3a8a}'
+    +'.params-bd{padding:16px}'
+    +'.params-lbl{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px}'
+    +'.pgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}'
+    +'.pb{border:1px solid #e2e8f0;border-radius:8px;padding:10px 8px;text-align:center;background:white}'
+    +'.pb-lbl{font-size:9px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;line-height:1.3;margin-bottom:6px}'
+    +'.pb-val{font-size:22px;font-weight:900;color:#2563eb;line-height:1}'
+    +'.pb-val.bico{font-size:16px;color:#1e3a8a}'
+    +'.pb-unit{font-size:10px;color:#94a3b8;margin-top:2px}'
+    // tabela
+    +'.tbl-wrap{display:flex;gap:14px;align-items:flex-start}'
+    +'table{width:100%;border-collapse:collapse;font-size:13px}'
+    +'thead tr{background:#1e3a8a}'
+    +'th{color:white;padding:10px 12px;font-size:11px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.4px}'
+    +'th.tc{text-align:center}'
+    +'td{font-size:13px}'
+    +'.tbl-note{font-size:11px;color:#94a3b8;font-style:italic;padding:8px 12px}'
+    // obs+tecnico
+    +'.bottom-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}'
+    +'.obs-card{background:#fffce8;border:1.5px solid #fde047;border-radius:10px;padding:14px 16px}'
+    +'.obs-hd{font-size:11px;font-weight:700;color:#854d0e;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;display:flex;align-items:center;gap:7px}'
+    +'.obs-txt{font-size:13px;color:#1a1a1a;line-height:1.6}'
+    +'.tec-card{border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;background:white}'
+    +'.tec-lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}'
+    +'.tec-nome{font-size:14px;font-weight:700;color:#1a2535;margin-bottom:8px}'
+    // footer
+    +'.footer{background:#1e3a8a;padding:12px 22px;display:flex;justify-content:space-between;align-items:center}'
+    +'.ft-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#bfdbfe}'
+    +'.ft-amj{font-size:14px;font-weight:700;color:white}'
+    +'.ft-rec{font-size:11px;color:#bfdbfe;text-align:right;max-width:240px;line-height:1.5}';
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Receita '+numFmt+'</title>'
+    +'<style>'+C+'</style></head><body><div class="pg">'
 
     // HEADER
-    + "<div class=\"hdr\">"
-    + "<img src=\"" + LOGO_AMJ + "\" alt=\"AMJ\">"
-    + "<div class=\"hdr-mid\"><div class=\"hdr-empresa\">AMJ Agropecuaria</div>"
-    + "<div class=\"hdr-titulo\">Relatorio de<br>Recomendacao Agricola</div></div>"
-    + "<div class=\"hdr-right\"><div class=\"badges\">"
-    + "<span class=\"badge\" style=\"background:" + sBg + ";color:" + sCor + ";border-color:" + sBrd + "\">"
-    + "&#128203; " + (sMap[s]||s).toUpperCase() + "</span>"
-    + "<span class=\"badge badge-aprov\">&#9989; APROVACAO: OK!</span></div>"
-    + "<div class=\"hdr-data\">&#128197; Data do Lancamento: &nbsp;<strong>" + dataLanc + "</strong></div>"
-    + "</div></div>"
-    + "<div class=\"stripe\"></div>"
+    +'<div class="hdr">'
+    +'<div class="hdr-logo"><img src="'+LOGO_AMJ+'" alt="AMJ"></div>'
+    +'<div class="hdr-title">'
+    +'<div class="ht-emp">AMJ Agropecuaria</div>'
+    +'<div class="ht-rec">RECEITA</div>'
+    +'<div class="ht-sub">&#8211; RECOMENDACAO</div>'
+    +'</div>'
+    +'<div class="hdr-badges">'
+    +'<div class="bdg"><div class="bdg-lbl">&#128203; Status</div><div class="bdg-val status">'+(sMap[s]||s).toUpperCase()+'</div></div>'
+    +'<div class="bdg"><div class="bdg-lbl">&#10003; Aprovacao</div><div class="bdg-val ok">OK!</div></div>'
+    +'<div class="bdg"><div class="bdg-lbl">&#128197; Data do Lancamento</div><div class="bdg-val">'+dataLanc+'</div></div>'
+    +'<div class="bdg"><div class="bdg-lbl">&#127991; Receita N.</div><div class="bdg-val">'+numFmt+'</div></div>'
+    +'</div></div>'
 
     // BODY
-    + "<div class=\"body\">"
+    +'<div class="body">'
 
-    // LOCAL DA OPERACAO
-    + "<div class=\"sec\"><div class=\"sec-head\">&#128205; Local da Operacao</div>"
-    + "<div class=\"sec-body\"><div class=\"local-grid\">"
-    + "<div class=\"lc\"><div class=\"lc-lbl\">&#128100; Cliente</div><div class=\"lc-val\">" + esc(configGlobal.empresa) + "</div>"
-    + "<div class=\"lc-lbl\" style=\"margin-top:12px\">&#127968; Fazenda</div><div class=\"lc-val\">" + esc(r.fazenda) + "</div></div>"
-    + "<div class=\"lc\"><div class=\"lc-lbl\">&#11036; Talhoes</div><div>" + talhChips + "</div></div>"
-    + "<div class=\"lc\"><div class=\"lc-lbl\">&#127807; Cultura</div><div class=\"lc-val\">" + esc(r.cultura||"--") + (r.safra ? " | " + esc(r.safra) : "") + "</div></div>"
-    + "<div class=\"lc\" style=\"text-align:center\"><div class=\"lc-lbl\" style=\"justify-content:center\">Area Total</div>"
-    + "<div class=\"lc-big\">" + areaTotal.toFixed(2) + "</div><div class=\"lc-unit\">Hectares</div></div>"
-    + "</div></div></div>"
+    // LOCAL
+    +'<div class="sec"><div class="sec-hd">&#128205; Local da Operacao</div>'
+    +'<div class="local-top">'
+    +'<div class="lc"><div class="lc-lbl">&#128100; Cliente</div><div class="lc-val">'+esc(configGlobal.empresa)+'</div></div>'
+    +'<div class="lc"><div class="lc-lbl">&#127968; Fazenda</div><div class="lc-val">'+esc(r.fazenda)+'</div></div>'
+    +'<div class="lc"><div class="lc-lbl">&#127807; Cultura</div><div class="lc-val">'+esc(r.cultura||'--')+(r.safra?' | '+esc(r.safra):'')+'</div></div>'
+    +'<div class="lc" style="text-align:center"><div class="lc-lbl" style="justify-content:center">&#128208; Area Total</div>'
+    +'<div class="area-big">'+area.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'</div>'
+    +'<div class="area-unit">ha</div></div>'
+    +'</div>'
+    +'<div class="talh-hd">&#11088; Talhoes ('+talhoes.length+')</div>'
+    +'<div class="talh-grid">'
+    +talhoes.map(t =>
+      '<div class="talh-chip">'
+      +'<span class="talh-nome">'+esc(t.nome)+'</span>'
+      +'<span class="talh-area">'+t.area+' ha</span>'
+      +'</div>'
+    ).join('')
+    +'</div></div>'
 
-    // OPERACAO
-    + "<div class=\"sec\"><div class=\"sec-head\">&#9881; Operacao e Parametros</div>"
-    + "<div class=\"sec-body\"><div class=\"op-grid\">"
-    + "<div class=\"op-esq\"><div class=\"op-lbl\">Operacao</div>" + opSVG
-    + "<div class=\"op-nome\">" + opNome + "</div>"
-    + "<div class=\"op-periodo\"><div class=\"op-periodo-l\">&#128197; Periodo</div>"
-    + "<div class=\"op-periodo-v\">" + dIni + " a " + dFim + "</div></div></div>"
-    + "<div class=\"params\"><div class=\"params-titulo\">Parametros da Aplicacao</div>"
-    + "<div class=\"params-grid\">"
-    + "<div class=\"pb\"><div class=\"pb-ico\">&#128167;</div><div class=\"pb-lbl\">Tanque</div><div class=\"pb-val\">" + tanque.toLocaleString("pt-BR") + "</div><div class=\"pb-unit\">Litros</div></div>"
-    + "<div class=\"pb\"><div class=\"pb-ico\">&#9201;</div><div class=\"pb-lbl\">Vazao<br>por Hectare</div><div class=\"pb-val\">" + vazao + "</div><div class=\"pb-unit\">L/ha</div></div>"
-    + "<div class=\"pb\"><div class=\"pb-ico\">&#128208;</div><div class=\"pb-lbl\">Capacidade<br>do Tanque</div><div class=\"pb-val\">" + capHaTxt + "</div><div class=\"pb-unit\">Hectares</div></div>"
-    + "<div class=\"pb\"><div class=\"pb-ico\">&#129405;</div><div class=\"pb-lbl\">Qtd. Total<br>de Tanque</div><div class=\"pb-val\">" + nTanques + "</div><div class=\"pb-unit\">Tanques</div></div>"
-    + (r.bico ? "<div class=\"pb\"><div class=\"pb-ico\">&#128166;</div><div class=\"pb-lbl\">Tipo de Bico</div><div class=\"pb-val bico\">" + esc(r.bico) + "</div></div>"
-              : "<div class=\"pb\"><div class=\"pb-ico\">&#128166;</div><div class=\"pb-lbl\">Tipo de Bico</div><div class=\"pb-val\" style=\"color:#d1d5db\">--</div></div>")
-    + "</div></div></div></div></div>"
+    // OPERAÇÃO
+    +'<div class="sec"><div class="sec-hd">&#9881; Operacao e Parametros</div>'
+    +'<div class="op-grid">'
+    +'<div class="op-esq">'+opSVG
+    +'<div class="op-nome">'+opNome+'</div>'
+    +'<div class="op-periodo">'
+    +'<div class="op-periodo-lbl">&#128197; Periodo</div>'
+    +'<div class="op-periodo-val">'+dIni+' a '+dFim+'</div>'
+    +'</div></div>'
+    +'<div class="params-bd"><div class="params-lbl">Parametros da Aplicacao</div>'
+    +'<div class="pgrid">'
+    +'<div class="pb"><div class="pb-lbl">Tanque</div><div class="pb-val">'+tanque.toLocaleString('pt-BR')+'</div><div class="pb-unit">Litros</div></div>'
+    +'<div class="pb"><div class="pb-lbl">Vazao<br>por Hectare</div><div class="pb-val">'+vazao+'</div><div class="pb-unit">L/ha</div></div>'
+    +'<div class="pb"><div class="pb-lbl">Capacidade<br>do Tanque</div><div class="pb-val">'+capTxt+'</div><div class="pb-unit">Hectares</div></div>'
+    +'<div class="pb"><div class="pb-lbl">Qtd. Total<br>de Tanques</div><div class="pb-val">'+nTanques+'</div><div class="pb-unit">Tanques</div></div>'
+    +(r.bico
+      ? '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val bico">'+esc(r.bico)+'</div></div>'
+      : '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val" style="color:#cbd5e1">--</div></div>')
+    +'</div></div></div></div>'
 
-    // TABELA
-    + "<div class=\"sec\"><div class=\"sec-head\">&#128200; Insumos Recomendados</div>"
-    + "<table><thead><tr>"
-    + "<th>Produto</th><th class=\"tc\">Tipo</th><th class=\"tc\">Dose / ha</th>"
-    + "<th class=\"tc\" style=\"color:#fde68a\">Dose / Bomba<br>(Carga Cheia)</th>"
-    + "<th class=\"tc\">Qde Total<br>na Area</th></tr></thead><tbody>" + rows + "</tbody></table>"
-    + "<div class=\"tbl-note\">* Valores calculados com base na area total informada e parametros de aplicacao.</div></div>"
+    // INSUMOS
+    +'<div class="sec"><div class="sec-hd">&#127807; Insumos Recomendados</div>'
+    +'<div class="tbl-wrap">'
+    +'<div style="flex:1;min-width:0">'
+    +'<table><thead><tr>'
+    +'<th>Produto</th><th class="tc">Tipo</th><th class="tc">Dose / ha</th>'
+    +'<th class="tc">Dose / Bomba<br>(Carga Cheia)</th>'
+    +'<th class="tc">Qde Total<br>na Area</th>'
+    +'</tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div class="tbl-note">* Valores calculados com base na area total informada e parametros de aplicacao.</div>'
+    +'</div>'
+    +(bioCard ? '<div style="flex-shrink:0">'+bioCard+'</div>' : '')
+    +'</div></div>'
 
-    + biosBloco
-    + finBloco
+    +finBloco
 
-    // OBSERVACOES
-    + ((r.descricao||r.obs) ? "<div class=\"obs-card\"><div class=\"obs-ico\">&#128203;</div>"
-    + "<div><div class=\"obs-titulo\">Observacoes</div>"
-    + "<div class=\"obs-texto\">" + esc(r.descricao||r.obs||"") + "</div>"
-    + (r.obs && r.descricao ? "<div class=\"obs-texto\" style=\"margin-top:4px;color:#854d0e\">" + esc(r.obs) + "</div>" : "")
-    + "</div></div>" : "")
+    // OBS + TECNICO
+    +'<div class="bottom-grid">'
+    +((r.descricao||r.obs)
+      ? '<div class="obs-card"><div class="obs-hd">&#128203; Observacoes</div>'
+        +'<div class="obs-txt">'+esc(r.descricao||r.obs||'')+'</div>'
+        +(r.obs && r.descricao ? '<div class="obs-txt" style="margin-top:6px;color:#854d0e">'+esc(r.obs)+'</div>' : '')
+        +'</div>'
+      : '<div></div>')
+    +'<div class="tec-card">'
+    +'<div class="tec-lbl">Tecnico Responsavel</div>'
+    +'<div class="tec-nome">'+esc(r.tecnico||'--')+'</div>'
+    +'<svg width="220" height="50" xmlns="http://www.w3.org/2000/svg">'
+    +'<text x="10" y="40" font-family="Georgia,serif" font-style="italic" font-size="26" fill="#1a2535" opacity="0.75">'+esc(r.tecnico||'')+'</text>'
+    +'<line x1="10" y1="47" x2="210" y2="47" stroke="#1e3a8a" stroke-width="1.5"/>'
+    +'</svg>'
+    +'</div>'
+    +'</div>'
 
-    + "</div>"  // .body
+    +'</div>' // .body
 
     // FOOTER
-    + "<div class=\"footer\">"
-    + "<div><div class=\"ft-tec-titulo\">Tecnico Responsavel</div>"
-    + "<div class=\"ft-tec-nome\">" + esc(r.tecnico||"--") + "</div>"
-    + "<div class=\"ft-tec-sub\">Receita " + numFmt + "</div></div>"
-    + "<div class=\"ft-mid\"><div class=\"ft-mid-titulo\">AMJ Agro Gestao</div>"
-    + "<div class=\"ft-mid-sub\">&#128274; Sistema seguro e rastreavel</div>"
-    + "<div class=\"ft-mid-sub\">Gerado em " + dataEmit + "</div></div>"
-    + "<div><div class=\"ft-rec-titulo\">Recomendacao Tecnica</div>"
-    + "<div class=\"ft-rec-texto\">Siga rigorosamente as doses e recomendacoes para garantir a eficacia da aplicacao.</div></div>"
-    + "</div>"
-    + "</div>"  // .page
-    + "<script>window.onload=()=>window.print()<\/script>"
-    + "</body></html>";
+    +'<div class="footer">'
+    +'<div class="ft-item">&#128274; Sistema seguro e rastreavel</div>'
+    +'<div class="ft-amj">AMJ AGRO GESTAO</div>'
+    +'<div class="ft-item">&#128197; Gerado em '+dataEmit+'</div>'
+    +'<div class="ft-rec">Siga rigorosamente as doses e recomendacoes para garantir a eficacia da aplicacao.</div>'
+    +'</div>'
 
-  await updateDoc(doc(db, "receitas", id), { impresso: true, impressoEm: new Date().toISOString() });
-  const w = window.open("", "_blank");
-  if (!w) { mostrarToast("Popup bloqueado.", "erro"); return; }
+    +'</div>' // .pg
+    +'<script>window.onload=()=>window.print()<\/script>'
+    +'</body></html>';
+
+  await updateDoc(doc(db,'receitas',id),{impresso:true,impressoEm:new Date().toISOString()});
+  const w = window.open('','_blank');
+  if (!w) { mostrarToast('Popup bloqueado.','erro'); return; }
   w.document.write(html);
   w.document.close();
-  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
+  setTimeout(()=>{ try{w.print();}catch(e){} },600);
 }
 
 // ── Gestão de Talhões ───────────────────────────────────────────────
