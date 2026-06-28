@@ -7163,47 +7163,54 @@ async function imprimirReceita(id) {
 
   const numFmt    = '#' + String(r.numero||0).padStart(4,'0');
   const isDrone   = r.operacao === 'drone';
-  const opLabel   = isDrone ? 'Drone' : 'Pulverização<br>Autopropelido';
+  const opNome    = isDrone ? 'Drone' : 'Pulverização<br>Autopropelido';
   const dataEmit  = new Date().toLocaleDateString('pt-BR');
   const dataLanc  = r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : dataEmit;
   const dIni      = r.dataInicio ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—';
   const dFim      = r.dataFim   ? new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR')   : '—';
   const talhoesTxt = (r.talhoes||[]).map(t => t.nome).join(', ');
-  const areaTotal = r.areaTotal || 0;
-  const vazao     = r.vazao || 0;
-  const tanque    = r.tanque || (isDrone ? 70 : 3000);
-  const capTanque = vazao > 0 ? tanque / vazao : 0;
-  const nTanques  = capTanque > 0 ? (areaTotal / capTanque).toFixed(2) : '—';
-  const capHaTxt  = capTanque > 0 ? capTanque.toFixed(2) : '—';
+  const areaTotal  = r.areaTotal || 0;
+  const vazao      = r.vazao || 0;
+  const tanque     = r.tanque || (isDrone ? 70 : 3000);
+  const capTanque  = vazao > 0 ? tanque / vazao : 0;
+  const nTanques   = capTanque > 0 ? (areaTotal / capTanque).toFixed(2) : '—';
+  const capHaTxt   = capTanque > 0 ? capTanque.toFixed(2) : '—';
   const statusLabel = { pendente:'Pendente', em_aberto:'Em Aberto', finalizado:'Finalizado', cancelado:'Cancelado' };
-  const statusCor   = { pendente:'#856404', em_aberto:'#1a4080', finalizado:'#0a3622', cancelado:'#842029' };
-  const statusBg    = { pendente:'#fff3cd', em_aberto:'#e8f0fe', finalizado:'#d1e7dd', cancelado:'#f8d7da' };
 
-  // SVG ilustração da máquina
   const opSVG = isDrone
-    ? '<svg width="90" height="68" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="44" x2="45" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="70" y1="44" x2="75" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/><circle cx="44" cy="65" r="4" fill="#f90"/><circle cx="76" cy="65" r="4" fill="#f90"/></svg>'
-    : '<svg width="110" height="68" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>';
+    ?  + SVG_DRONE + r
+    :  + SVG_AUTO  + r;
 
   // Linhas de produtos
   const linhasProd = (r.itens||[]).map((it, idx) => {
-    const isBio  = it.biologico;
-    const isSub  = !!it.substituidoPor;
-    const nome   = isSub ? esc(it.nome) + ' <span style="font-size:10px;color:#e65100">(↔ ' + esc(it.nomeOriginal||'') + ')</span>' : esc(it.nome);
-    const doseHa = it.doseHa || 0;
-    const qdeTot = it.qdeTotalArea || 0;
-    const doseCarga   = capTanque > 0 ? Math.round(doseHa * capTanque * 1000)/1000 : 0;
-    const restHa      = capTanque > 0 ? areaTotal % capTanque : 0;
-    const doseParcial = restHa > 0.01 ? Math.round(doseHa * restHa * 1000)/1000 : doseCarga;
-    const rowBg = isBio ? '#e8f5e9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafd');
-    const nomeStyle = isBio ? 'font-weight:700;color:#1b5e20' : '';
-    return '<tr style="background:' + rowBg + '">'
-      + '<td style="' + nomeStyle + '">' + nome + '</td>'
-      + '<td class="tc">' + esc(it.tipo||'—') + '</td>'
-      + '<td class="tc">' + esc(it.unidade||'L') + '</td>'
-      + '<td class="tc">' + doseHa + '</td>'
-      + '<td class="tc fw">' + doseCarga.toFixed(3) + '</td>'
-      + '<td class="tc fw ora">' + doseParcial.toFixed(3) + '</td>'
-      + '<td class="tc fw blu">' + qdeTot.toFixed(3) + '</td>'
+    const isBio = it.biologico;
+    const isSub = !!it.substituidoPor;
+    const nome  = isSub ? esc(it.nome)+'<br><small style="color:#e65100">'+esc(it.nomeOriginal||'')+'</small>' : esc(it.nome);
+    const doseHa     = it.doseHa || 0;
+    const qdeTot     = it.qdeTotalArea || 0;
+    const doseCarga  = capTanque > 0 ? Math.round(doseHa*capTanque*1000)/1000 : 0;
+    const restHa     = capTanque > 0 ? areaTotal % capTanque : 0;
+    const doseParcial = restHa > 0.01 ? Math.round(doseHa*restHa*1000)/1000 : doseCarga;
+    if (isBio) {
+      return '<tr class="bio-row">'
+        + '<td class="nome" style="color:#1a3a6b;font-weight:700">'+nome+'</td>'
+        + '<td class="tc" style="color:#1a3a6b;font-weight:700">'+esc(it.tipo||'—')+'</td>'
+        + '<td class="tc" style="color:#1a3a6b;font-weight:700">'+esc(it.unidade||'L')+'</td>'
+        + '<td class="tc" style="color:#1a3a6b;font-weight:700">'+doseHa+'</td>'
+        + '<td class="tc fw" style="color:#1a3a6b">'+doseCarga.toFixed(3)+'</td>'
+        + '<td class="tc fw" style="color:#1a3a6b">'+doseParcial.toFixed(3)+'</td>'
+        + '<td class="tc fw" style="color:#1a3a6b">'+qdeTot.toLocaleString('pt-BR',{minimumFractionDigits:3})+'</td>'
+        + '</tr>';
+    }
+    const bg = idx%2===0 ? '#fff' : '#f8fafd';
+    return '<tr style="background:'+bg+'">'
+      + '<td class="nome">'+nome+'</td>'
+      + '<td class="tc">'+esc(it.tipo||'—')+'</td>'
+      + '<td class="tc">'+esc(it.unidade||'L')+'</td>'
+      + '<td class="tc">'+doseHa+'</td>'
+      + '<td class="tc fw">'+doseCarga.toFixed(3)+'</td>'
+      + '<td class="tc fw ora">'+doseParcial.toFixed(3)+'</td>'
+      + '<td class="tc fw blu">'+qdeTot.toLocaleString('pt-BR',{minimumFractionDigits:3})+'</td>'
       + '</tr>';
   }).join('');
 
@@ -7212,187 +7219,240 @@ async function imprimirReceita(id) {
   let biosBloco = '';
   if (bios.length && capTanque > 0) {
     const bl = bios.map(it => {
-      const vPt  = Math.round(it.doseHa * capTanque * 1000)/1000;
+      const vPt  = Math.round(it.doseHa*capTanque*1000)/1000;
       const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
-      return '<tr><td>' + esc(it.nome) + '</td>'
-        + '<td class="tc fw">' + (it.qdeTotalArea||0).toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
-        + '<td class="tc fw grn">' + vPt.toFixed(3) + ' ' + esc(it.unidade||'L') + '</td>'
-        + '<td class="tc">' + conc.toFixed(2) + '%</td></tr>';
+      return '<tr><td>'+esc(it.nome)+'</td>'
+        +'<td class="tc fw">'+( it.qdeTotalArea||0).toFixed(3)+' '+esc(it.unidade||'L')+'</td>'
+        +'<td class="tc fw grn">'+vPt.toFixed(3)+' '+esc(it.unidade||'L')+'</td>'
+        +'<td class="tc">'+conc.toFixed(2)+'%</td></tr>';
     }).join('');
-    biosBloco = '<div class="card" style="border:1.5px solid #a5d6a7;background:#f1f8f2;margin-top:20px">'
-      + '<div style="font-size:13px;font-weight:800;color:#1b5e20;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🧬 Diluição de Biológicos</div>'
-      + '<table><thead><tr><th>Produto</th><th class="tc">Vol. Total</th><th class="tc">Por Tanque (' + tanque + 'L)</th><th class="tc">Concentração</th></tr></thead>'
-      + '<tbody>' + bl + '</tbody></table></div>';
+    biosBloco = '<div style="margin-top:16px;padding:14px 18px;background:#e8f5e9;border-radius:10px;border:1.5px solid #a5d6a7">'
+      + '<div style="font-size:13px;font-weight:800;color:#1b5e20;margin-bottom:10px">🧬 Diluição de Biológicos</div>'
+      + '<table><thead><tr style="background:#2e7d32"><th>Produto</th><th class="tc">Vol. Total</th><th class="tc">Por Tanque ('+tanque+'L)</th><th class="tc">Concentração</th></tr></thead>'
+      + '<tbody>'+bl+'</tbody></table></div>';
   }
 
   // Bloco finalizado
   let finBloco = '';
   if (r.status === 'finalizado' && r.aplicador) {
     const diasAtr = r.diasAtraso > 0 ? r.diasAtraso : 0;
-    finBloco = '<div class="card" style="border:1.5px solid #86c9a0;background:#e8f5ee;margin-top:20px">'
-      + '<span style="font-weight:800;color:#0a3622">✔ Aplicação Realizada</span><br>'
-      + '<span style="font-size:13px">Aplicador: <strong>' + esc(r.aplicador) + '</strong> &nbsp;·&nbsp; ' + dIni + ' a ' + dFim + '</span>'
-      + (diasAtr > 0 ? '<br><span style="color:#7c2d12;font-weight:700;font-size:12px">⚠️ ' + diasAtr + ' dia' + (diasAtr>1?'s':'') + ' de atraso</span>' : '')
+    finBloco = '<div style="margin-top:12px;padding:10px 16px;background:#e8f5ee;border-radius:8px;border:1.5px solid #86c9a0;font-size:13px;color:#0a3622">'
+      + '<strong>✔ Aplicação Realizada</strong> — Aplicador: <strong>'+esc(r.aplicador)+'</strong> &nbsp;·&nbsp; '+dIni+' a '+dFim
+      + (diasAtr > 0 ? ' <span style="color:#7c2d12;font-weight:700">⚠️ '+diasAtr+' dia'+(diasAtr>1?'s':'')+' de atraso</span>' : '')
       + '</div>';
   }
 
-  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">'
-  + '<title>Receita ' + numFmt + '</title><style>'
-  + '* { box-sizing:border-box; margin:0; padding:0; }'
-  + 'body { font-family:Arial,sans-serif; background:#f0f4f8; color:#1a2535; font-size:13px; }'
-  + '.page { background:white; max-width:900px; margin:0 auto; padding:28px 32px; }'
-  + '@media print { body{background:white} .page{padding:20px 24px} }'
+  // ── HTML DO PDF ────────────────────────────────────────────────────
+  const s = r.status || 'pendente';
+  const sLabel = statusLabel[s] || s;
+  const sBg  = {pendente:'#fff3cd',em_aberto:'#dbeafe',finalizado:'#d1fae5',cancelado:'#fee2e2'}[s]||'#eee';
+  const sCor = {pendente:'#92600a',em_aberto:'#1e40af',finalizado:'#065f46',cancelado:'#991b1b'}[s]||'#333';
+  const sBrd = {pendente:'#fcd34d',em_aberto:'#93c5fd',finalizado:'#6ee7b7',cancelado:'#fca5a5'}[s]||'#ccc';
 
-  /* HEADER */
-  + '.header { display:flex; align-items:center; gap:20px; border-bottom:3px solid #1a3a6b; padding-bottom:18px; margin-bottom:20px; }'
-  + '.header img { height:64px; }'
-  + '.h-titles { flex:1; }'
-  + '.h-empresa { font-size:13px; font-weight:700; color:#1a3a6b; letter-spacing:.5px; }'
-  + '.h-relatorio { font-size:22px; font-weight:900; color:#1a2535; line-height:1.1; }'
-  + '.h-right { text-align:right; }'
-  + '.h-data { font-size:12px; color:#6a7a8a; margin-top:8px; }'
-  + '.h-data strong { color:#1a2535; }'
-  + '.badge { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border-radius:8px; font-size:12px; font-weight:800; margin-bottom:6px; }'
-  + '.badge-ok { background:#e8f5ee; color:#0a3622; border:1.5px solid #86c9a0; }'
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Receita '+numFmt+'</title><style>'
+  +'*{box-sizing:border-box;margin:0;padding:0}'
+  +'body{font-family:Arial,sans-serif;background:#e8edf2;color:#1a2535;font-size:13px}'
+  +'.page{background:white;max-width:860px;margin:16px auto;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.15)}'
+  +'@media print{body{background:white}.page{margin:0;box-shadow:none;border-radius:0}}'
 
-  /* CARDS */
-  + '.card { background:#f8fafd; border:1.5px solid #e0e8f0; border-radius:12px; padding:16px 20px; margin-bottom:16px; }'
-  + '.card-title { font-size:11px; font-weight:800; color:#1a3a6b; text-transform:uppercase; letter-spacing:.8px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }'
-  + '.card-title::before { content:""; display:block; width:4px; height:16px; background:#1a3a6b; border-radius:2px; }'
+  // HEADER
+  +'.hdr{border:3px solid #0f2d5c;border-radius:10px 10px 0 0;background:white;padding:18px 24px;display:flex;align-items:center;gap:18px}'
+  +'.hdr img{height:60px}'
+  +'.hdr-mid{flex:1}'
+  +'.hdr-empresa{font-size:12px;font-weight:700;color:#1a3a6b;letter-spacing:.5px}'
+  +'.hdr-titulo{font-size:22px;font-weight:900;color:#1a2535;line-height:1.1;text-transform:uppercase}'
+  +'.hdr-right{text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end}'
+  +'.badge-row{display:flex;gap:8px;align-items:center}'
+  +'.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:800;border:1.5px solid}'
+  +'.badge-aprov{background:#d1fae5;color:#065f46;border-color:#6ee7b7}'
+  +'.hdr-data{font-size:12px;color:#6a7a8a;display:flex;align-items:center;gap:6px}'
+  +'.hdr-data strong{color:#1a2535;font-size:15px}'
+  +'.hdr-divider{height:3px;background:linear-gradient(90deg,#1a3a6b,#2d6ab0)}'
 
-  /* LOCAL DA OPERAÇÃO */
-  + '.local-grid { display:grid; grid-template-columns:1fr 1fr 1.4fr 1fr; gap:16px; }'
-  + '.local-item .lbl { font-size:11px; color:#6a7a8a; display:flex; align-items:center; gap:5px; margin-bottom:4px; }'
-  + '.local-item .val { font-size:14px; font-weight:700; color:#1a2535; line-height:1.4; }'
-  + '.local-item .val-big { font-size:28px; font-weight:900; color:#1a3a6b; line-height:1; }'
-  + '.local-item .val-unit { font-size:13px; color:#6a7a8a; font-weight:600; }'
+  // BODY PADDING
+  +'.body{padding:18px 22px;background:#f0f4f8}'
+  +'.card{background:white;border-radius:10px;padding:16px 20px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.08)}'
 
-  /* OPERAÇÃO */
-  + '.op-grid { display:grid; grid-template-columns:200px 1fr; gap:20px; align-items:start; }'
-  + '.op-maquina { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; padding:12px; background:white; border-radius:10px; border:1.5px solid #e0e8f0; }'
-  + '.op-maquina-nome { font-size:15px; font-weight:900; color:#1a2535; text-align:center; line-height:1.2; }'
-  + '.op-periodo { margin-top:10px; font-size:12px; color:#6a7a8a; text-align:center; }'
-  + '.op-periodo strong { color:#1a3a6b; font-size:13px; display:block; margin-top:2px; }'
-  + '.params-titulo { font-size:11px; font-weight:800; color:#2d6a2d; text-transform:uppercase; letter-spacing:.8px; margin-bottom:12px; }'
-  + '.params-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; }'
-  + '.param-box { background:white; border:1.5px solid #e0e8f0; border-radius:10px; padding:10px 8px; text-align:center; }'
-  + '.param-box .p-icon { font-size:18px; margin-bottom:4px; }'
-  + '.param-box .p-lbl { font-size:10px; color:#6a7a8a; line-height:1.3; margin-bottom:4px; }'
-  + '.param-box .p-val { font-size:20px; font-weight:900; color:#1a3a6b; line-height:1; }'
-  + '.param-box .p-val.grn { color:#2d7d32; }'
-  + '.param-box .p-unit { font-size:11px; color:#6a7a8a; margin-top:2px; }'
-  + '.param-box.bico .p-val { font-size:16px; }'
+  // LOCAL DA OPERAÇÃO
+  +'.sec-titulo{font-size:13px;font-weight:800;color:#1a3a6b;text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px}'
+  +'.local-grid{display:grid;grid-template-columns:1fr 1.4fr 1.2fr 0.8fr;gap:0;border:1px solid #e0e8f0;border-radius:8px;overflow:hidden}'
+  +'.local-cell{padding:12px 14px;border-right:1px solid #e0e8f0}'
+  +'.local-cell:last-child{border-right:none}'
+  +'.lc-icon{font-size:18px;margin-bottom:6px}'
+  +'.lc-label{font-size:10px;color:#6a7a8a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}'
+  +'.lc-val{font-size:13px;font-weight:700;color:#1a2535;line-height:1.4}'
+  +'.lc-val-big{font-size:28px;font-weight:900;color:#1a3a6b;line-height:1}'
+  +'.lc-val-unit{font-size:12px;color:#6a7a8a;font-weight:600;margin-top:2px}'
+  +'.lc-sub{margin-top:10px}'
 
-  /* TABELA */
-  + '.table-titulo { font-size:13px; font-weight:900; color:#1a2535; text-transform:uppercase; letter-spacing:.8px; margin:20px 0 10px; padding-left:4px; border-left:4px solid #1a3a6b; padding-left:10px; }'
-  + 'table { width:100%; border-collapse:collapse; border-radius:10px; overflow:hidden; }'
-  + 'thead tr { background:#1a3a6b; }'
-  + 'th { color:white; padding:11px 12px; font-size:12px; font-weight:700; text-align:left; }'
-  + 'th.tc { text-align:center; }'
-  + 'td { padding:10px 12px; font-size:13px; border-bottom:1px solid #eef2f7; }'
-  + 'td.tc { text-align:center; }'
-  + 'td.fw { font-weight:700; }'
-  + 'td.blu { color:#1a4a9a; }'
-  + 'td.ora { color:#c05a00; }'
-  + 'td.grn { color:#1b5e20; }'
-  + '.table-note { font-size:11px; color:#9aa5b0; font-style:italic; margin-top:6px; padding-left:4px; }'
+  // OPERAÇÃO
+  +'.op-grid{display:grid;grid-template-columns:180px 1fr;gap:16px}'
+  +'.op-esq{background:#f8fafd;border-radius:8px;border:1px solid #e0e8f0;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px}'
+  +'.op-label{font-size:10px;font-weight:800;color:#2d7d32;text-transform:uppercase;letter-spacing:.8px}'
+  +'.op-nome{font-size:16px;font-weight:900;color:#1a2535;text-align:center;line-height:1.2}'
+  +'.op-periodo{margin-top:8px;text-align:center}'
+  +'.op-periodo-label{font-size:10px;color:#6a7a8a;display:flex;align-items:center;gap:4px}'
+  +'.op-periodo-val{font-size:13px;font-weight:700;color:#1a3a6b;margin-top:2px}'
+  +'.params-titulo{font-size:11px;font-weight:800;color:#2d7d32;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}'
+  +'.params-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}'
+  +'.param-box{border:1px solid #e0e8f0;border-radius:8px;padding:8px;text-align:center;background:#fafbfd}'
+  +'.pb-icon{font-size:16px;margin-bottom:3px}'
+  +'.pb-label{font-size:9px;color:#6a7a8a;line-height:1.3;margin-bottom:3px}'
+  +'.pb-val{font-size:18px;font-weight:900;color:#2d7d32;line-height:1}'
+  +'.pb-val.bico{font-size:14px;color:#1a3a6b}'
+  +'.pb-unit{font-size:10px;color:#6a7a8a;margin-top:1px}'
 
-  /* OBS + TÉCNICO */
-  + '.obs-card { background:#fffbe8; border:1.5px solid #f0d060; border-radius:10px; padding:14px 18px; margin-top:20px; display:flex; gap:14px; align-items:flex-start; }'
-  + '.obs-icon { font-size:24px; flex-shrink:0; }'
-  + '.obs-titulo { font-size:12px; font-weight:800; color:#92600a; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }'
-  + '.obs-texto { font-size:14px; color:#3a2a0a; }'
-  + '.footer { margin-top:24px; padding-top:16px; border-top:2px solid #e0e8f0; display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; }'
-  + '.tec-bloco .tec-titulo { font-size:11px; font-weight:800; color:#1a3a6b; text-transform:uppercase; letter-spacing:.8px; margin-bottom:6px; display:flex; align-items:center; gap:6px; }'
-  + '.tec-bloco .tec-nome { font-size:14px; font-weight:700; font-style:italic; color:#1a2535; }'
-  + '.tec-bloco .tec-crea { font-size:12px; color:#6a7a8a; margin-top:2px; }'
-  + '.footer-mid { text-align:center; }'
-  + '.footer-mid .fm-logo { font-size:12px; font-weight:700; color:#1a3a6b; }'
-  + '.footer-mid .fm-sub { font-size:11px; color:#6a7a8a; margin-top:2px; }'
-  + '.rec-bloco { text-align:right; }'
-  + '.rec-bloco .rb-titulo { font-size:11px; font-weight:800; color:#2d7d32; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }'
-  + '.rec-bloco .rb-texto { font-size:12px; color:#3a4a3a; line-height:1.5; }'
-  + '</style></head><body><div class="page">'
+  // TABELA
+  +'.tbl-titulo{font-size:14px;font-weight:900;color:#1a2535;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-left:6px;border-left:4px solid #1a3a6b}'
+  +'table{width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden}'
+  +'thead tr{background:#0f2d5c}'
+  +'th{color:white;padding:10px 12px;font-size:12px;font-weight:700;text-align:left}'
+  +'th.tc{text-align:center}'
+  +'td{padding:9px 12px;font-size:13px;border-bottom:1px solid #eef2f7}'
+  +'td.tc{text-align:center}'
+  +'td.nome{font-weight:500}'
+  +'td.fw{font-weight:700}'
+  +'td.blu{color:#1a3a6b}'
+  +'td.ora{color:#c05a00}'
+  +'td.grn{color:#1b5e20}'
+  +'.bio-row td{background:#eff6ff}'
+  +'.tbl-note{font-size:11px;color:#9aa5b0;font-style:italic;margin-top:6px}'
 
-  // ── HEADER ───────────────────────────────────────────────────────
-  + '<div class="header">'
-  + '<img src="' + LOGO_AMJ + '" alt="AMJ">'
-  + '<div class="h-titles">'
-  + '<div class="h-empresa">AMJ AGROPECUÁRIA</div>'
-  + '<div class="h-relatorio">RELATÓRIO DE<br>RECOMENDAÇÃO AGRÍCOLA</div>'
-  + '</div>'
-  + '<div class="h-right">'
-  + '<span class="badge" style="background:' + (statusBg[r.status]||'#eee') + ';color:' + (statusCor[r.status]||'#333') + ';border:1.5px solid currentColor">'
-  + '📋 ' + (statusLabel[r.status]||r.status).toUpperCase() + '</span><br>'
-  + '<span class="badge badge-ok">✅ APROVAÇÃO: OK!</span>'
-  + '<div class="h-data">📅 Data do Lançamento: <strong>' + dataLanc + '</strong></div>'
-  + '</div>'
-  + '</div>'
+  // OBS
+  +'.obs-card{background:#fffbe8;border:1.5px solid #fcd34d;border-radius:8px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start}'
+  +'.obs-icon{width:32px;height:32px;background:#fef3c7;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}'
+  +'.obs-titulo{font-size:12px;font-weight:800;color:#92600a;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}'
+  +'.obs-texto{font-size:13px;color:#3a2a0a}'
 
-  // ── LOCAL DA OPERAÇÃO ─────────────────────────────────────────────
-  + '<div class="card">'
-  + '<div class="card-title">📍 Local da Operação</div>'
-  + '<div class="local-grid">'
-  + '<div class="local-item"><div class="lbl">👤 Cliente</div><div class="val">' + esc(configGlobal.empresa) + '</div>'
-  + '<div class="lbl" style="margin-top:12px">🏠 Fazenda</div><div class="val">' + esc(r.fazenda) + '</div></div>'
-  + '<div class="local-item"><div class="lbl">⬛ Talhões</div><div class="val">' + talhoesTxt + '</div></div>'
-  + '<div class="local-item"><div class="lbl">🌿 Cultura</div><div class="val">' + esc(r.cultura||'—') + (r.safra ? ' | ' + esc(r.safra) : '') + '</div></div>'
-  + '<div class="local-item"><div class="lbl">📐 Área Total</div><div class="val-big">' + areaTotal.toFixed(2) + '</div><div class="val-unit">Hectares</div></div>'
-  + '</div></div>'
+  // FOOTER
+  +'.footer{background:#0f2d5c;padding:16px 22px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;align-items:start}'
+  +'.ft-tec .ft-titulo{font-size:10px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:flex;align-items:center;gap:5px}'
+  +'.ft-tec .ft-nome{font-size:14px;font-weight:700;color:white}'
+  +'.ft-tec .ft-crea{font-size:12px;color:#93c5fd;margin-top:2px}'
+  +'.ft-mid{text-align:center}'
+  +'.ft-mid .fm-sys{font-size:13px;font-weight:700;color:white}'
+  +'.ft-mid .fm-sub{font-size:11px;color:#93c5fd;margin-top:3px;display:flex;align-items:center;justify-content:center;gap:4px}'
+  +'.ft-rec .fr-titulo{font-size:10px;font-weight:800;color:#6ee7b7;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}'
+  +'.ft-rec .fr-texto{font-size:12px;color:#bfdbfe;line-height:1.5}'
+  +'</style></head><body><div class="page">'
 
-  // ── OPERAÇÃO ──────────────────────────────────────────────────────
-  + '<div class="card">'
-  + '<div class="op-grid">'
-  + '<div class="op-maquina">'
-  + '<div style="font-size:10px;font-weight:800;color:#2d7d32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">OPERAÇÃO</div>'
-  + opSVG
-  + '<div class="op-maquina-nome">' + opLabel + '</div>'
-  + '<div class="op-periodo">Período da Aplicação<strong>' + dIni + ' a ' + dFim + '</strong></div>'
-  + '</div>'
-  + '<div>'
-  + '<div class="params-titulo">⚙ Parâmetros da Aplicação</div>'
-  + '<div class="params-grid">'
-  + '<div class="param-box"><div class="p-icon">💧</div><div class="p-lbl">Tanque</div><div class="p-val grn">' + tanque.toLocaleString('pt-BR') + '</div><div class="p-unit">Litros</div></div>'
-  + '<div class="param-box"><div class="p-icon">⏱</div><div class="p-lbl">Vazão<br>por Hectare</div><div class="p-val grn">' + vazao + '</div><div class="p-unit">L/ha</div></div>'
-  + '<div class="param-box"><div class="p-icon">📐</div><div class="p-lbl">Capacidade<br>do Tanque</div><div class="p-val grn">' + capHaTxt + '</div><div class="p-unit">Hectares</div></div>'
-  + '<div class="param-box"><div class="p-icon">🪣</div><div class="p-lbl">Qtd. Total<br>de Tanque</div><div class="p-val grn">' + nTanques + '</div><div class="p-unit">Tanques</div></div>'
-  + (r.bico ? '<div class="param-box bico"><div class="p-icon">💦</div><div class="p-lbl">Tipo de Bico</div><div class="p-val" style="color:#1a3a6b">' + esc(r.bico) + '</div></div>' : '')
-  + '</div>'
-  + '</div>'
-  + '</div></div>'
+  // ── HEADER ────────────────────────────────────────────────────────
+  +'<div class="hdr">'
+  +'<img src="'+LOGO_AMJ+'" alt="AMJ">'
+  +'<div class="hdr-mid">'
+  +'<div class="hdr-empresa">AMJ AGROPECUÁRIA</div>'
+  +'<div class="hdr-titulo">Relatório de<br>Recomendação Agrícola</div>'
+  +'</div>'
+  +'<div class="hdr-right">'
+  +'<div class="badge-row">'
+  +'<span class="badge" style="background:'+sBg+';color:'+sCor+';border-color:'+sBrd+'">📋 '+sLabel.toUpperCase()+'</span>'
+  +'<span class="badge badge-aprov">✅ APROVAÇÃO: OK!</span>'
+  +'</div>'
+  +'<div class="hdr-data">📅 Data do Lançamento: &nbsp;<strong>'+dataLanc+'</strong></div>'
+  +'</div>'
+  +'</div>'
+  +'<div class="hdr-divider"></div>'
 
-  // ── TABELA DE INSUMOS ─────────────────────────────────────────────
-  + '<div class="table-titulo">Insumos Recomendados</div>'
-  + '<table><thead><tr>'
-  + '<th>Insumo Recomendado</th><th class="tc">Tipo</th><th class="tc">Unid.</th><th class="tc">Dose / ha</th>'
-  + '<th class="tc" style="color:#ffe082">Dose / Bomba<br>(Carga Cheia)</th>'
-  + '<th class="tc" style="color:#ffb74d">Dose / Bomba<br>(Carga Parcial)</th>'
-  + '<th class="tc">Qde Total<br>na Área</th>'
-  + '</tr></thead><tbody>' + linhasProd + '</tbody></table>'
-  + '<div class="table-note">* Valores calculados com base na área total informada e parâmetros de aplicação.</div>'
+  // ── BODY ──────────────────────────────────────────────────────────
+  +'<div class="body">'
 
-  + biosBloco
-  + finBloco
+  // LOCAL DA OPERAÇÃO
+  +'<div class="card">'
+  +'<div class="sec-titulo">📍 Local da Operação</div>'
+  +'<div class="local-grid">'
+  +'<div class="local-cell">'
+  +'<div class="lc-icon">👤</div><div class="lc-label">Cliente</div><div class="lc-val">'+esc(configGlobal.empresa)+'</div>'
+  +'<div class="lc-sub"><div class="lc-icon">🏠</div><div class="lc-label">Fazenda</div><div class="lc-val">'+esc(r.fazenda)+'</div></div>'
+  +'</div>'
+  +'<div class="local-cell">'
+  +'<div class="lc-icon">⬛</div><div class="lc-label">Talhões</div><div class="lc-val">'+talhoesTxt+'</div>'
+  +'</div>'
+  +'<div class="local-cell">'
+  +'<div class="lc-icon">🌿</div><div class="lc-label">Cultura</div><div class="lc-val">'+esc(r.cultura||'—')+(r.safra?' | '+esc(r.safra):'')+'</div>'
+  +'</div>'
+  +'<div class="local-cell" style="text-align:center">'
+  +'<div class="lc-label">Área Total</div>'
+  +'<div class="lc-val-big">'+areaTotal.toFixed(2)+'</div>'
+  +'<div class="lc-val-unit">Hectares</div>'
+  +'</div>'
+  +'</div>'
+  +'</div>'
 
-  // ── OBSERVAÇÕES ───────────────────────────────────────────────────
-  + (r.descricao || r.obs ? '<div class="obs-card"><div class="obs-icon">📋</div><div><div class="obs-titulo">Observações</div><div class="obs-texto">' + esc(r.descricao||r.obs||'') + '</div>' + (r.obs && r.descricao ? '<div class="obs-texto" style="margin-top:6px;color:#856404">' + esc(r.obs) + '</div>' : '') + '</div></div>' : '')
+  // OPERAÇÃO
+  +'<div class="card">'
+  +'<div class="op-grid">'
+  +'<div class="op-esq">'
+  +'<div class="op-label">Operação</div>'
+  +opSVG
+  +'<div class="op-nome">'+opNome+'</div>'
+  +'<div class="op-periodo">'
+  +'<div class="op-periodo-label">📅 Período da Aplicação</div>'
+  +'<div class="op-periodo-val">'+dIni+' a '+dFim+'</div>'
+  +'</div>'
+  +'</div>'
+  +'<div>'
+  +'<div class="params-titulo">⚙ Parâmetros da Aplicação</div>'
+  +'<div class="params-grid">'
+  +'<div class="param-box"><div class="pb-icon">💧</div><div class="pb-label">Tanque</div><div class="pb-val">'+tanque.toLocaleString('pt-BR')+'</div><div class="pb-unit">Litros</div></div>'
+  +'<div class="param-box"><div class="pb-icon">⏱</div><div class="pb-label">Vazão<br>por Hectare</div><div class="pb-val">'+vazao+'</div><div class="pb-unit">L/ha</div></div>'
+  +'<div class="param-box"><div class="pb-icon">📐</div><div class="pb-label">Capacidade<br>do Tanque</div><div class="pb-val">'+capHaTxt+'</div><div class="pb-unit">Hectares</div></div>'
+  +'<div class="param-box"><div class="pb-icon">🪣</div><div class="pb-label">Qtd. Total<br>de Tanque</div><div class="pb-val">'+nTanques+'</div><div class="pb-unit">Tanques</div></div>'
+  +(r.bico ? '<div class="param-box"><div class="pb-icon">💦</div><div class="pb-label">Tipo de Bico</div><div class="pb-val bico">'+esc(r.bico)+'</div></div>' : '<div class="param-box"><div class="pb-icon">💦</div><div class="pb-label">Tipo de Bico</div><div class="pb-val bico" style="color:#ccc">—</div></div>')
+  +'</div>'
+  +'</div>'
+  +'</div>'
+  +'</div>'
 
-  // ── RODAPÉ ────────────────────────────────────────────────────────
-  + '<div class="footer">'
-  + '<div class="tec-bloco"><div class="tec-titulo">👤 Técnico Responsável</div>'
-  + '<div class="tec-nome">' + esc(r.tecnico||'—') + '</div>'
-  + '</div>'
-  + '<div class="footer-mid"><div class="fm-logo">AMJ Agro Gestão</div><div class="fm-sub">Documento gerado em ' + dataEmit + '</div><div class="fm-sub" style="margin-top:4px">🔒 Sistema seguro e rastreável</div></div>'
-  + '<div class="rec-bloco"><div class="rb-titulo">✅ Recomendação Técnica</div><div class="rb-texto">Siga rigorosamente as doses e<br>recomendações para garantir a<br>eficácia da aplicação.</div></div>'
-  + '</div>'
+  // TABELA INSUMOS
+  +'<div>'
+  +'<div class="tbl-titulo">Insumos Recomendados</div>'
+  +'<table><thead><tr>'
+  +'<th>Insumo Recomendado</th><th class="tc">Tipo</th><th class="tc">Unid.</th><th class="tc">Dose / ha</th>'
+  +'<th class="tc" style="color:#fde68a">Dose / Bomba<br>(Carga Cheia)</th>'
+  +'<th class="tc" style="color:#fdba74">Dose / Bomba<br>(Carga Parcial)</th>'
+  +'<th class="tc">Qde Total<br>na Área</th>'
+  +'</tr></thead><tbody>'+linhasProd+'</tbody></table>'
+  +'<div class="tbl-note">* Valores calculados com base na área total informada e parâmetros de aplicação.</div>'
+  +'</div>'
 
-  + '</div>' // .page
-  + '<script>window.onload = () => window.print()<\/script>'
-  + '</body></html>';
+  +biosBloco
+  +finBloco
+
+  // OBSERVAÇÕES
+  +((r.descricao||r.obs) ? '<div class="obs-card" style="margin-top:14px">'
+  +'<div class="obs-icon">📋</div>'
+  +'<div><div class="obs-titulo">Observações</div>'
+  +'<div class="obs-texto">'+esc(r.descricao||r.obs||'')+'</div>'
+  +(r.obs && r.descricao ? '<div class="obs-texto" style="margin-top:4px;color:#856404">'+esc(r.obs)+'</div>' : '')
+  +'</div></div>' : '')
+
+  +'</div>' // .body
+
+  // FOOTER
+  +'<div class="footer">'
+  +'<div class="ft-tec">'
+  +'<div class="ft-titulo">👤 Técnico Responsável</div>'
+  +'<div class="ft-nome">'+esc(r.tecnico||'—')+'</div>'
+  +'<div class="ft-crea">Receita '+numFmt+'</div>'
+  +'</div>'
+  +'<div class="ft-mid">'
+  +'<div class="fm-sys">AMJ Agro Gestão</div>'
+  +'<div class="fm-sub">🔒 Sistema seguro e rastreável</div>'
+  +'<div style="font-size:11px;color:#93c5fd;margin-top:4px">Gerado em '+dataEmit+'</div>'
+  +'</div>'
+  +'<div class="ft-rec">'
+  +'<div class="fr-titulo">✅ Recomendação Técnica</div>'
+  +'<div class="fr-texto">Siga rigorosamente as doses e recomendações para garantir a eficácia da aplicação.</div>'
+  +'</div>'
+  +'</div>'
+
+  +'</div>' // .page
+  +'<script>window.onload=()=>window.print()<\/script>'
+  +'</body></html>';
 
   await updateDoc(doc(db, 'receitas', id), { impresso: true, impressoEm: new Date().toISOString() });
   const w = window.open('', '_blank');
-  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
+  if (!w) { mostrarToast('Popup bloqueado.', 'erro'); return; }
   w.document.write(html);
   w.document.close();
   setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
