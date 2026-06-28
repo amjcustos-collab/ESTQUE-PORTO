@@ -7382,22 +7382,24 @@ async function imprimirReceita(id) {
 
     // OPERAÇÃO
     +'<div class="sec"><div class="sec-hd">&#9881; Operacao e Parametros</div>'
-    +'<div class="op-grid">'
-    +'<div class="op-esq">'+opSVG
+    +'<div class="op-wrap">'
+    +'<div class="op-esq">'
+    +opSVG
     +'<div class="op-nome">'+opNome+'</div>'
-    +'<div class="op-periodo">'
+    +'<div style="text-align:center;margin-top:2px">'
     +'<div class="op-periodo-lbl">&#128197; Periodo</div>'
     +'<div class="op-periodo-val">'+dIni+' a '+dFim+'</div>'
     +'</div></div>'
-    +'<div class="params-bd"><div class="params-lbl">Parametros da Aplicacao</div>'
+    +'<div class="params-bd">'
+    +'<div class="params-lbl">Parametros da Aplicacao</div>'
     +'<div class="pgrid">'
-    +'<div class="pb"><div class="pb-lbl">Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+tanque.toLocaleString('pt-BR')+'</span> <span class="pb-unit">Litros</span></div></div>'
-    +'<div class="pb"><div class="pb-lbl">Vazao<br>por Hectare</div><div class="pb-val-wrap"><span class="pb-val">'+vazao+'</span> <span class="pb-unit">L/ha</span></div></div>'
-    +'<div class="pb"><div class="pb-lbl">Capacidade<br>do Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+capTxt+'</span> <span class="pb-unit">Hectares</span></div></div>'
-    +'<div class="pb"><div class="pb-lbl">Qtd. Total<br>de Tanques</div><div class="pb-val-wrap"><span class="pb-val">'+nTanques+'</span> <span class="pb-unit">Tanques</span></div></div>'
-    +(r.bico
-      ? '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val-wrap"><span class="pb-val bico">'+esc(r.bico)+'</span></div></div>'
-      : '<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val-wrap"><span class="pb-val" style="color:#cbd5e1">--</span></div></div>')
+    +'<div class="pb"><div class="pb-lbl">Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+tanque.toLocaleString('pt-BR')+'</span><span class="pb-unit">L</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Vazao / ha</div><div class="pb-val-wrap"><span class="pb-val">'+vazao+'</span><span class="pb-unit">L/ha</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Cap. Tanque</div><div class="pb-val-wrap"><span class="pb-val">'+capTxt+'</span><span class="pb-unit">ha</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Qtd. Tanques</div><div class="pb-val-wrap"><span class="pb-val">'+nTanques+'</span></div></div>'
+    +'<div class="pb"><div class="pb-lbl">Tipo de Bico</div><div class="pb-val-wrap">'
+    +(r.bico ? '<span class="pb-val bico">'+esc(r.bico)+'</span>' : '<span class="pb-val" style="color:#cbd5e1">--</span>')
+    +'</div></div>'
     +'</div></div></div></div>'
 
     // INSUMOS
