@@ -8034,7 +8034,13 @@ async function imprimirReceita(id) {
     +'<div style="font-size:20px;font-weight:900;color:#1e3a8a;line-height:1">'+nTanques+'</div>'
     +'<div style="font-size:10px;color:#94a3b8;font-weight:600;margin-top:1px">Tanques</div>'
     +'</div>'
-    +(isDrone ? '' : (()=>{
+    +(isDrone ? (()=>{
+      return '<div style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center">'
+        +'<div style="font-size:9px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Tipo de Bico</div>'
+        +'<div style="font-size:22px;margin:2px 0">🚁</div>'
+        +'<div style="font-size:13px;font-weight:800;color:#1e3a8a;margin-top:2px">Drone</div>'
+        +'</div>';
+    })() : (()=>{
       const bv = (r.bico||'').toLowerCase();
       const isC = bv.includes('conico') || bv.includes('cônico');
       const isL = bv.includes('leque');
@@ -8505,8 +8511,8 @@ function renderDashboard() {
 
   // ── CARDS DE RESUMO RÁPIDO ──────────────────────────────────────────
   const totalProd   = produtos.length;
-  const negativos   = produtos.filter(p => p.estoque < 0).length;
-  const zerados     = produtos.filter(p => p.estoque === 0).length;
+  const negativos   = produtos.filter(p => p.estoque < 0 && !p.semBaixaAuto).length;
+  const zerados     = produtos.filter(p => p.estoque === 0 && !p.semBaixaAuto).length;
   const baixos      = produtos.filter(p => p.estoque > 0 && p.estoque <= 10).length;
 
   const irrigMes    = irrigLancamentos
