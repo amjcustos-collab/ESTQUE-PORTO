@@ -4858,42 +4858,6 @@ function gerarPDFLancamento(movId) {
   
 
 
-<!-- MODAL IMPORTAR ESTOQUE -->
-<div class="overlay" id="overlayImportarEstoque" onclick="if(event.target===this)window.AppEstoque.fecharImportarEstoque()">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
-      <h2>📥 Importar Estoque — Planilha 16/06</h2>
-      <button class="btn-fechar" onclick="window.AppEstoque.fecharImportarEstoque()">×</button>
-    </div>
-    <div class="modal-body">
-      <div style="background:#fff3cd;border:1px solid #f0b860;border-radius:8px;padding:12px;font-size:13px;margin-bottom:16px">
-        ⚠️ <strong>Atenção:</strong> Atualiza o estoque de <strong>159 produtos</strong> da planilha de 16/06. Produtos existentes terão o estoque sobrescrito. Novos serão criados.
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
-        <div style="background:#f0f4ff;border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:24px;font-weight:800;color:#1a4080">159</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">Total</div>
-        </div>
-        <div style="background:#f0faf0;border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:24px;font-weight:800;color:#1a7a3b" id="impOk">0</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">Importados</div>
-        </div>
-        <div style="background:#fff9f9;border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:24px;font-weight:800;color:#c00" id="impErro">0</div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">Erros</div>
-        </div>
-      </div>
-      <div style="background:#e0e8f0;border-radius:99px;height:10px;overflow:hidden;margin-bottom:12px">
-        <div id="impBarra" style="background:#1a7a3b;height:100%;width:0%;transition:width .2s;border-radius:99px"></div>
-      </div>
-      <div id="impLog" style="background:#1a2530;color:#a8f0a8;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;height:200px;overflow-y:auto;white-space:pre-wrap;display:none"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-cancelar" id="btnImpCancelar" onclick="window.AppEstoque.fecharImportarEstoque()">Cancelar</button>
-      <button class="btn-confirmar-editar" id="btnImpIniciar" onclick="window.AppEstoque.executarImportacao()">🚀 Iniciar Importação</button>
-    </div>
-  </div>
-</div>
 </body></html>`;
 
   win.document.write(html);
@@ -9243,5 +9207,43 @@ window.AppEstoque = {
 };
 </script>
 
+
+
+<!-- MODAL IMPORTAR ESTOQUE -->
+<div class="overlay" id="overlayImportarEstoque" onclick="if(event.target===this)window.AppEstoque.fecharImportarEstoque()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2>📥 Importar Estoque — Planilha 16/06</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharImportarEstoque()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#fff3cd;border:1px solid #f0b860;border-radius:8px;padding:12px;font-size:13px;margin-bottom:16px">
+        ⚠️ <strong>Atenção:</strong> Atualiza o estoque de <strong>159 produtos</strong> da planilha de 16/06. Produtos existentes terão o estoque sobrescrito. Novos serão criados.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#f0f4ff;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:#1a4080">159</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Total</div>
+        </div>
+        <div style="background:#f0faf0;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:#1a7a3b" id="impOk">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Importados</div>
+        </div>
+        <div style="background:#fff9f9;border-radius:8px;padding:12px;text-align:center">
+          <div style="font-size:24px;font-weight:800;color:#c00" id="impErro">0</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">Erros</div>
+        </div>
+      </div>
+      <div style="background:#e0e8f0;border-radius:99px;height:10px;overflow:hidden;margin-bottom:12px">
+        <div id="impBarra" style="background:#1a7a3b;height:100%;width:0%;transition:width .2s;border-radius:99px"></div>
+      </div>
+      <div id="impLog" style="background:#1a2530;color:#a8f0a8;padding:12px;border-radius:8px;font-family:monospace;font-size:11px;height:200px;overflow-y:auto;white-space:pre-wrap;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" id="btnImpCancelar" onclick="window.AppEstoque.fecharImportarEstoque()">Cancelar</button>
+      <button class="btn-confirmar-editar" id="btnImpIniciar" onclick="window.AppEstoque.executarImportacao()">🚀 Iniciar Importação</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
