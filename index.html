@@ -223,6 +223,19 @@ header {
 .btn-baixa { background: var(--vermelho); color: white; border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
 .btn-baixa:hover { background: #9e2525; }
 .produto-card.zerado .btn-baixa { background: var(--cinza); cursor: not-allowed; }
+.produto-card.negativo { border-color: #7b1fa2; background: #f9f0ff; }
+.produto-card.negativo .unidade-tag { background: #7b1fa2 !important; filter: none; }
+.produto-card.negativo .estoque-valor { color: #7b1fa2; }
+.dash-pill.negativo { background: #f3e8ff; color: #7b1fa2; }
+.dash-rec-item { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--borda); }
+.dash-rec-item:last-child { border-bottom:none; }
+.dash-rec-num { font-size:11px; font-weight:700; color:var(--texto-suave); min-width:40px; }
+.dash-rec-info { flex:1; min-width:0; }
+.dash-rec-nome { font-size:13px; font-weight:600; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-rec-sub { font-size:11px; color:var(--texto-suave); margin-top:1px; }
+.dash-rec-pill { font-size:10px; font-weight:700; padding:2px 9px; border-radius:999px; flex-shrink:0; }
+.dash-rec-pill.pendente { background:#fef3c7; color:#854d0e; }
+.dash-rec-pill.em_aberto { background:#dbeafe; color:#1d4ed8; }
 .btn-entrada { background: var(--verde); color: white; border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
 .btn-entrada:hover { background: var(--verde-claro); }
 .btn-editar { background: var(--azul-fundo); color: var(--azul); border: 1px solid #b0c4e0; border-radius: 8px; padding: 9px 11px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
@@ -384,6 +397,7 @@ header {
 .dash-card-sub   { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
 .dash-card.alerta  { border-color: #f0b860; background: #fffdf5; }
 .dash-card.critico { border-color: var(--vermelho); background: var(--vermelho-fundo); }
+.dash-card.negativo { border-color: #7b1fa2; background: #f9f0ff; }
 .dash-card.azul    { border-color: #1a5fb4; background: #f0f4ff; }
 .dash-card.verde   { border-color: #2a7a2a; background: #f0faf0; }
 
@@ -1007,6 +1021,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <option value="normal">Estoque normal</option>
     <option value="baixo">Estoque baixo (≤10)</option>
     <option value="zerado">Zerado</option>
+    <option value="negativo">Negativo ⚠️</option>
   </select>
   <button class="btn-novo-produto" id="btnNovoProdutoFiltro" style="display:none" onclick="window.AppEstoque.abrirNovoProduto()">+ Novo Produto</button>
   <button class="btn-receita-filtros" id="btnReceitaFiltro" style="display:none" onclick="window.AppEstoque.abrirReceita()">🧾 Baixa com Receita</button>
@@ -1029,12 +1044,12 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   <!-- Grid de seções -->
   <div class="dash-grid">
 
-    <!-- Estoque crítico -->
+    <!-- Receitas ativas -->
     <div class="dash-secao">
-      <div class="dash-secao-header" style="color:var(--vermelho)">
-        ⚠️ Estoque em alerta
+      <div class="dash-secao-header" style="color:#1d4ed8">
+        🧪 Receitas pendentes e em aberto
       </div>
-      <div class="dash-secao-body" id="dashEstoqueAlerta"></div>
+      <div class="dash-secao-body" id="dashReceitas"></div>
     </div>
 
     <!-- Últimas movimentações -->
@@ -3072,7 +3087,7 @@ const PRODUTOS_INICIAIS = [
 // =====================================================================
 // RENDERIZAR
 // =====================================================================
-function statusCard(estoque) { if (estoque <= 0) return 'zerado'; if (estoque <= 10) return 'baixo'; return ''; }
+function statusCard(estoque) { if (estoque < 0) return 'negativo'; if (estoque === 0) return 'zerado'; if (estoque <= 10) return 'baixo'; return ''; }
 // parseQtd: converte string de quantidade para número, aceitando vírgula
 // (padrão pt-BR) ou ponto como separador decimal. Retorna NaN se inválido.
 function parseQtd(valor) {
@@ -7020,14 +7035,18 @@ function abrirAceiteReceita(id) {
   }).join('');
 
   const temInsuf = itensComSaldo.some(it => it.saldoOk === false);
+  const temNaoCad = itensComSaldo.some(it => it.saldoEstoque === null);
 
   document.getElementById('aceiteReceitaConteudo').innerHTML = `
     <div style="background:var(--cinza-claro);border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:13px">
       <strong>Receita #${String(r.numero||0).padStart(4,'0')}</strong> · ${esc(r.fazenda)} · ${esc(r.cultura||'')}<br>
       <span style="color:var(--texto-suave)">${talhoesTxt} · Área: ${(r.areaTotal||0).toFixed(2)} ha</span>
     </div>
-    ${temInsuf ? `<div style="background:#fff3cd;padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;color:#856404">
-      ⚠️ Alguns produtos estão com saldo insuficiente. Você pode substituí-los ou aceitar mesmo assim (os produtos pendentes ficam marcados).
+    ${temNaoCad ? `<div style="background:#fdecea;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;color:#b83232;border:1px solid #f5c2c2">
+      ❌ <strong>Aceite bloqueado:</strong> há produto(s) não cadastrado(s) no estoque. Substitua-os ou cadastre-os antes de aceitar.
+    </div>` : ''}
+    ${temInsuf && !temNaoCad ? `<div style="background:#fff3cd;padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13px;color:#856404">
+      ⚠️ Alguns produtos estão com saldo insuficiente. O estoque ficará <strong>negativo</strong> após o aceite, aguardando entrada futura.
     </div>` : ''}
     <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px">
       <thead><tr style="background:#1a3a6b;color:white">
@@ -7044,6 +7063,16 @@ function abrirAceiteReceita(id) {
   `;
 
   document.getElementById('overlayAceiteReceita').classList.add('aberto');
+
+  // Bloquear botao se houver produto nao cadastrado
+  const btnAceite = document.getElementById('btnConfirmarAceite');
+  if (btnAceite) {
+    const temNaoCadFinal = itensComSaldo.some(it => it.saldoEstoque === null);
+    btnAceite.disabled = temNaoCadFinal;
+    btnAceite.style.opacity = temNaoCadFinal ? '0.45' : '1';
+    btnAceite.style.cursor = temNaoCadFinal ? 'not-allowed' : 'pointer';
+    btnAceite.title = temNaoCadFinal ? 'Substitua ou cadastre os produtos nao encontrados antes de aceitar' : '';
+  }
 }
 
 // Guardamos os itens com saldo calculado para uso no confirmarAceite
@@ -7092,43 +7121,56 @@ function updateBioCalc(i, campo, valor, prefixo) {
 async function confirmarAceite() {
   const r = recReceitas.find(x => x.id === _recAceitandoId);
   if (!r) return;
+
+  // Segurança: checar se ainda há produto não cadastrado (pode ter mudado)
+  const algumNaoCad = (r.itens||[]).some(it => {
+    const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
+    return !prod;
+  });
+  if (algumNaoCad) {
+    mostrarToast('Há produto(s) não cadastrado(s). Substitua-os antes de aceitar.', 'erro');
+    return;
+  }
+
   const btn = document.getElementById('btnConfirmarAceite');
   btn.disabled = true; btn.textContent = 'Processando...';
 
   try {
-    // Dar baixa no estoque para cada produto que tiver saldo
+    // Dar baixa no estoque para cada produto — permite negativo se saldo insuficiente
     const itensAtualizados = await Promise.all((r.itens||[]).map(async it => {
       const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
-      if (!prod) return { ...it, saldoOk: null, baixaDada: false };
-      const saldo = prod.estoque || 0;
-      const saldoOk = saldo >= (it.qdeTotalArea||0);
-      if (saldoOk) {
-        // Dar baixa no estoque
-        await runTransaction(db, async tx => {
-          const ref = doc(db, 'produtos', prod.id);
-          const snap = await tx.get(ref);
-          const atual = Math.round((snap.data().estoque||0)*100)/100;
-          if (atual < (it.qdeTotalArea||0)) throw new Error('ESTOQUE_INSUFICIENTE');
-          tx.update(ref, { estoque: increment(-(it.qdeTotalArea||0)) });
-        });
-        // Registrar no histórico
-        const _estoqueApos = Math.round(((prod.estoque||0)-(it.qdeTotalArea||0))*100)/100;
-        await addDoc(collection(db, 'historico'), {
-          tipo: 'saida',
-          produto: prod.nome, produtoId: prod.id,
-          classe: prod.classe||'', unidade: prod.unidade||'',
-          qtd: it.qdeTotalArea||0, estoqueApos: _estoqueApos,
-          resp: sessaoAtual?.label||sessaoAtual?.email||'',
-          usuario: sessaoAtual?.email||'',
-          obs: 'Baixa via Receita #'+String(r.numero).padStart(4,'0'),
-          receitaId: _recAceitandoId, receitaNum: r.numero, fazenda: r.fazenda,
-          dataOrdenacao: serverTimestamp(),
-          dataLocal: new Date().getTime(),
-          data: new Date().toISOString().split('T')[0],
-        });
-        return { ...it, saldoOk: true, baixaDada: true };
-      }
-      return { ...it, saldoOk: false, baixaDada: false };
+      if (!prod) return { ...it, saldoOk: null, baixaDada: false }; // não deve chegar aqui
+
+      const qtd = it.qdeTotalArea || 0;
+      // Dar baixa sem verificar saldo mínimo — permite ir negativo
+      let estoqueApos;
+      await runTransaction(db, async tx => {
+        const ref = doc(db, 'produtos', prod.id);
+        const snap = await tx.get(ref);
+        const atual = Math.round((snap.data().estoque||0)*100)/100;
+        estoqueApos = Math.round((atual - qtd)*100)/100;
+        tx.update(ref, { estoque: increment(-qtd) });
+      });
+
+      const ficouNegativo = estoqueApos < 0;
+      // Registrar no histórico com flag se ficou negativo
+      await addDoc(collection(db, 'historico'), {
+        tipo: 'saida',
+        produto: prod.nome, produtoId: prod.id,
+        classe: prod.classe||'', unidade: prod.unidade||'',
+        qtd, estoqueApos,
+        resp: sessaoAtual?.label||sessaoAtual?.email||'',
+        usuario: sessaoAtual?.email||'',
+        obs: 'Baixa via Receita #'+String(r.numero).padStart(4,'0') + (ficouNegativo ? ' (estoque negativo)' : ''),
+        receitaId: _recAceitandoId, receitaNum: r.numero, fazenda: r.fazenda,
+        estoqueNegativo: ficouNegativo,
+        dataOrdenacao: serverTimestamp(),
+        dataLocal: new Date().getTime(),
+        data: new Date().toISOString().split('T')[0],
+      });
+
+      const saldoAntes = prod.estoque || 0;
+      return { ...it, produtoId: prod.id, saldoOk: saldoAntes >= qtd, baixaDada: true, estoqueNegativo: ficouNegativo };
     }));
 
     await updateDoc(doc(db, 'receitas', _recAceitandoId), {
@@ -7139,9 +7181,9 @@ async function confirmarAceite() {
       atualizadoEm: new Date().toISOString(),
     });
 
-    const pendentes = itensAtualizados.filter(it => it.saldoOk === false).length;
-    mostrarToast(pendentes
-      ? `Aceite realizado! ${pendentes} produto(s) com saldo insuficiente ficaram pendentes.`
+    const negativos = itensAtualizados.filter(it => it.estoqueNegativo).length;
+    mostrarToast(negativos
+      ? `Aceite realizado! ${negativos} produto(s) ficaram com estoque negativo — aguardando entrada.`
       : 'Receita aceita e baixas realizadas no estoque!', 'sucesso');
     fecharAceiteReceita();
     fecharDetReceita();
@@ -8043,7 +8085,8 @@ function renderDashboard() {
 
   // ── CARDS DE RESUMO RÁPIDO ──────────────────────────────────────────
   const totalProd   = produtos.length;
-  const zerados     = produtos.filter(p => p.estoque <= 0).length;
+  const negativos   = produtos.filter(p => p.estoque < 0).length;
+  const zerados     = produtos.filter(p => p.estoque === 0).length;
   const baixos      = produtos.filter(p => p.estoque > 0 && p.estoque <= 10).length;
 
   const irrigMes    = irrigLancamentos
@@ -8067,6 +8110,7 @@ function renderDashboard() {
 
   const cards = [
     { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
+    { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '' },
     { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
     { valor: baixos,              label: 'Estoque baixo',        sub: '≤ 10 unidades',                     cls: baixos  > 0 ? 'alerta'  : '' },
     { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
@@ -8077,27 +8121,39 @@ function renderDashboard() {
   if (el('dashCards')) {
     el('dashCards').innerHTML = cards.map(c => `
       <div class="dash-card ${c.cls}">
-        <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
+        <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'negativo' ? 'color:#7b1fa2' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
         <div class="dash-card-label">${c.label}</div>
         ${c.sub ? `<div class="dash-card-sub">${c.sub}</div>` : ''}
       </div>`).join('');
   }
 
-  // ── ESTOQUE EM ALERTA ───────────────────────────────────────────────
-  const emAlerta = produtos
-    .filter(p => p.estoque <= 10)
-    .sort((a, b) => a.estoque - b.estoque)
+  // ── RECEITAS PENDENTES E EM ABERTO ─────────────────────────────────
+  const recAtivas = recReceitas
+    .filter(r => r.status === 'pendente' || r.status === 'em_aberto')
+    .sort((a, b) => {
+      const ord = { 'pendente': 0, 'em_aberto': 1 };
+      if (ord[a.status] !== ord[b.status]) return ord[a.status] - ord[b.status];
+      return (b.numero || 0) - (a.numero || 0);
+    })
     .slice(0, 8);
 
-  if (el('dashEstoqueAlerta')) {
-    el('dashEstoqueAlerta').innerHTML = emAlerta.length === 0
-      ? '<div class="dash-secao-vazio">✅ Todos os produtos com estoque normal</div>'
-      : emAlerta.map(p => `
-        <div class="dash-secao-item">
-          <span class="dash-secao-item-nome" title="${esc(p.nome)}">${esc(p.nome)}</span>
-          <span class="dash-pill ${p.estoque <= 0 ? 'zerado' : 'baixo'}">${p.estoque <= 0 ? 'Zerado' : 'Baixo'}</span>
-          <span class="dash-secao-item-val" style="${p.estoque <= 0 ? 'color:var(--vermelho)' : 'color:#c47a00'}">${fmt(p.estoque)} ${p.unidade}</span>
-        </div>`).join('');
+  if (el('dashReceitas')) {
+    el('dashReceitas').innerHTML = recAtivas.length === 0
+      ? '<div class="dash-secao-vazio">✅ Nenhuma receita pendente ou em aberto</div>'
+      : recAtivas.map(r => {
+          const num = String(r.numero || 0).padStart(4, '0');
+          const statusLabel = r.status === 'pendente' ? 'Pendente' : 'Em Aberto';
+          const talhoesTxt = (r.talhoes || []).map(t => t.nome).join(', ') || '—';
+          return `
+          <div class="dash-rec-item">
+            <span class="dash-rec-num">#${num}</span>
+            <div class="dash-rec-info">
+              <div class="dash-rec-nome">${esc(r.descricao || r.cultura || '—')}</div>
+              <div class="dash-rec-sub">${esc(r.fazenda)} · ${esc(talhoesTxt)}</div>
+            </div>
+            <span class="dash-rec-pill ${r.status}">${statusLabel}</span>
+          </div>`;
+        }).join('');
   }
 
   // ── ÚLTIMAS MOVIMENTAÇÕES ───────────────────────────────────────────
@@ -8523,7 +8579,7 @@ function gerarPDF() {
   const busca = document.getElementById('busca').value.trim();
   const classeF = document.getElementById('filtroClasse').value;
   const statusF = document.getElementById('filtroStatus').value;
-  const statusLabel = { normal: 'Estoque normal', baixo: 'Estoque baixo (≤10)', zerado: 'Zerado' };
+  const statusLabel = { normal: 'Estoque normal', baixo: 'Estoque baixo (≤10)', zerado: 'Zerado', negativo: 'Negativo' };
 
   let descFiltro = '';
   if (escopo === 'filtro' && (busca || classeF || statusF)) {
