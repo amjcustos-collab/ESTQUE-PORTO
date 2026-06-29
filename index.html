@@ -227,13 +227,13 @@ header {
 .produto-card.negativo .unidade-tag { background: #7b1fa2 !important; filter: none; }
 .produto-card.negativo .estoque-valor { color: #7b1fa2; }
 .dash-pill.negativo { background: #f3e8ff; color: #7b1fa2; }
-.dash-rec-item { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--borda); }
+.dash-rec-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--borda); }
 .dash-rec-item:last-child { border-bottom:none; }
-.dash-rec-num { font-size:11px; font-weight:700; color:var(--texto-suave); min-width:40px; }
+.dash-rec-num { font-size:11px; font-weight:700; color:var(--texto-suave); min-width:38px; padding-top:2px; flex-shrink:0; }
 .dash-rec-info { flex:1; min-width:0; }
-.dash-rec-nome { font-size:13px; font-weight:600; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dash-rec-sub { font-size:11px; color:var(--texto-suave); margin-top:1px; }
-.dash-rec-pill { font-size:10px; font-weight:700; padding:2px 9px; border-radius:999px; flex-shrink:0; }
+.dash-rec-nome { font-size:13px; font-weight:700; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-rec-sub { font-size:11px; color:var(--texto-suave); margin-top:2px; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.dash-rec-pill { font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; flex-shrink:0; margin-top:2px; white-space:nowrap; }
 .dash-rec-pill.pendente { background:#fef3c7; color:#854d0e; }
 .dash-rec-pill.em_aberto { background:#dbeafe; color:#1d4ed8; }
 .btn-entrada { background: var(--verde); color: white; border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
@@ -2876,6 +2876,20 @@ async function iniciarListenersTempoReal() {
     dashUltimasMov = lista;
     if (moduloAtivo === 'dashboard') renderDashboard();
   });
+
+  // Listener de receitas iniciado globalmente para o Dashboard consumir sem precisar abrir o módulo
+  if (!unsubReceitas) {
+    unsubReceitas = onSnapshot(
+      query(collection(db, 'receitas'), orderBy('numero', 'desc')),
+      snap => {
+        recReceitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const nums = recReceitas.map(r => r.numero || 0);
+        _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
+        if (moduloAtivo === 'receitas') renderReceitas();
+        if (moduloAtivo === 'dashboard') renderDashboard();
+      }
+    );
+  }
 
   escutarLancamentosIrrig();
   escutarLancamentosPluv();
@@ -6043,17 +6057,22 @@ const TIPOS_BIOLOGICOS = ['biológico', 'biologico', 'biológicos', 'biologicos'
 async function iniciarModuloReceitas() {
   await carregarTalhoes();
   popularSelectsFazendasReceitas();
-  if (unsubReceitas) return; // já escutando
-  unsubReceitas = onSnapshot(
-    query(collection(db, 'receitas'), orderBy('numero', 'desc')),
-    snap => {
-      recReceitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Próximo número
-      const nums = recReceitas.map(r => r.numero || 0);
-      _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
-      renderReceitas();
-    }
-  );
+  // Listener já pode estar ativo (iniciado globalmente em iniciarListenersTempoReal)
+  // Se não estiver (raro), inicia agora
+  if (!unsubReceitas) {
+    unsubReceitas = onSnapshot(
+      query(collection(db, 'receitas'), orderBy('numero', 'desc')),
+      snap => {
+        recReceitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const nums = recReceitas.map(r => r.numero || 0);
+        _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
+        renderReceitas();
+      }
+    );
+  } else {
+    // Listener já ativo — só re-renderiza com os dados em memória
+    renderReceitas();
+  }
 }
 
 function pararModuloReceitas() {
@@ -6540,13 +6559,14 @@ function renderItensReceita() {
         </div>
         <div>
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
-          <input type="number" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
+          <input type="number" id="recDoseHa_${i}" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
-            oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
+            oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)"
+            onchange="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
         </div>
         <div>
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL <span style="font-size:10px;color:#888">(auto)</span></label>
-          <input type="number" id="recQdeTotal_${i}" value="${qdeVal}" min="0" step="0.001" placeholder="Auto"
+          <input type="number" id="recQdeTotal_${i}" value="${qdeVal || ''}" min="0" step="0.001" placeholder="Auto"
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;
             box-sizing:border-box;background:#f0f8f0;font-weight:700;color:#1a5fb4"
             oninput="window.AppEstoque.updateItemReceita(${i},'qdeTotalManual',this.value===''?null:parseFloat(this.value)||0)">
@@ -6633,6 +6653,12 @@ function recalcularTodasQdes() {
   if (!areaTotal || !_recItens.length) return;
   _recItens.forEach((it, i) => {
     if (it.qdeTotalManual != null) return; // manual: não sobrescrever
+    // Ler dose do DOM caso o usuário tenha digitado sem disparar oninput (paste/autofill)
+    const doseEl = document.getElementById('recDoseHa_' + i);
+    if (doseEl) {
+      const doseDOM = parseFloat(doseEl.value) || 0;
+      if (doseDOM !== it.doseHa) it.doseHa = doseDOM;
+    }
     const qdeAuto = Math.round((it.doseHa||0) * areaTotal * 1000) / 1000;
     it.qdeTotalArea = qdeAuto;
     // Atualizar apenas o campo de QDE TOTAL no DOM, sem re-renderizar tudo
@@ -6650,7 +6676,7 @@ function updateDoseHa(i, doseHa) {
     const qdeAuto = Math.round(doseHa * areaTotal * 1000) / 1000;
     _recItens[i].qdeTotalArea = qdeAuto;
     const el = document.getElementById('recQdeTotal_' + i);
-    if (el) el.value = qdeAuto || '';
+    if (el) el.value = qdeAuto > 0 ? qdeAuto : '';
   }
 }
 
@@ -6686,6 +6712,17 @@ async function salvarReceita() {
   if (!_recItens.length || _recItens.some(i => !i.nome)) {
     mostrarToast('Adicione pelo menos um produto com nome.', 'erro'); return;
   }
+
+  // Sincronizar dose do DOM → _recItens antes de calcular (garante valores digitados sem disparar oninput)
+  _recItens.forEach((it, i) => {
+    const doseEl = document.getElementById('recDoseHa_' + i);
+    if (doseEl) { const v = parseFloat(doseEl.value) || 0; if (v !== it.doseHa) it.doseHa = v; }
+    const qdeEl = document.getElementById('recQdeTotal_' + i);
+    if (qdeEl && qdeEl.value !== '') {
+      const v = parseFloat(qdeEl.value);
+      if (!isNaN(v)) it.qdeTotalManual = v;
+    }
+  });
 
   // Calcular área total e Qde Total automática para itens sem valor manual
   const areaTotal = _recTalhoesSel.reduce((s,t) => s + (t.area||0), 0);
@@ -7027,9 +7064,14 @@ function abrirAceiteReceita(id) {
           : '<span style="color:#2a7a2a;font-weight:700">✓ OK</span>'}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
-        <button onmousedown="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
-          style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:6px;
-          padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">↔ Substituir</button>
+        <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">
+          <button onmousedown="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
+            style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:6px;
+            padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">↔ Substituir</button>
+          ${semCad ? `<button onmousedown="window.AppEstoque.cadastrarProdutoNoAceite(${i},'${esc(it.nome)}','${esc(it.unidade||'L')}','${esc(it.tipo||'')}','${r.id}')"
+            style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:6px;
+            padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">+ Cadastrar</button>` : ''}
+        </div>
       </td>
     </tr>`;
   }).join('');
@@ -7192,6 +7234,144 @@ async function confirmarAceite() {
     mostrarToast('Erro ao processar aceite.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '✅ Confirmar aceite e dar baixa no estoque';
+  }
+}
+
+// ── Cadastro rápido de produto direto no aceite ────────────────────
+function cadastrarProdutoNoAceite(itemIdx, nomePreench, unidadePreench, tipoPreench, receitaId) {
+  // Mapear tipo de item da receita para classe de produto
+  const classeMap = {
+    'Herbicida': 'HERBICIDA', 'Fungicida': 'FUNGICIDA', 'Inseticida': 'INSETICIDA',
+    'Adjuvante': 'ADJUVANTE', 'Biológico': 'BIOLÓGICO', 'Foliar': 'FOLIAR',
+    'Óleo': 'OLEO', 'Moluscicida': 'MOLUSCICIDA', 'Meio de Cultura': 'MEIO DE CULTURA'
+  };
+  const classeSugerida = classeMap[tipoPreench] || '';
+
+  const modal = document.createElement('div');
+  modal.id = 'overlayQuickCad';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1100;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <div style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b);color:white;padding:16px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:15px;font-weight:700">➕ Cadastrar Produto</div>
+        <button onclick="document.getElementById('overlayQuickCad').remove()"
+          style="background:none;border:none;color:white;font-size:22px;cursor:pointer;line-height:1">×</button>
+      </div>
+      <div style="padding:20px">
+        <div style="font-size:12px;color:#5a6472;margin-bottom:14px">
+          Cadastre o produto rapidamente. Após salvar, o aceite será desbloqueado.
+        </div>
+        <div style="display:grid;gap:10px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#5a6472;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Nome do produto *</label>
+            <input id="qcNome" value="${esc(nomePreench)}" type="text" placeholder="Nome completo do produto"
+              style="width:100%;padding:9px 12px;border:2px solid #d0d8e0;border-radius:8px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#5a6472;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Classe *</label>
+              <select id="qcClasse" style="width:100%;padding:9px 12px;border:2px solid #d0d8e0;border-radius:8px;font-size:13px;box-sizing:border-box">
+                <option value="">Selecione...</option>
+                <option value="ADJUVANTE" ${classeSugerida==='ADJUVANTE'?'selected':''}>Adjuvante</option>
+                <option value="BIOLÓGICO" ${classeSugerida==='BIOLÓGICO'?'selected':''}>Biológico</option>
+                <option value="FOLIAR" ${classeSugerida==='FOLIAR'?'selected':''}>Foliar</option>
+                <option value="FUNGICIDA" ${classeSugerida==='FUNGICIDA'?'selected':''}>Fungicida</option>
+                <option value="HERBICIDA" ${classeSugerida==='HERBICIDA'?'selected':''}>Herbicida</option>
+                <option value="INSETICIDA" ${classeSugerida==='INSETICIDA'?'selected':''}>Inseticida</option>
+                <option value="MEIO DE CULTURA">Meio de Cultura</option>
+                <option value="MOLUSCICIDA">Moluscicida</option>
+                <option value="OLEO">Óleo</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#5a6472;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Unidade *</label>
+              <select id="qcUnidade" style="width:100%;padding:9px 12px;border:2px solid #d0d8e0;border-radius:8px;font-size:13px;box-sizing:border-box">
+                <option value="L" ${unidadePreench==='L'?'selected':''}>L (Litros)</option>
+                <option value="KG" ${unidadePreench==='KG'?'selected':''}>KG (Quilos)</option>
+                <option value="UN" ${unidadePreench==='UN'?'selected':''}>UN (Unidade)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#5a6472;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Princípio ativo</label>
+              <input id="qcPA" type="text" placeholder="Ex: Glifosato"
+                style="width:100%;padding:9px 12px;border:2px solid #d0d8e0;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:#5a6472;text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px">Estoque inicial</label>
+              <input id="qcEstoque" type="number" value="0" min="0" step="0.001"
+                style="width:100%;padding:9px 12px;border:2px solid #d0d8e0;border-radius:8px;font-size:13px;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+        <div id="qcErro" style="color:#b83232;font-size:12px;margin-top:10px;display:none"></div>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button onclick="document.getElementById('overlayQuickCad').remove()"
+            style="flex:1;padding:10px;border:2px solid #d0d8e0;border-radius:8px;background:white;font-size:13px;font-weight:600;cursor:pointer;color:#5a6472">
+            Cancelar
+          </button>
+          <button onclick="window.AppEstoque._confirmarQuickCad(${itemIdx},'${receitaId}')"
+            style="flex:2;padding:10px;background:#1a7a3b;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
+            ✓ Cadastrar e desbloquear aceite
+          </button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  setTimeout(() => document.getElementById('qcNome')?.focus(), 50);
+}
+
+async function _confirmarQuickCad(itemIdx, receitaId) {
+  const nome    = document.getElementById('qcNome')?.value.trim();
+  const classe  = document.getElementById('qcClasse')?.value;
+  const unidade = document.getElementById('qcUnidade')?.value;
+  const pa      = document.getElementById('qcPA')?.value.trim() || '';
+  const estoque = parseFloat(document.getElementById('qcEstoque')?.value) || 0;
+  const erroEl  = document.getElementById('qcErro');
+
+  if (!nome || !classe) {
+    erroEl.textContent = 'Preencha nome e classe do produto.';
+    erroEl.style.display = 'block';
+    return;
+  }
+  if (produtos.some(p => p.nome.toLowerCase() === nome.toLowerCase())) {
+    erroEl.textContent = 'Já existe um produto com esse nome.';
+    erroEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.querySelector('#overlayQuickCad button[onclick*="_confirmarQuickCad"]');
+  if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+  try {
+    const ref = doc(collection(db, 'produtos'));
+    const novoProd = { nome, classe, unidade, pa, estoque, estoqueMin: 0 };
+    await setDoc(ref, novoProd);
+    // Registrar no histórico se estoque inicial > 0
+    if (estoque > 0) {
+      await addDoc(collection(db, 'historico'), {
+        tipo: 'entrada', produto: nome, produtoId: ref.id,
+        classe, unidade, qtd: estoque, estoqueApos: estoque,
+        resp: sessaoAtual?.label || sessaoAtual?.email || '',
+        usuario: sessaoAtual?.email || '',
+        obs: 'Estoque inicial — cadastro rápido via Receita',
+        dataOrdenacao: serverTimestamp(),
+        dataLocal: new Date().getTime(),
+        data: new Date().toISOString().split('T')[0],
+      });
+    }
+    document.getElementById('overlayQuickCad')?.remove();
+    mostrarToast(`"${nome}" cadastrado! Verificando aceite...`, 'sucesso');
+    // Reabrir o aceite para refletir o novo produto
+    const idAtual = _recAceitandoId;
+    fecharAceiteReceita();
+    setTimeout(() => abrirAceiteReceita(idAtual), 300);
+  } catch(e) {
+    console.error(e);
+    erroEl.textContent = 'Erro ao cadastrar produto.';
+    erroEl.style.display = 'block';
+    if (btn) { btn.disabled = false; btn.textContent = '✓ Cadastrar e desbloquear aceite'; }
   }
 }
 
@@ -8143,7 +8323,10 @@ function renderDashboard() {
       : recAtivas.map(r => {
           const num = String(r.numero || 0).padStart(4, '0');
           const statusLabel = r.status === 'pendente' ? 'Pendente' : 'Em Aberto';
-          const talhoesTxt = (r.talhoes || []).map(t => t.nome).join(', ') || '—';
+          const talhoes = (r.talhoes || []).map(t => t.nome);
+          const talhoesTxt = talhoes.length > 3
+            ? talhoes.slice(0, 3).join(', ') + ` +${talhoes.length - 3}`
+            : talhoes.join(', ') || '—';
           return `
           <div class="dash-rec-item">
             <span class="dash-rec-num">#${num}</span>
@@ -8740,6 +8923,7 @@ window.AppEstoque = {
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
   abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto, clonarReceita, _filtrarSubstProd, _selecionarSubstProd, _confirmarSubstProd,
+  cadastrarProdutoNoAceite, _confirmarQuickCad,
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
