@@ -639,6 +639,34 @@ header {
 .rec-item-field-qde     { grid-column: 5; }
 .rec-item-field-del     { grid-column: 6; }
 @media (max-width: 640px) {
+  /* Cards de receita */
+  .rec-card { padding: 16px; border-radius: 16px; }
+  .rec-card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rec-card-left { width: 100%; gap: 12px; }
+  .rec-card-doc-icon { width: 48px; height: 48px; border-radius: 12px; font-size: 22px; flex-shrink: 0; }
+  .rec-card-titulo { font-size: 18px; line-height: 1.3; }
+  .rec-card-meta { font-size: 12px; gap: 8px; margin-bottom: 4px; }
+  .rec-card-top-right { width: 100%; justify-content: space-between; }
+  .rec-status { padding: 7px 14px; font-size: 12px; }
+  .rec-btn-aplicar { padding: 9px 14px; font-size: 12px; flex: 1; justify-content: center; }
+  .rec-card-talhoes { gap: 6px; margin: 12px 0 0; }
+  .rec-talhao-chip { padding: 6px 10px; font-size: 12px; }
+  .rec-card-footer { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .rec-footer-box { padding: 10px 12px; border-radius: 10px; }
+  .rec-footer-box strong { font-size: 11px; }
+  .rec-footer-box small { font-size: 12px; margin-top: 3px; }
+  .rec-grupo-header { padding: 12px 14px; gap: 10px; }
+  .rec-grupo-label { font-size: 14px; }
+  /* Tabelas nos modais de detalhe e aceite — scroll horizontal */
+  #detReceitaConteudo table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  #aceiteReceitaConteudo table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  /* Modais menores no mobile */
+  .overlay { padding: 8px; }
+  .modal { border-radius: 16px; }
+  .modal-header { padding: 14px 16px; }
+  .modal-header h2 { font-size: 15px; }
+  .modal-body { padding: 14px; max-height: 80vh; }
+  /* Grid itens de produto no formulário */
   .rec-item-fields { grid-template-columns: 1fr 1fr 1fr 36px; grid-template-rows: auto auto auto; gap: 8px; }
   .rec-item-field-produto { grid-column: 1 / -1; grid-row: 1; }
   .rec-item-field-tipo    { grid-column: 1 / 3;  grid-row: 2; }
@@ -646,6 +674,10 @@ header {
   .rec-item-field-del     { grid-column: 4;       grid-row: 2; }
   .rec-item-field-dose    { grid-column: 1 / 3;  grid-row: 3; }
   .rec-item-field-qde     { grid-column: 3 / 5;  grid-row: 3; display: block; }
+}
+@media (max-width: 380px) {
+  .rec-card-footer { grid-template-columns: 1fr; }
+  .rec-card-titulo { font-size: 16px; }
 }
 
 /* Badge sem baixa auto */
@@ -6236,9 +6268,10 @@ const TIPOS_BIOLOGICOS = ['biológico', 'biologico', 'biológicos', 'biologicos'
 async function iniciarModuloReceitas() {
   await carregarTalhoes();
   popularSelectsFazendasReceitas();
-  // Listener já pode estar ativo (iniciado globalmente em iniciarListenersTempoReal)
-  // Se não estiver (raro), inicia agora
-  if (!unsubReceitas) {
+  // Listener global já ativo — apenas re-renderiza
+  if (unsubReceitas) {
+    renderReceitas();
+  } else {
     unsubReceitas = onSnapshot(
       query(collection(db, 'receitas'), orderBy('numero', 'desc')),
       snap => {
@@ -6248,9 +6281,6 @@ async function iniciarModuloReceitas() {
         renderReceitas();
       }
     );
-  } else {
-    // Listener já ativo — só re-renderiza com os dados em memória
-    renderReceitas();
   }
 }
 
@@ -8458,8 +8488,8 @@ function renderDashboard() {
 
   // ── CARDS DE RESUMO RÁPIDO ──────────────────────────────────────────
   const totalProd   = produtos.length;
-  const negativos   = produtos.filter(p => p.estoque < 0).length;
-  const zerados     = produtos.filter(p => p.estoque === 0).length;
+  const negativos   = produtos.filter(p => p.estoque < 0 && !p.semBaixaAuto).length;
+  const zerados     = produtos.filter(p => p.estoque === 0 && !p.semBaixaAuto).length;
   const baixos      = produtos.filter(p => p.estoque > 0 && p.estoque <= 10).length;
 
   const irrigMes    = irrigLancamentos
