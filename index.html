@@ -6006,6 +6006,8 @@ const FAZENDAS_RECEITAS = [...new Set(TALHOES_PADRAO.map(t => t.fazenda))].sort(
 // Estado do módulo
 let recReceitas       = [];   // lista carregada do Firestore
 let recTalhoes        = [];   // talhões carregados do Firestore
+let recPaginaAtual    = 1;
+const REC_POR_PAGINA  = 10;
 let _recEditandoId    = null; // id da receita em edição
 let _recAceitandoId   = null; // id da receita em aceite
 let _recFinalizandoId = null; // id da receita sendo finalizada
