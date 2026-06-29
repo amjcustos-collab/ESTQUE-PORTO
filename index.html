@@ -226,6 +226,7 @@ header {
 .produto-card.negativo { border-color: #7b1fa2; background: #f9f0ff; }
 .produto-card.negativo .unidade-tag { background: #7b1fa2 !important; filter: none; }
 .produto-card.negativo .estoque-valor { color: #7b1fa2; }
+.badge-sem-baixa { display:inline-flex; align-items:center; gap:4px; background:#e8f5e9; color:#1b5e20; border:1px solid #a5d6a7; border-radius:999px; font-size:10px; font-weight:700; padding:1px 7px; margin-left:6px; vertical-align:middle; }
 .dash-pill.negativo { background: #f3e8ff; color: #7b1fa2; }
 .dash-rec-item { display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--borda); transition:background 0.1s; }
 .dash-rec-item:hover { background:var(--cinza-claro); }
@@ -2014,6 +2015,13 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           </div>
           <div class="campo-group"><label>Estoque inicial</label><input type="number" id="np-estoque" min="0" step="0.5" placeholder="0"></div>
         </div>
+        <div id="np-sem-baixa-wrap" style="display:none;align-items:center;gap:10px;padding:10px 12px;background:#e8f5e9;border-radius:8px;border:1px solid #a5d6a7">
+          <input type="checkbox" id="np-sem-baixa" style="width:16px;height:16px;accent-color:#1b5e20;cursor:pointer">
+          <div>
+            <label for="np-sem-baixa" style="font-size:13px;font-weight:700;color:#1b5e20;cursor:pointer">🔬 Cadastro universal (sem movimentação automática)</label>
+            <div style="font-size:11px;color:#4a7a50;margin-top:1px">Use para biológicos/cepas: aparece nas receitas mas não gera baixa de estoque no aceite.</div>
+          </div>
+        </div>
         <div class="painel-acoes" style="justify-content:flex-end">
           <button class="btn-cancelar" onclick="window.AppEstoque.fecharNovoProduto()">Cancelar</button>
           <button class="btn-confirmar-editar" onclick="window.AppEstoque.confirmarNovoProduto()">✓ Adicionar Produto</button>
@@ -3184,7 +3192,7 @@ function renderLista() {
       card.innerHTML = `
         <div class="produto-linha" onclick="window.AppEstoque.fecharTodosMenus()">
           <div class="produto-info">
-            <div class="produto-nome">${p.nome}</div>
+            <div class="produto-nome">${p.nome}${p.semBaixaAuto ? '<span class="badge-sem-baixa">🔬 Universal</span>' : ''}</div>
             <div class="produto-pa">${p.pa}</div>
           </div>
           <div class="estoque-badge">
@@ -3192,8 +3200,10 @@ function renderLista() {
             <div class="estoque-label">em estoque</div>
           </div>
           <div class="btn-acoes">
+            ${p.semBaixaAuto ? `<span style="font-size:11px;color:#1b5e20;font-weight:600;padding:4px 8px">🔬 Cadastro universal — sem movimentação</span>` : `
             ${podeEntrada ? `<button class="btn-entrada" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','entrada')" title="Registrar entrada">+ Entrada</button>` : ''}
             ${podeBaixa ? `<button class="btn-baixa" onclick="event.stopPropagation();window.AppEstoque.abrirPainel('${p.id}','saida')" ${p.estoque<=0?'disabled':''}>− Baixa</button>` : ''}
+            `}
             ${(podeEditar || podeExcluir || podeVerHist) ? `
             <div style="position:relative">
               <button class="btn-menu-acoes" onclick="event.stopPropagation();window.AppEstoque.toggleMenuAcoes('${p.id}')" title="Mais ações">⋯</button>
@@ -3257,6 +3267,12 @@ function renderPainelConteudo(id, tipo) {
       </div>`;
   } else if (tipo === 'editar') {
     painel.className = 'painel-baixa aberto tipo-editar';
+    const semBaixaCheck = p.semBaixaAuto ? 'checked' : '';
+    const semBaixaWrap = isAdmin() ? `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#e8f5e9;border-radius:8px;border:1px solid #a5d6a7">
+        <input type="checkbox" id="ed-sem-baixa-${id}" ${semBaixaCheck} style="width:15px;height:15px;accent-color:#1b5e20;cursor:pointer">
+        <label for="ed-sem-baixa-${id}" style="font-size:12px;font-weight:700;color:#1b5e20;cursor:pointer">🔬 Cadastro universal (sem movimentação automática)</label>
+      </div>` : '';
     el.innerHTML = `
       <div class="painel-titulo">✎ Editar produto: ${p.nome}</div>
       <div class="painel-campos">
@@ -3269,7 +3285,8 @@ function renderPainelConteudo(id, tipo) {
             <option value="KG" ${p.unidade==='KG'?'selected':''}>Quilo (KG)</option>
           </select>
         </div>
-        <div class="campo-group" style="max-width:160px"><label>Estoque (manual)</label><input type="number" id="ed-estoque-${id}" min="0" step="0.5" value="${p.estoque}"></div>
+        <div class="campo-group" style="max-width:160px"><label>Estoque (manual)</label><input type="number" id="ed-estoque-${id}" min="0" step="0.5" value="${p.estoque}" ${p.semBaixaAuto ? 'disabled title="Produto universal não tem estoque"' : ''}></div>
+        ${semBaixaWrap}
         <div class="painel-acoes">
           <button class="btn-cancelar" onclick="window.AppEstoque.fecharPainel('${id}')">Cancelar</button>
           <button class="btn-confirmar-editar" id="btn-confirma-${id}" onclick="window.AppEstoque.confirmarEdicao('${id}')">✓ Salvar Alterações</button>
@@ -3393,7 +3410,9 @@ async function confirmarEdicao(id) {
   const novoNome = document.getElementById(`ed-nome-${id}`).value.trim();
   const novoPA = document.getElementById(`ed-pa-${id}`).value.trim();
   const novaUnidade = document.getElementById(`ed-unidade-${id}`).value;
-  const novoEstoque = parseQtd(document.getElementById(`ed-estoque-${id}`).value);
+  const novoEstoqueEl = document.getElementById(`ed-estoque-${id}`);
+  const novoEstoque = novoEstoqueEl && !novoEstoqueEl.disabled ? parseQtd(novoEstoqueEl.value) : p.estoque;
+  const novoSemBaixa = isAdmin() ? (document.getElementById(`ed-sem-baixa-${id}`)?.checked || false) : (p.semBaixaAuto || false);
   if (!novoNome) { mostrarToast('O nome não pode ficar vazio.', 'erro'); return; }
   if (isNaN(novoEstoque) || novoEstoque < 0) { mostrarToast('Estoque inválido.', 'erro'); return; }
 
@@ -3404,7 +3423,7 @@ async function confirmarEdicao(id) {
     const unidadeAntiga = p.unidade;
     const novoEstoqueArred = Math.round(novoEstoque * 100) / 100;
 
-    await Persistencia.salvarProduto({ ...p, nome: novoNome, pa: novoPA, unidade: novaUnidade, estoque: novoEstoqueArred });
+    await Persistencia.salvarProduto({ ...p, nome: novoNome, pa: novoPA, unidade: novaUnidade, estoque: novoEstoqueArred, semBaixaAuto: novoSemBaixa });
 
     const s = getSessao();
     if (estoqueAntigo !== novoEstoqueArred || nomeAntigo !== novoNome || unidadeAntiga !== novaUnidade) {
@@ -3480,6 +3499,11 @@ function abrirNovoProduto() {
   document.getElementById('np-pa').value = '';
   document.getElementById('np-unidade').value = 'L';
   document.getElementById('np-estoque').value = '';
+  const semBaixaCheck = document.getElementById('np-sem-baixa');
+  if (semBaixaCheck) semBaixaCheck.checked = false;
+  // Mostrar opção de "sem baixa auto" apenas para admin
+  const wrapSemBaixa = document.getElementById('np-sem-baixa-wrap');
+  if (wrapSemBaixa) wrapSemBaixa.style.display = isAdmin() ? 'flex' : 'none';
   document.getElementById('overlayNovoProduto').classList.add('aberto');
   setTimeout(() => document.getElementById('np-nome').focus(), 80);
 }
@@ -3492,21 +3516,25 @@ async function confirmarNovoProduto() {
   const classe = document.getElementById('np-classe').value;
   const unidade = document.getElementById('np-unidade').value;
   const estoque = parseQtd(document.getElementById('np-estoque').value) || 0;
+  const semBaixaAuto = isAdmin() && (document.getElementById('np-sem-baixa')?.checked || false);
   if (!nome) { mostrarToast('Informe o nome do produto.', 'erro'); return; }
 
   const btn = document.querySelector('#overlayNovoProduto .btn-confirmar-editar');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
 
   try {
-    const novo = { classe, nome, unidade, pa: pa || classe, estoque: Math.round(estoque*100)/100 };
+    const estoqueInicial = semBaixaAuto ? 0 : Math.round(estoque*100)/100;
+    const novo = { classe, nome, unidade, pa: pa || classe, estoque: estoqueInicial, semBaixaAuto };
     const novoId = await Persistencia.criarProduto(novo);
 
     const s = getSessao();
-    await Persistencia.registrarHistorico({
-      produtoId: novoId, produto: novo.nome, classe: novo.classe, qtd: novo.estoque, unidade: novo.unidade,
-      resp: s ? s.label : '—', obs: 'Produto cadastrado no sistema', estoqueApos: novo.estoque,
-      data: new Date().toISOString(), tipo: 'entrada', usuario: s ? s.email : '—', nomeUsuario: s ? s.label : '—'
-    });
+    if (!semBaixaAuto) {
+      await Persistencia.registrarHistorico({
+        produtoId: novoId, produto: novo.nome, classe: novo.classe, qtd: novo.estoque, unidade: novo.unidade,
+        resp: s ? s.label : '—', obs: 'Produto cadastrado no sistema', estoqueApos: novo.estoque,
+        data: new Date().toISOString(), tipo: 'entrada', usuario: s ? s.email : '—', nomeUsuario: s ? s.label : '—'
+      });
+    }
 
     fecharNovoProduto();
     mostrarToast(`✓ Produto "${novo.nome}" adicionado!`, 'sucesso');
@@ -6538,9 +6566,11 @@ function onRecOperacaoChange() {
   const tanqueInput = document.getElementById('recTanque');
   if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
   if (bicoGrp) bicoGrp.style.display = op === 'autopropelido' ? '' : 'none';
-  if (tanqueInput && !tanqueInput.value) {
+  // Sempre atualiza o tanque ao trocar tipo — não manter valor do tipo anterior
+  if (tanqueInput) {
     if (op === 'drone') tanqueInput.value = 70;
     else if (op === 'autopropelido') tanqueInput.value = 3000;
+    else tanqueInput.value = '';
   }
 }
 
@@ -7060,7 +7090,8 @@ function abrirAceiteReceita(id) {
     const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
     const saldo = prod ? (prod.estoque || 0) : null;
     const saldoOk = saldo === null ? null : saldo >= it.qdeTotalArea;
-    return { ...it, produtoId: prod?.id || null, saldoEstoque: saldo, saldoOk };
+    const semBaixaAuto = prod?.semBaixaAuto || false;
+    return { ...it, produtoId: prod?.id || null, saldoEstoque: saldo, saldoOk, semBaixaAuto };
   });
 
   // Itens biológicos para calculador
@@ -7118,13 +7149,15 @@ function abrirAceiteReceita(id) {
   }
 
   const linhasProd = itensComSaldo.map((it, i) => {
-    const semSaldo = it.saldoOk === false;
-    const semCad   = it.saldoEstoque === null;
+    const semSaldo  = it.saldoOk === false;
+    const semCad    = it.saldoEstoque === null;
+    const universal = it.semBaixaAuto === true;
     const faltam = ((it.qdeTotalArea||0)-(it.saldoEstoque||0)).toFixed(2);
-    return `<tr style="${semSaldo?'background:#fff3cd':''}">
+    return `<tr style="${semSaldo&&!universal?'background:#fff3cd':''}">
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2">
         ${esc(it.nome)}
         ${semCad ? '<span style="font-size:10px;color:#856404;margin-left:4px">⚠️ não cadastrado</span>' : ''}
+        ${universal ? '<span style="font-size:10px;color:#1b5e20;margin-left:4px;font-weight:700">🔬 universal</span>' : ''}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.tipo||'—')}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
@@ -7135,21 +7168,22 @@ function abrirAceiteReceita(id) {
           oninput="window.AppEstoque.updateQdeAceite(${i},parseFloat(this.value)||0)">
         <span style="font-size:11px;color:var(--texto-suave)">${esc(it.unidade||'L')}</span>
       </td>
-      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right">${it.saldoEstoque !== null ? it.saldoEstoque.toFixed(2) : '—'}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:right">${universal ? '—' : it.saldoEstoque !== null ? it.saldoEstoque.toFixed(2) : '—'}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center" id="aceiteStatus_${i}">
-        ${semCad ? '<span style="color:#856404;font-size:12px">Não cadastrado</span>'
+        ${universal ? '<span style="color:#1b5e20;font-size:11px;font-weight:700">🔬 Sem baixa auto</span>'
+          : semCad ? '<span style="color:#856404;font-size:12px">Não cadastrado</span>'
           : semSaldo ? `<span style="color:#c00;font-size:11px;font-weight:700">⚠️ Faltam ${faltam} ${esc(it.unidade||'L')}</span>`
           : '<span style="color:#2a7a2a;font-weight:700">✓ OK</span>'}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">
-        <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">
+        ${universal ? '' : `<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">
           <button onmousedown="window.AppEstoque.abrirSubstituirProduto('${r.id}',${i})"
             style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:6px;
             padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">↔ Substituir</button>
           ${semCad ? `<button onmousedown="window.AppEstoque.cadastrarProdutoNoAceite(${i},'${esc(it.nome)}','${esc(it.unidade||'L')}','${esc(it.tipo||'')}','${r.id}')"
             style="background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;border-radius:6px;
             padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer">+ Cadastrar</button>` : ''}
-        </div>
+        </div>`}
       </td>
     </tr>`;
   }).join('');
@@ -7261,6 +7295,9 @@ async function confirmarAceite() {
       const prod = produtos.find(p => p.nome.toLowerCase() === it.nome.toLowerCase());
       if (!prod) return { ...it, saldoOk: null, baixaDada: false }; // não deve chegar aqui
 
+      // Produto universal (biológicos/cepas) — sem baixa automática
+      if (prod.semBaixaAuto) return { ...it, produtoId: prod.id, saldoOk: true, baixaDada: false, semBaixaAuto: true };
+
       const qtd = it.qdeTotalArea || 0;
       // Dar baixa sem verificar saldo mínimo — permite ir negativo
       let estoqueApos;
@@ -7302,9 +7339,12 @@ async function confirmarAceite() {
     });
 
     const negativos = itensAtualizados.filter(it => it.estoqueNegativo).length;
-    mostrarToast(negativos
-      ? `Aceite realizado! ${negativos} produto(s) ficaram com estoque negativo — aguardando entrada.`
-      : 'Receita aceita e baixas realizadas no estoque!', 'sucesso');
+    const universais = itensAtualizados.filter(it => it.semBaixaAuto).length;
+    let msg = 'Receita aceita e baixas realizadas no estoque!';
+    if (negativos && universais) msg = `Aceite realizado! ${negativos} produto(s) ficaram negativos. ${universais} produto(s) universal(is) sem baixa automática.`;
+    else if (negativos) msg = `Aceite realizado! ${negativos} produto(s) ficaram com estoque negativo — aguardando entrada.`;
+    else if (universais) msg = `Aceite realizado! ${universais} produto(s) universal(is) (ex: biológicos) sem baixa automática — dar baixa manualmente se necessário.`;
+    mostrarToast(msg, 'sucesso');
     fecharAceiteReceita();
     fecharDetReceita();
   } catch(e) {
@@ -8370,7 +8410,8 @@ function renderDashboard() {
     { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
     { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '' },
     { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
-    { valor: baixos,              label: 'Estoque baixo',        sub: '≤ 10 unidades',                     cls: baixos  > 0 ? 'alerta'  : '' },
+    { valor: recReceitas.filter(r => r.status === 'pendente').length, label: 'Receitas pendentes', sub: 'aguardando aceite', cls: recReceitas.filter(r => r.status === 'pendente').length > 0 ? 'alerta' : '' },
+    { valor: recReceitas.filter(r => r.status === 'em_aberto').length, label: 'Receitas em aberto', sub: 'em execução',      cls: recReceitas.filter(r => r.status === 'em_aberto').length > 0 ? 'azul' : '' },
     { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
     { valor: pluvMes.toFixed(1)  + ' mm', label: 'Chuva média no mês', sub: 'média entre fazendas',       cls: 'verde' },
     { valor: pluvTotal.toFixed(1) + ' mm', label: 'Chuva total no mês', sub: 'soma de todas as fazendas', cls: 'verde' },
