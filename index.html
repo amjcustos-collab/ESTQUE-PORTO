@@ -227,13 +227,14 @@ header {
 .produto-card.negativo .unidade-tag { background: #7b1fa2 !important; filter: none; }
 .produto-card.negativo .estoque-valor { color: #7b1fa2; }
 .dash-pill.negativo { background: #f3e8ff; color: #7b1fa2; }
-.dash-rec-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--borda); }
+.dash-rec-item { display:flex; align-items:center; gap:10px; padding:8px 16px; border-bottom:1px solid var(--borda); transition:background 0.1s; }
+.dash-rec-item:hover { background:var(--cinza-claro); }
 .dash-rec-item:last-child { border-bottom:none; }
-.dash-rec-num { font-size:11px; font-weight:700; color:var(--texto-suave); min-width:38px; padding-top:2px; flex-shrink:0; }
+.dash-rec-num { font-size:11px; font-weight:700; color:var(--texto-suave); min-width:36px; flex-shrink:0; font-family:monospace; }
 .dash-rec-info { flex:1; min-width:0; }
-.dash-rec-nome { font-size:13px; font-weight:700; color:var(--texto); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dash-rec-sub { font-size:11px; color:var(--texto-suave); margin-top:2px; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.dash-rec-pill { font-size:10px; font-weight:700; padding:3px 9px; border-radius:999px; flex-shrink:0; margin-top:2px; white-space:nowrap; }
+.dash-rec-nome { font-size:13px; font-weight:700; color:var(--texto); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dash-rec-sub { font-size:11px; color:var(--texto-suave); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.dash-rec-pill { font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; flex-shrink:0; white-space:nowrap; }
 .dash-rec-pill.pendente { background:#fef3c7; color:#854d0e; }
 .dash-rec-pill.em_aberto { background:#dbeafe; color:#1d4ed8; }
 .btn-entrada { background: var(--verde); color: white; border: none; border-radius: 8px; padding: 9px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
@@ -2877,9 +2878,8 @@ async function iniciarListenersTempoReal() {
     if (moduloAtivo === 'dashboard') renderDashboard();
   });
 
-  // Listener de receitas iniciado globalmente para o Dashboard consumir sem precisar abrir o módulo
+  // Listener de receitas — mesmo padrão da irrigação/pluviometria
   if (!unsubReceitas) {
-    let _recFirstSnap = true;
     unsubReceitas = onSnapshot(
       query(collection(db, 'receitas'), orderBy('numero', 'desc')),
       snap => {
@@ -2887,17 +2887,7 @@ async function iniciarListenersTempoReal() {
         const nums = recReceitas.map(r => r.numero || 0);
         _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
         if (moduloAtivo === 'receitas') renderReceitas();
-        // Sempre atualiza o dashboard — no primeiro snapshot o moduloAtivo pode
-        // ainda não ter sido definido, então verifica o elemento diretamente
-        const dashAtivo = moduloAtivo === 'dashboard'
-          || document.getElementById('telaDash')?.classList.contains('ativa');
-        if (dashAtivo || _recFirstSnap) {
-          _recFirstSnap = false;
-          // Pequeno delay para garantir que o DOM do dashboard já foi renderizado
-          setTimeout(() => {
-            if (document.getElementById('dashReceitas')) renderDashboard();
-          }, 100);
-        }
+        if (moduloAtivo === 'dashboard') renderDashboard();
       }
     );
   }
@@ -8547,7 +8537,9 @@ function navegarModulo(modulo) {
   // Só iniciam se ainda não estiverem rodando.
   if (modulo === 'irrigacao')    iniciarModuloIrrigacao();
   if (modulo === 'pluviometria') iniciarModuloPluv();
-  if (modulo === 'receitas')     iniciarModuloReceitas();  else pararModuloReceitas();
+  // Receitas: o listener global fica sempre ativo (Dashboard o consome).
+  // Ao entrar no módulo, apenas inicializa os selects/talhões.
+  if (modulo === 'receitas') iniciarModuloReceitas();
   if (modulo === 'dashboard')    renderDashboard();
 }
 
