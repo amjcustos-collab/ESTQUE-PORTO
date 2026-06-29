@@ -558,36 +558,52 @@ header {
 
 /* ── Cards de Receita ── */
 .rec-lista { display:flex; flex-direction:column; gap:12px; }
-.rec-card { background:white; border:1px solid #e2e8f0; border-radius:10px;
-  padding:12px 16px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
-.rec-card:hover { box-shadow:0 2px 10px rgba(0,0,0,.08); border-color:#93c5fd; }
-.rec-card-num { font-size:10px; font-weight:700; color:var(--texto-suave);
-  text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
-.rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:0 0 6px; }
-.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
-.rec-talhao-chip { background:#f0f5ff; color:#1e3a8a; border:1px solid #bfdbfe;
-  border-radius:5px; padding:2px 8px; font-size:11px; font-weight:600; white-space:nowrap; }
-.rec-card-header { display:flex; align-items:flex-start; gap:12px; }
-.rec-card-right { margin-left:auto; display:flex; flex-direction:column;
-  align-items:flex-end; gap:4px; flex-shrink:0; padding-left:12px; }
-.rec-status { display:inline-block; padding:5px 16px; border-radius:20px;
-  font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; }
-.rec-status.pendente   { background:#fef9c3; color:#854d0e; border:1.5px solid #fde047; }
-.rec-status.em_aberto  { background:#dbeafe; color:#1e40af; border:1.5px solid #93c5fd; }
-.rec-status.finalizado { background:#dcfce7; color:#166534; border:1.5px solid #86efac; }
-.rec-status.cancelado  { background:#fee2e2; color:#991b1b; border:1.5px solid #fca5a5; }
-.rec-realizar-aplicacao { font-size:11px; font-weight:700; color:#c05a00;
-  background:none; border:none; padding:0; white-space:nowrap; margin-top:3px; }
-.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:4px;
+.rec-card { background:white; border:1px solid #e2e8f0; border-radius:12px;
+  padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
+.rec-card:hover { box-shadow:0 2px 12px rgba(0,0,0,.08); border-color:#93c5fd; }
+/* Linha 1: ícone + info + status + botão */
+.rec-card-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.rec-card-doc-icon { width:40px; height:40px; background:#eff6ff; border-radius:8px;
+  display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.rec-card-info { flex:1; min-width:0; }
+.rec-card-num { font-size:11px; font-weight:600; color:var(--texto-suave); margin-bottom:2px; }
+.rec-card-titulo { font-size:16px; font-weight:800; color:var(--texto); }
+.rec-card-top-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.rec-status { display:inline-flex; align-items:center; gap:5px; padding:5px 14px;
+  border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
+.rec-status.pendente   { background:#fef9c3; color:#854d0e; border:1px solid #fde047; }
+.rec-status.em_aberto  { background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; }
+.rec-status.finalizado { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
+.rec-status.cancelado  { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
+.rec-btn-aplicar { display:inline-flex; align-items:center; gap:6px; padding:7px 16px;
+  background:#1e40af; color:white; border-radius:8px; font-size:12px; font-weight:700;
+  white-space:nowrap; border:none; cursor:pointer; }
+/* Talhões */
+.rec-card-talh-section { border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;
+  padding:10px 0; margin-bottom:12px; }
+.rec-card-talh-label { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase;
+  letter-spacing:.6px; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
+.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:4px; }
+.rec-talhao-chip { background:#f8fafc; color:#1e3a8a; border:1px solid #e2e8f0;
+  border-radius:6px; padding:3px 10px; font-size:11px; font-weight:600; white-space:nowrap; }
+/* Impresso */
+.rec-card-impresso { font-size:11px; color:#166534; font-weight:600;
+  display:flex; align-items:center; gap:4px; margin-top:6px; }
+/* Rodapé 3 colunas */
+.rec-card-footer { display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:8px; align-items:center; }
+.rec-card-footer-col { display:flex; flex-direction:column; gap:1px; }
+.rec-card-footer-col.center { align-items:center; }
+.rec-card-footer-col.right { align-items:flex-end; }
+.rec-footer-label { font-size:9px; font-weight:700; color:#94a3b8;
+  text-transform:uppercase; letter-spacing:.5px; }
+.rec-footer-value { font-size:13px; font-weight:800; color:#1a2535; }
+.rec-footer-value.green { color:#166534; }
+/* Atraso */
+.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px;
   font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
-  border:1px solid #fca974; border-radius:6px; padding:2px 8px; }
-.rec-card-divider { height:1px; background:#f1f5f9; margin:8px 0; }
-.rec-card-footer { display:flex; align-items:center;
-  justify-content:space-between; gap:12px; }
-.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
-.rec-footer-tecnico { font-size:11px; color:var(--texto-suave); }
-.rec-footer-data { font-size:11px; color:var(--texto-suave); font-weight:600; }
-.rec-footer-operador { font-size:11px; color:#166534; font-weight:700; }
+  border:1px solid #fca974; border-radius:6px; padding:2px 8px; margin-top:4px; }
+.rec-realizar-aplicacao { display:none; }
 
 /* Grupos de status */
 .rec-grupo-header { display:flex; align-items:center; gap:14px; padding:14px 18px;
@@ -626,11 +642,11 @@ header {
 .rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
 .rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
 
-.rec-op-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px;
-  border-radius:8px; font-size:12px; font-weight:700; }
+.rec-op-badge { display:inline-flex; align-items:center; gap:6px; padding:3px 0;
+  font-size:13px; font-weight:800; }
 .rec-op-badge svg { display:block; flex-shrink:0; }
-.rec-op-badge.drone         { background:#eff6ff; color:#1e40af; }
-.rec-op-badge.autopropelido { background:#f0fdf4; color:#166534; }
+.rec-op-badge.drone         { color:#1e40af; }
+.rec-op-badge.autopropelido { color:#166534; }
 
 /* Histórico receita agrupado */
 .mov-receita-grupo { border-left:4px solid #1a4080; }
@@ -6143,30 +6159,61 @@ function renderReceitas() {
     const operadorTxt = r.status === 'finalizado' && r.aplicador
       ? ` &nbsp;—&nbsp; <span class="rec-footer-operador">Operador: <strong>${esc(r.aplicador)}</strong></span>` : '';
     const recId = r.id;
+    const aplicarBtn = r.status==='em_aberto'
+      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${recId}'),150)">⚡ Realizar a Aplicação!</button>`
+      : '';
+    const statusDot = {pendente:'🟡',em_aberto:'🔵',finalizado:'🟢',cancelado:'🔴'}[r.status]||'⚪';
     return `<div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
-      <div class="rec-card-header">
-        <div style="flex:1;min-width:0">
-          <div class="rec-card-num">RECEITA #${String(r.numero).padStart(4,'0')} &nbsp;·&nbsp; ${r.fazenda} &nbsp;·&nbsp; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' &nbsp;·&nbsp; SAFRA '+esc(r.safra):''}</div>
+
+      <!-- Linha topo: ícone + info + status + botão -->
+      <div class="rec-card-top">
+        <div class="rec-card-doc-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="1.8">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
+          </svg>
+        </div>
+        <div class="rec-card-info">
+          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} &middot; ${r.fazenda} &middot; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' &middot; Safra '+esc(r.safra):''}</div>
           <div class="rec-card-titulo">${esc(r.descricao||r.cultura||'—')}</div>
-          ${(r.talhoes||[]).length?`<div class="rec-card-talhoes">${(r.talhoes||[]).map(t=>`<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>`:''}
-          <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap">
-            ${r.impresso?'<span style="color:#166534;font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px">🖨️ Impresso</span>':''}
-            ${atrasoTag}
-          </div>
         </div>
-        <div class="rec-card-right">
-          <span class="rec-status ${r.status}">${statusLabel[r.status]||r.status}</span>
-          ${r.status==='em_aberto'?'<div class="rec-realizar-aplicacao">⚡ Realizar a Aplicação!</div>':''}
+        <div class="rec-card-top-right">
+          <span class="rec-status ${r.status}">${statusDot} ${statusLabel[r.status]||r.status}</span>
+          ${aplicarBtn}
         </div>
       </div>
-      <div class="rec-card-divider"></div>
+
+      <!-- Talhões -->
+      ${(r.talhoes||[]).length ? `
+      <div class="rec-card-talh-section">
+        <div class="rec-card-talh-label">📍 Talhões (${(r.talhoes||[]).length})</div>
+        <div class="rec-card-talhoes">${(r.talhoes||[]).map(t=>`<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>
+      </div>` : ''}
+
+      <!-- Impresso + atraso -->
+      ${r.impresso||atrasoDias>0 ? `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+        ${r.impresso?'<span class="rec-card-impresso">🖨️ Impresso</span>':''}
+        ${atrasoTag}
+      </div>` : ''}
+
+      <!-- Rodapé 3 colunas: Equipamento | Responsável | Data -->
       <div class="rec-card-footer">
-        <div style="display:inline-flex;align-items:center;gap:0">${opBadge}${operadorTxt}</div>
-        <div class="rec-card-footer-meta">
-          <span class="rec-footer-tecnico">Responsável: <strong>${esc(r.tecnico||'—')}</strong></span>
-          <span class="rec-footer-data">${dataFmt}</span>
+        <div class="rec-card-footer-col">
+          <span class="rec-footer-label">Equipamento</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:2px">${opBadge}</div>
+          ${r.status==='finalizado'&&r.aplicador?`<span style="font-size:11px;color:#166534;font-weight:600;margin-top:2px">Operador: <strong>${esc(r.aplicador)}</strong></span>`:''}
+        </div>
+        <div class="rec-card-footer-col center">
+          <span class="rec-footer-label">Responsável</span>
+          <span class="rec-footer-value">${esc(r.tecnico||'—')}</span>
+        </div>
+        <div class="rec-card-footer-col right">
+          <span class="rec-footer-label">Data</span>
+          <span class="rec-footer-value">${dataFmt}</span>
         </div>
       </div>
+
     </div>`;
   }
 
