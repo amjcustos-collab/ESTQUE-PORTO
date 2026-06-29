@@ -558,36 +558,36 @@ header {
 
 /* ── Cards de Receita ── */
 .rec-lista { display:flex; flex-direction:column; gap:12px; }
-.rec-card { background:white; border:1.5px solid var(--borda); border-radius:12px;
-  padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
-.rec-card:hover { box-shadow:0 3px 12px rgba(0,0,0,.10); border-color:#b0c0d8; }
-.rec-card-header { display:flex; align-items:flex-start; gap:16px;
-  padding-bottom:12px; border-bottom:1px solid var(--borda); }
-.rec-card-num { font-size:11px; font-weight:700; color:var(--texto-suave);
-  text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
-.rec-card-titulo { font-size:16px; font-weight:800; color:var(--texto); margin:2px 0 8px; }
-.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
-.rec-talhao-chip { background:#eef4ff; color:#1a4080; border:1px solid #c0d0f0;
-  border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; }
+.rec-card { background:white; border:1px solid #e2e8f0; border-radius:10px;
+  padding:12px 16px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
+.rec-card:hover { box-shadow:0 2px 10px rgba(0,0,0,.08); border-color:#93c5fd; }
+.rec-card-num { font-size:10px; font-weight:700; color:var(--texto-suave);
+  text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+.rec-card-titulo { font-size:15px; font-weight:800; color:var(--texto); margin:0 0 6px; }
+.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:4px; margin:4px 0; }
+.rec-talhao-chip { background:#f0f5ff; color:#1e3a8a; border:1px solid #bfdbfe;
+  border-radius:5px; padding:2px 8px; font-size:11px; font-weight:600; white-space:nowrap; }
+.rec-card-header { display:flex; align-items:flex-start; gap:12px; }
 .rec-card-right { margin-left:auto; display:flex; flex-direction:column;
-  align-items:flex-end; gap:6px; flex-shrink:0; padding-left:16px; }
-.rec-status { display:inline-block; padding:9px 22px; border-radius:20px;
-  font-size:13px; font-weight:800; letter-spacing:.3px; white-space:nowrap; }
-.rec-status.pendente   { background:#fff3cd; color:#856404; border:1.5px solid #ffd700; }
-.rec-status.em_aberto  { background:#cfe2ff; color:#084298; border:1.5px solid #84b4f0; }
-.rec-status.finalizado { background:#d1e7dd; color:#0a3622; border:1.5px solid #86c9a0; }
-.rec-status.cancelado  { background:#f8d7da; color:#842029; border:1.5px solid #f0a0a8; }
-.rec-realizar-aplicacao { font-size:12px; font-weight:700; color:#c05a00;
-  background:none; border:none; padding:0; white-space:nowrap; margin-top:6px; }
-.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:6px;
+  align-items:flex-end; gap:4px; flex-shrink:0; padding-left:12px; }
+.rec-status { display:inline-block; padding:5px 16px; border-radius:20px;
+  font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; }
+.rec-status.pendente   { background:#fef9c3; color:#854d0e; border:1.5px solid #fde047; }
+.rec-status.em_aberto  { background:#dbeafe; color:#1e40af; border:1.5px solid #93c5fd; }
+.rec-status.finalizado { background:#dcfce7; color:#166534; border:1.5px solid #86efac; }
+.rec-status.cancelado  { background:#fee2e2; color:#991b1b; border:1.5px solid #fca5a5; }
+.rec-realizar-aplicacao { font-size:11px; font-weight:700; color:#c05a00;
+  background:none; border:none; padding:0; white-space:nowrap; margin-top:3px; }
+.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; margin-top:4px;
   font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
-  border:1px solid #fca974; border-radius:6px; padding:3px 9px; }
-.rec-card-footer { display:flex; align-items:center; padding-top:10px;
+  border:1px solid #fca974; border-radius:6px; padding:2px 8px; }
+.rec-card-divider { height:1px; background:#f1f5f9; margin:8px 0; }
+.rec-card-footer { display:flex; align-items:center;
   justify-content:space-between; gap:12px; }
-.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
-.rec-footer-tecnico { font-size:13px; color:var(--texto-suave); }
-.rec-footer-data { font-size:13px; color:var(--texto); font-weight:700; }
-.rec-footer-operador { font-size:13px; color:#2d5a1e; font-weight:600; }
+.rec-card-footer-meta { display:flex; flex-direction:column; align-items:flex-end; gap:1px; }
+.rec-footer-tecnico { font-size:11px; color:var(--texto-suave); }
+.rec-footer-data { font-size:11px; color:var(--texto-suave); font-weight:600; }
+.rec-footer-operador { font-size:11px; color:#166534; font-weight:700; }
 
 /* Grupos de status */
 .rec-grupo-header { display:flex; align-items:center; gap:14px; padding:14px 18px;
@@ -626,11 +626,11 @@ header {
 .rec-prod-tag.substituido { background:#fff3e0; color:#e65100; text-decoration:line-through; }
 .rec-vazio { text-align:center; padding:48px 20px; color:var(--texto-suave); font-size:14px; }
 
-.rec-op-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 14px;
-  border-radius:10px; font-size:13px; font-weight:700; }
+.rec-op-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 10px;
+  border-radius:8px; font-size:12px; font-weight:700; }
 .rec-op-badge svg { display:block; flex-shrink:0; }
-.rec-op-badge.drone         { background:#e8f4fd; color:#1565c0; }
-.rec-op-badge.autopropelido { background:#f0faf0; color:#2d6a2d; }
+.rec-op-badge.drone         { background:#eff6ff; color:#1e40af; }
+.rec-op-badge.autopropelido { background:#f0fdf4; color:#166534; }
 
 /* Histórico receita agrupado */
 .mov-receita-grupo { border-left:4px solid #1a4080; }
@@ -6146,19 +6146,22 @@ function renderReceitas() {
     return `<div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
       <div class="rec-card-header">
         <div style="flex:1;min-width:0">
-          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} · ${r.fazenda} · ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' · Safra '+esc(r.safra):''}</div>
+          <div class="rec-card-num">RECEITA #${String(r.numero).padStart(4,'0')} &nbsp;·&nbsp; ${r.fazenda} &nbsp;·&nbsp; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' &nbsp;·&nbsp; SAFRA '+esc(r.safra):''}</div>
           <div class="rec-card-titulo">${esc(r.descricao||r.cultura||'—')}</div>
           ${(r.talhoes||[]).length?`<div class="rec-card-talhoes">${(r.talhoes||[]).map(t=>`<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>`:''}
-          ${r.impresso?'<div style="margin-top:4px"><span style="color:#2a7a2a;font-size:11px;font-weight:600">🖨️ Impresso</span></div>':''}
-          ${atrasoTag}
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap">
+            ${r.impresso?'<span style="color:#166534;font-size:11px;font-weight:600;display:flex;align-items:center;gap:3px">🖨️ Impresso</span>':''}
+            ${atrasoTag}
+          </div>
         </div>
         <div class="rec-card-right">
           <span class="rec-status ${r.status}">${statusLabel[r.status]||r.status}</span>
           ${r.status==='em_aberto'?'<div class="rec-realizar-aplicacao">⚡ Realizar a Aplicação!</div>':''}
         </div>
       </div>
+      <div class="rec-card-divider"></div>
       <div class="rec-card-footer">
-        <div style="display:inline-flex;align-items:center">${opBadge}${operadorTxt}</div>
+        <div style="display:inline-flex;align-items:center;gap:0">${opBadge}${operadorTxt}</div>
         <div class="rec-card-footer-meta">
           <span class="rec-footer-tecnico">Responsável: <strong>${esc(r.tecnico||'—')}</strong></span>
           <span class="rec-footer-data">${dataFmt}</span>
