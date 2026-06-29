@@ -6669,9 +6669,10 @@ function onRecOperacaoChange() {
   const tanqueInput = document.getElementById('recTanque');
   if (grp) grp.style.display = (op === 'drone' || op === 'autopropelido') ? '' : 'none';
   if (bicoGrp) bicoGrp.style.display = op === 'autopropelido' ? '' : 'none';
-  if (tanqueInput && !tanqueInput.value) {
+  if (tanqueInput) {
     if (op === 'drone') tanqueInput.value = 70;
     else if (op === 'autopropelido') tanqueInput.value = 3000;
+    else tanqueInput.value = '';
   }
 }
 
@@ -8670,6 +8671,9 @@ function navegarModulo(modulo) {
   show('btnHistoricoHeader', modulo === 'estoque');
   show('btnExcelHeader',     modulo === 'estoque' && temRelat);
   show('btnPDFHeader',       modulo === 'estoque' && temRelat);
+
+  const btnImportarNav = document.getElementById('btnImportarEstoque');
+  if (btnImportarNav) btnImportarNav.style.display = (modulo === 'estoque' && isAdmin()) ? 'inline-block' : 'none';
   // Irrigação
   show('btnIrrigExcelHeader', modulo === 'irrigacao' && temRelat);
   show('btnIrrigPDFHeader',   modulo === 'irrigacao' && temRelat);
