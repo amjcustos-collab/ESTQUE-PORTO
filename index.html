@@ -643,15 +643,15 @@ header {
 @media (max-width: 640px) {
   .rec-item-fields {
     grid-template-columns: 1fr 1fr 1fr 36px;
-    grid-template-rows: auto auto;
+    grid-template-rows: auto auto auto;
     gap: 8px;
   }
   .rec-item-field-produto { grid-column: 1 / -1; grid-row: 1; }
-  .rec-item-field-tipo    { grid-column: 1; grid-row: 2; }
-  .rec-item-field-unid    { grid-column: 2; grid-row: 2; }
-  .rec-item-field-dose    { grid-column: 3; grid-row: 2; }
-  .rec-item-field-qde     { display: none; } /* QDE calculada automaticamente — ocultar em mobile para dar espaço */
-  .rec-item-field-del     { grid-column: 4; grid-row: 2; }
+  .rec-item-field-tipo    { grid-column: 1 / 3;  grid-row: 2; }
+  .rec-item-field-unid    { grid-column: 3;       grid-row: 2; }
+  .rec-item-field-del     { grid-column: 4;       grid-row: 2; }
+  .rec-item-field-dose    { grid-column: 1 / 3;  grid-row: 3; }
+  .rec-item-field-qde     { grid-column: 3 / 5;  grid-row: 3; display: block; }
 }
 .rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
   border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
@@ -1131,6 +1131,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <option value="MEIO DE CULTURA">Meio de Cultura</option>
     <option value="MOLUSCICIDA">Moluscicida</option>
     <option value="OLEO">Óleo</option>
+              <option value="SEMENTE">Semente</option>
   </select>
   <select class="filtro-status" onchange="window.AppEstoque.filtrar()" id="filtroStatus">
     <option value="">Todos os status</option>
@@ -2118,6 +2119,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
               <option value="MEIO DE CULTURA">Meio de Cultura</option>
               <option value="MOLUSCICIDA">Moluscicida</option>
               <option value="OLEO">Óleo</option>
+              <option value="SEMENTE">Semente</option>
             </select>
           </div>
           <div class="campo-group" style="max-width:130px">
@@ -2252,6 +2254,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
               <option value="MEIO DE CULTURA">Meio de Cultura</option>
               <option value="MOLUSCICIDA">Moluscicida</option>
               <option value="OLEO">Óleo</option>
+              <option value="SEMENTE">Semente</option>
             </select>
           </div>
           <div class="campo-group" style="max-width:130px">
@@ -3283,6 +3286,7 @@ function renderLista() {
     'MEIO DE CULTURA':{ icone: '🔬', cor: '#f3e8fd', desc: 'Meios e substratos' },
     'MOLUSCICIDA':    { icone: '🐌', cor: '#fce8f4', desc: 'Controle de moluscos' },
     'OLEO':           { icone: '💧', cor: '#e8f0fd', desc: 'Óleos minerais e vegetais' },
+    'SEMENTE':        { icone: '🌱', cor: '#f0fdf4', desc: 'Sementes e cultivares' },
   };
   Object.keys(grupos).sort().forEach(classe => {
     const meta = CLASSE_META[classe] || { icone: '📦', cor: '#f5f5f5', desc: 'Produtos' };
@@ -6750,7 +6754,8 @@ function renderItensReceita() {
   });
 
   cont.innerHTML = _recItens.map((it, i) => {
-    const qdeVal = it.qdeTotalManual != null ? it.qdeTotalManual : (it.qdeTotalArea || '');
+    const qdeAuto = it.qdeTotalManual != null ? it.qdeTotalManual : it.qdeTotalArea;
+    const qdeVal  = qdeAuto > 0 ? qdeAuto : '';
     return `
     <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--borda)">
       <div class="rec-item-fields">
@@ -6799,7 +6804,7 @@ function renderItensReceita() {
             padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;width:100%">🗑</button>
         </div>
       </div>
-      ${it.estoqueDisp != null ? '<div style="font-size:11px;margin-top:4px;color:'+((it.estoqueDisp||0)>=(qdeVal||0)?'var(--verde)':'var(--vermelho)')+'">📦 Estoque atual: <strong>'+fmt(it.estoqueDisp)+' '+(it.unidade||'')+'</strong>'+((it.estoqueDisp||0)<(qdeVal||0)?' <span style="color:var(--vermelho);font-weight:700">⚠️ Insuficiente</span>':'')+'</div>' : ''}
+      ${it.estoqueDisp != null ? '<div style="font-size:11px;margin-top:4px;color:'+((it.estoqueDisp||0)>=(qdeAuto||0)?'var(--verde)':'var(--vermelho)')+'">📦 Estoque atual: <strong>'+fmt(it.estoqueDisp)+' '+(it.unidade||'')+'</strong>'+((it.estoqueDisp||0)<(qdeAuto||0)?' <span style="color:var(--vermelho);font-weight:700">⚠️ Insuficiente</span>':'')+'</div>' : ''}
     </div>`;
   }).join('');
 }
@@ -7477,7 +7482,7 @@ function cadastrarProdutoNoAceite(itemIdx, nomePreench, unidadePreench, tipoPree
   const classeMap = {
     'Herbicida': 'HERBICIDA', 'Fungicida': 'FUNGICIDA', 'Inseticida': 'INSETICIDA',
     'Adjuvante': 'ADJUVANTE', 'Biológico': 'BIOLÓGICO', 'Foliar': 'FOLIAR',
-    'Óleo': 'OLEO', 'Moluscicida': 'MOLUSCICIDA', 'Meio de Cultura': 'MEIO DE CULTURA'
+    'Óleo': 'OLEO', 'Moluscicida': 'MOLUSCICIDA', 'Meio de Cultura': 'MEIO DE CULTURA', 'Semente': 'SEMENTE'
   };
   const classeSugerida = classeMap[tipoPreench] || '';
 
@@ -7515,6 +7520,7 @@ function cadastrarProdutoNoAceite(itemIdx, nomePreench, unidadePreench, tipoPree
                 <option value="MEIO DE CULTURA">Meio de Cultura</option>
                 <option value="MOLUSCICIDA">Moluscicida</option>
                 <option value="OLEO">Óleo</option>
+              <option value="SEMENTE">Semente</option>
               </select>
             </div>
             <div>
