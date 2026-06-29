@@ -621,7 +621,28 @@ header {
 .rec-grupo-count { font-size:13px; font-weight:800; padding:5px 13px;
   border-radius:20px; flex-shrink:0; }
 
-/* Chips de cultura no formulário */
+/* Grid de campos de produto no formulário de receita — responsivo */
+.rec-item-fields { display:grid; grid-template-columns:2fr 1fr 60px 80px 80px 44px; gap:8px; align-items:end; }
+.rec-item-field-produto { grid-column: 1; }
+.rec-item-field-tipo    { grid-column: 2; }
+.rec-item-field-unid    { grid-column: 3; }
+.rec-item-field-dose    { grid-column: 4; }
+.rec-item-field-qde     { grid-column: 5; }
+.rec-item-field-del     { grid-column: 6; }
+
+@media (max-width: 640px) {
+  .rec-item-fields {
+    grid-template-columns: 1fr 1fr 1fr 36px;
+    grid-template-rows: auto auto;
+    gap: 8px;
+  }
+  .rec-item-field-produto { grid-column: 1 / -1; grid-row: 1; }
+  .rec-item-field-tipo    { grid-column: 1; grid-row: 2; }
+  .rec-item-field-unid    { grid-column: 2; grid-row: 2; }
+  .rec-item-field-dose    { grid-column: 3; grid-row: 2; }
+  .rec-item-field-qde     { display: none; } /* QDE calculada automaticamente — ocultar em mobile para dar espaço */
+  .rec-item-field-del     { grid-column: 4; grid-row: 2; }
+}
 .rec-cultura-chip { display:inline-flex; align-items:center; gap:4px; padding:7px 14px;
   border-radius:20px; font-size:13px; font-weight:600; cursor:pointer;
   border:1.5px solid var(--borda); background:white; color:var(--texto);
@@ -816,6 +837,89 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 @media (max-width: 400px) {
   .header-app { font-size: 13px; }
   .estoque-valor { font-size: 17px; }
+}
+
+/* ===== RESPONSIVIDADE RECEITAS — MOBILE ===== */
+@media (max-width: 640px) {
+
+  /* Card de receita — padding menor */
+  .rec-card { padding: 16px; border-radius: 16px; }
+
+  /* Header do card: empilha ícone+info acima dos botões */
+  .rec-card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .rec-card-left { width: 100%; gap: 12px; }
+  .rec-card-doc-icon { width: 48px; height: 48px; border-radius: 12px; font-size: 22px; flex-shrink: 0; }
+
+  /* Título menor no mobile */
+  .rec-card-titulo { font-size: 18px; line-height: 1.3; }
+  .rec-card-meta { font-size: 12px; gap: 8px; margin-bottom: 4px; }
+
+  /* Status e botão ficam lado a lado em linha completa */
+  .rec-card-top-right { width: 100%; justify-content: space-between; }
+  .rec-status { padding: 7px 14px; font-size: 12px; }
+  .rec-btn-aplicar { padding: 9px 14px; font-size: 12px; flex: 1; justify-content: center; }
+
+  /* Chips de talhão menores */
+  .rec-card-talhoes { gap: 6px; margin: 12px 0 0; }
+  .rec-talhao-chip { padding: 6px 10px; font-size: 12px; }
+
+  /* Footer: 1 coluna em mobile muito pequeno, 2 colunas em mobile normal */
+  .rec-card-footer { grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+  .rec-footer-box { padding: 10px 12px; border-radius: 10px; }
+  .rec-footer-box strong { font-size: 11px; }
+  .rec-footer-box small { font-size: 12px; margin-top: 3px; }
+
+  /* Grupos de status */
+  .rec-grupo-header { padding: 12px 14px; gap: 10px; }
+  .rec-grupo-label { font-size: 14px; }
+
+  /* Formulário Nova Receita — itens de produto em coluna */
+  #recItensLista .rec-item-linha-principal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  #recItensLista .rec-item-nome { grid-column: 1 / -1; min-width: 0; }
+
+  /* Filtros do módulo receitas */
+  .rec-filtros { flex-direction: column; gap: 8px; }
+  .rec-filtros select,
+  .rec-filtros input { width: 100%; }
+
+  /* Modal de detalhe da receita — grid 2 col → 1 col */
+  #detReceitaConteudo [style*="grid-template-columns:1fr 1fr"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  /* Tabela de produtos no detalhe — scroll horizontal */
+  #detReceitaConteudo table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Modal de aceite — tabela com scroll */
+  #aceiteReceitaConteudo table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Overlay — padding menor */
+  .overlay { padding: 8px; }
+  .modal { border-radius: 16px; }
+  .modal-header { padding: 14px 16px; }
+  .modal-header h2 { font-size: 15px; }
+  .modal-body { padding: 14px; max-height: 80vh; }
+}
+
+@media (max-width: 380px) {
+  /* Footer 1 coluna em telas muito pequenas */
+  .rec-card-footer { grid-template-columns: 1fr; }
+  .rec-card-titulo { font-size: 16px; }
 }
 
 .btn-carregar-mais {
@@ -6639,8 +6743,8 @@ function renderItensReceita() {
     const qdeVal = it.qdeTotalManual != null ? it.qdeTotalManual : (it.qdeTotalArea || '');
     return `
     <div style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--borda)">
-      <div style="display:grid;grid-template-columns:2fr 1fr 60px 80px 80px auto;gap:8px;align-items:end">
-        <div style="position:relative">
+      <div class="rec-item-fields">
+        <div class="rec-item-field-produto" style="position:relative">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">PRODUTO</label>
           <input type="text" id="recProdNome_${i}" value="${esc(it.nome)}" placeholder=""
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
@@ -6649,7 +6753,7 @@ function renderItensReceita() {
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <div id="recProdSugs_${i}" style="position:absolute;top:100%;left:0;right:0;z-index:99"></div>
         </div>
-        <div>
+        <div class="rec-item-field-tipo">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">TIPO</label>
           <select id="recProdTipo_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
             onchange="window.AppEstoque.updateItemReceita(${i},'tipo',this.value)">
@@ -6658,30 +6762,32 @@ function renderItensReceita() {
               '<option value="'+t+'" '+(it.tipo===t?'selected':'')+'>'+t+'</option>').join('')}
           </select>
         </div>
-        <div>
+        <div class="rec-item-field-unid">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">UNID.</label>
           <select id="recProdUnid_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
             onchange="window.AppEstoque.updateItemReceita(${i},'unidade',this.value)">
             ${['L','Kg'].map(u => '<option value="'+u+'" '+((it.unidade||'L')===u?'selected':'')+'>'+u+'</option>').join('')}
           </select>
         </div>
-        <div>
+        <div class="rec-item-field-dose">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">DOSE/HA</label>
           <input type="number" id="recDoseHa_${i}" value="${it.doseHa||''}" min="0" step="0.001" placeholder="0"
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;box-sizing:border-box"
             oninput="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)"
             onchange="window.AppEstoque.updateDoseHa(${i},parseFloat(this.value)||0)">
         </div>
-        <div>
+        <div class="rec-item-field-qde">
           <label style="font-size:11px;color:var(--texto-suave);font-weight:600">QDE TOTAL <span style="font-size:10px;color:#888">(auto)</span></label>
           <input type="number" id="recQdeTotal_${i}" value="${qdeVal || ''}" min="0" step="0.001" placeholder="Auto"
             style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:7px;font-size:13px;
             box-sizing:border-box;background:#f0f8f0;font-weight:700;color:#1a5fb4"
             oninput="window.AppEstoque.updateItemReceita(${i},'qdeTotalManual',this.value===''?null:parseFloat(this.value)||0)">
         </div>
-        <button onclick="window.AppEstoque.removerItemReceita(${i})"
-          style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
-          padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;align-self:end">🗑</button>
+        <div class="rec-item-field-del" style="display:flex;align-items:flex-end">
+          <button onclick="window.AppEstoque.removerItemReceita(${i})"
+            style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
+            padding:7px 10px;cursor:pointer;font-size:14px;font-weight:700;width:100%">🗑</button>
+        </div>
       </div>
       ${it.estoqueDisp != null ? '<div style="font-size:11px;margin-top:4px;color:'+((it.estoqueDisp||0)>=(qdeVal||0)?'var(--verde)':'var(--vermelho)')+'">📦 Estoque atual: <strong>'+fmt(it.estoqueDisp)+' '+(it.unidade||'')+'</strong>'+((it.estoqueDisp||0)<(qdeVal||0)?' <span style="color:var(--vermelho);font-weight:700">⚠️ Insuficiente</span>':'')+'</div>' : ''}
     </div>`;
@@ -7912,7 +8018,7 @@ async function imprimirReceita(id) {
     +'<div style="font-size:20px;font-weight:900;color:#1e3a8a;line-height:1">'+nTanques+'</div>'
     +'<div style="font-size:10px;color:#94a3b8;font-weight:600;margin-top:1px">Tanques</div>'
     +'</div>'
-    +(()=>{
+    +(isDrone ? '' : (()=>{
       const bv = (r.bico||'').toLowerCase();
       const isC = bv.includes('conico') || bv.includes('cônico');
       const isL = bv.includes('leque');
@@ -7924,7 +8030,7 @@ async function imprimirReceita(id) {
         + ico
         +'<div style="font-size:13px;font-weight:800;color:'+valColor+';margin-top:2px">'+lbl+'</div>'
         +'</div>';
-    })()
+    })())
     +'</div></div></div>'
 
     // INSUMOS
