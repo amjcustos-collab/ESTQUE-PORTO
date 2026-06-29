@@ -6153,17 +6153,21 @@ function renderReceitas() {
       pendente:'#854d0e', em_aberto:'#1d4ed8', finalizado:'#166534', cancelado:'#991b1b'
     }[r.status] || '#64748b';
 
-    // Botão Realizar Aplicação (só em_aberto)
-    const btnAplicar = r.status === 'em_aberto'
-      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${recId}'),150)">⚡ Realizar Aplicação</button>`
+    // Botão: pendente → aceitar | em_aberto → abre detalhe (aplicação já aceita)
+    const btnAplicar = r.status === 'pendente'
+      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${recId}'),150)">⚡ Aceitar Receita</button>`
+      : r.status === 'em_aberto'
+      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.abrirDetReceita('${recId}')">⚡ Realizar Aplicação</button>`
       : '';
 
     // Ícone por status
     const iconMap = { pendente:'🕐', em_aberto:'📄', finalizado:'✅', cancelado:'❌' };
 
-    // Equipamento
+    // Equipamento — SVG art inline pequeno
+    const SVG_AUTO_CARD = `<svg width="44" height="28" viewBox="0 0 130 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="34" y="8" width="34" height="38" rx="4" fill="#2d7d32"/><rect x="38" y="11" width="20" height="16" rx="2" fill="#90caf9" opacity="0.85"/><rect x="54" y="4" width="30" height="38" rx="4" fill="#cfd8dc"/><rect x="57" y="7" width="24" height="30" rx="3" fill="#b0bec5"/><circle cx="42" cy="62" r="12" fill="#1a1a1a"/><circle cx="42" cy="62" r="7" fill="#555"/><circle cx="42" cy="62" r="3" fill="#888"/><circle cx="88" cy="62" r="12" fill="#1a1a1a"/><circle cx="88" cy="62" r="7" fill="#555"/><circle cx="88" cy="62" r="3" fill="#888"/><line x1="0" y1="50" x2="130" y2="50" stroke="#2d7d32" stroke-width="5" stroke-linecap="round"/><line x1="0" y1="50" x2="16" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><line x1="130" y1="50" x2="114" y2="36" stroke="#2d7d32" stroke-width="3.5" stroke-linecap="round"/><circle cx="2" cy="52" r="4" fill="#f90"/><circle cx="26" cy="52" r="4" fill="#f90"/><circle cx="52" cy="52" r="4" fill="#f90"/><circle cx="78" cy="52" r="4" fill="#f90"/><circle cx="104" cy="52" r="4" fill="#f90"/><circle cx="128" cy="52" r="4" fill="#f90"/></svg>`;
+    const SVG_DRONE_CARD = `<svg width="40" height="28" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="42" y="20" width="36" height="22" rx="4" fill="#d0d8e8"/><rect x="48" y="23" width="24" height="16" rx="3" fill="#b0bcd0"/><circle cx="60" cy="42" r="5" fill="#666"/><line x1="0" y1="34" x2="120" y2="34" stroke="#222" stroke-width="4" stroke-linecap="round"/><rect x="0" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><rect x="104" y="26" width="16" height="16" rx="3" fill="#2a2a2a"/><ellipse cx="8" cy="22" rx="16" ry="5" fill="#333" transform="rotate(-10 8 22)"/><ellipse cx="112" cy="22" rx="16" ry="5" fill="#333" transform="rotate(10 112 22)"/><rect x="4" y="22" width="10" height="6" rx="2" fill="#f90"/><rect x="106" y="22" width="10" height="6" rx="2" fill="#f90"/><line x1="40" y1="44" x2="34" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="44" x2="86" y2="62" stroke="#555" stroke-width="3" stroke-linecap="round"/><circle cx="33" cy="65" r="4" fill="#f90"/><circle cx="87" cy="65" r="4" fill="#f90"/></svg>`;
+    const eqSVG = r.operacao === 'drone' ? SVG_DRONE_CARD : SVG_AUTO_CARD;
     const eqNome = r.operacao === 'drone' ? 'Drone' : r.operacao === 'autopropelido' ? 'Autopropelido' : r.operacao || '—';
-    const eqIcon = r.operacao === 'drone' ? '🚁' : '🚜';
 
     // Chips de talhão
     const chips = (r.talhoes||[]).map(t =>
@@ -6202,8 +6206,8 @@ function renderReceitas() {
 
       <div class="rec-card-footer">
         <div class="rec-footer-box">
-          <strong>${eqIcon} Equipamento</strong>
-          <small>${eqNome}${r.status==='finalizado'&&r.aplicador?` · Operador: ${esc(r.aplicador)}`:''}</small>
+          <strong>Equipamento</strong>
+          <small style="display:flex;align-items:center;gap:8px;margin-top:6px">${eqSVG}<span style="font-weight:700;color:#1e3a5f">${eqNome}${r.status==='finalizado'&&r.aplicador?` · Operador: ${esc(r.aplicador)}`:''}</span></small>
         </div>
         <div class="rec-footer-box">
           <strong>👤 Responsável</strong>
