@@ -557,52 +557,40 @@ header {
   border-radius:8px; font-size:13px; }
 
 /* ── Cards de Receita ── */
-.rec-lista { display:flex; flex-direction:column; gap:12px; }
-.rec-card { background:white; border:1px solid #e2e8f0; border-radius:12px;
-  padding:16px 20px; cursor:pointer; transition:box-shadow .15s, border-color .15s; }
-.rec-card:hover { box-shadow:0 2px 12px rgba(0,0,0,.08); border-color:#93c5fd; }
-/* Linha 1: ícone + info + status + botão */
-.rec-card-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-.rec-card-doc-icon { width:40px; height:40px; background:#eff6ff; border-radius:8px;
-  display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.rec-card-info { flex:1; min-width:0; }
-.rec-card-num { font-size:11px; font-weight:600; color:var(--texto-suave); margin-bottom:2px; }
-.rec-card-titulo { font-size:16px; font-weight:800; color:var(--texto); }
-.rec-card-top-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.rec-status { display:inline-flex; align-items:center; gap:5px; padding:5px 14px;
-  border-radius:20px; font-size:12px; font-weight:700; white-space:nowrap; }
-.rec-status.pendente   { background:#fef9c3; color:#854d0e; border:1px solid #fde047; }
-.rec-status.em_aberto  { background:#eff6ff; color:#1e40af; border:1px solid #bfdbfe; }
-.rec-status.finalizado { background:#f0fdf4; color:#166534; border:1px solid #86efac; }
-.rec-status.cancelado  { background:#fef2f2; color:#991b1b; border:1px solid #fca5a5; }
-.rec-btn-aplicar { display:inline-flex; align-items:center; gap:6px; padding:7px 16px;
-  background:#1e40af; color:white; border-radius:8px; font-size:12px; font-weight:700;
-  white-space:nowrap; border:none; cursor:pointer; }
-/* Talhões */
-.rec-card-talh-section { border-top:1px solid #f1f5f9; border-bottom:1px solid #f1f5f9;
-  padding:10px 0; margin-bottom:12px; }
-.rec-card-talh-label { font-size:10px; font-weight:700; color:#64748b; text-transform:uppercase;
-  letter-spacing:.6px; margin-bottom:6px; display:flex; align-items:center; gap:5px; }
-.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:4px; }
-.rec-talhao-chip { background:#f8fafc; color:#1e3a8a; border:1px solid #e2e8f0;
-  border-radius:6px; padding:3px 10px; font-size:11px; font-weight:600; white-space:nowrap; }
-/* Impresso */
-.rec-card-impresso { font-size:11px; color:#166534; font-weight:600;
-  display:flex; align-items:center; gap:4px; margin-top:6px; }
-/* Rodapé 3 colunas */
-.rec-card-footer { display:grid; grid-template-columns:1fr 1fr 1fr;
-  gap:8px; align-items:center; }
-.rec-card-footer-col { display:flex; flex-direction:column; gap:1px; }
-.rec-card-footer-col.center { align-items:center; }
-.rec-card-footer-col.right { align-items:flex-end; }
-.rec-footer-label { font-size:9px; font-weight:700; color:#94a3b8;
-  text-transform:uppercase; letter-spacing:.5px; }
-.rec-footer-value { font-size:13px; font-weight:800; color:#1a2535; }
-.rec-footer-value.green { color:#166534; }
-/* Atraso */
-.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px;
-  font-size:11px; font-weight:700; color:#7c2d12; background:#fef2e8;
-  border:1px solid #fca974; border-radius:6px; padding:2px 8px; margin-top:4px; }
+.rec-lista { display:flex; flex-direction:column; gap:16px; }
+.rec-card {
+  width:100%; background:#fff; border-radius:22px;
+  box-shadow:0 14px 35px rgba(0,0,0,.08);
+  padding:22px 28px; cursor:pointer;
+  transition:box-shadow .15s, transform .15s;
+}
+.rec-card:hover { box-shadow:0 18px 40px rgba(0,0,0,.12); transform:translateY(-1px); }
+.rec-card-header { display:flex; justify-content:space-between; gap:20px; align-items:center; }
+.rec-card-left { display:flex; gap:18px; align-items:center; }
+.rec-card-doc-icon { width:60px; height:60px; border-radius:16px; display:flex;
+  align-items:center; justify-content:center; background:#eaf3ff; font-size:26px; flex-shrink:0; }
+.rec-card-meta { display:flex; gap:12px; flex-wrap:wrap; color:#64748b; font-size:13px; font-weight:600; margin-bottom:6px; }
+.rec-card-titulo { font-size:26px; font-weight:800; color:#0f172a; margin:0; }
+.rec-card-top-right { display:flex; gap:12px; align-items:center; flex-shrink:0; }
+.rec-status { padding:8px 18px; border-radius:999px; font-weight:700; font-size:13px; white-space:nowrap; }
+.rec-status.pendente   { background:#fef9c3; color:#854d0e; }
+.rec-status.em_aberto  { background:#e9f3ff; color:#1d4ed8; }
+.rec-status.finalizado { background:#dcfce7; color:#166534; }
+.rec-status.cancelado  { background:#fee2e2; color:#991b1b; }
+.rec-btn-aplicar { background:#2563eb; color:#fff; border:none; padding:12px 18px;
+  border-radius:14px; font-weight:700; cursor:pointer; font-size:13px; white-space:nowrap;
+  display:inline-flex; align-items:center; gap:6px; }
+.rec-btn-aplicar:hover { background:#1d4ed8; }
+.rec-card-talhoes { display:flex; flex-wrap:wrap; gap:8px; margin:18px 0 0; }
+.rec-talhao-chip { background:#f3f7fb; border:1px solid #d8e3ef; padding:8px 14px;
+  border-radius:999px; font-weight:600; color:#334155; font-size:13px; white-space:nowrap; }
+.rec-card-footer { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px; }
+.rec-footer-box { background:#f8fbff; border:1px solid #dbe7f2; border-radius:14px; padding:14px 16px; }
+.rec-footer-box strong { display:block; color:#1e3a5f; font-size:13px; font-weight:700; }
+.rec-footer-box small { display:block; margin-top:5px; color:#64748b; font-size:13px; font-weight:600; }
+.rec-atraso-tag { display:inline-flex; align-items:center; gap:4px; font-size:12px;
+  font-weight:700; color:#7c2d12; background:#fef2e8; border:1px solid #fca974;
+  border-radius:6px; padding:3px 10px; }
 .rec-realizar-aplicacao { display:none; }
 
 /* Grupos de status */
@@ -6159,58 +6147,71 @@ function renderReceitas() {
     const operadorTxt = r.status === 'finalizado' && r.aplicador
       ? ` &nbsp;—&nbsp; <span class="rec-footer-operador">Operador: <strong>${esc(r.aplicador)}</strong></span>` : '';
     const recId = r.id;
-    const aplicarBtn = r.status==='em_aberto'
-      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${recId}'),150)">⚡ Realizar a Aplicação!</button>`
+
+    // Cores por status
+    const metaColor = {
+      pendente:'#854d0e', em_aberto:'#1d4ed8', finalizado:'#166534', cancelado:'#991b1b'
+    }[r.status] || '#64748b';
+
+    // Botão Realizar Aplicação (só em_aberto)
+    const btnAplicar = r.status === 'em_aberto'
+      ? `<button class="rec-btn-aplicar" onclick="event.stopPropagation();window.AppEstoque.fecharDetReceita();setTimeout(()=>window.AppEstoque.abrirAceiteReceita('${recId}'),150)">⚡ Realizar Aplicação</button>`
       : '';
-    const statusDot = {pendente:'🟡',em_aberto:'🔵',finalizado:'🟢',cancelado:'🔴'}[r.status]||'⚪';
+
+    // Ícone por status
+    const iconMap = { pendente:'🕐', em_aberto:'📄', finalizado:'✅', cancelado:'❌' };
+
+    // Equipamento
+    const eqNome = r.operacao === 'drone' ? 'Drone' : r.operacao === 'autopropelido' ? 'Autopropelido' : r.operacao || '—';
+    const eqIcon = r.operacao === 'drone' ? '🚁' : '🚜';
+
+    // Chips de talhão
+    const chips = (r.talhoes||[]).map(t =>
+      `<span class="rec-talhao-chip" style="color:${metaColor};border-color:${metaColor}33">${esc(t.nome)} • ${t.area} ha</span>`
+    ).join('');
+
+    // Impresso
+    const impressoTag = r.impresso
+      ? `<span style="font-size:12px;color:#166534;font-weight:600;display:flex;align-items:center;gap:4px">🖨️ Impresso</span>` : '';
+
     return `<div class="rec-card" onclick="window.AppEstoque.abrirDetReceita('${recId}')">
 
-      <!-- Linha topo: ícone + info + status + botão -->
-      <div class="rec-card-top">
-        <div class="rec-card-doc-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="1.8">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/>
-          </svg>
-        </div>
-        <div class="rec-card-info">
-          <div class="rec-card-num">Receita #${String(r.numero).padStart(4,'0')} &middot; ${r.fazenda} &middot; ${CULTURAS_EMOJI[r.cultura]||''} ${esc(r.cultura||'')}${r.safra?' &middot; Safra '+esc(r.safra):''}</div>
-          <div class="rec-card-titulo">${esc(r.descricao||r.cultura||'—')}</div>
+      <div class="rec-card-header">
+        <div class="rec-card-left">
+          <div class="rec-card-doc-icon" style="background:${metaColor}18">${iconMap[r.status]||'📄'}</div>
+          <div>
+            <div class="rec-card-meta">
+              <span>Receita #${String(r.numero).padStart(4,'0')}</span>
+              <span style="color:${metaColor}">📍 ${esc(r.fazenda||'')}</span>
+              <span style="color:${metaColor}">${CULTURAS_EMOJI[r.cultura]||'🌱'} ${esc(r.cultura||'')}</span>
+              ${r.safra?`<span style="color:${metaColor}">📅 Safra ${esc(r.safra)}</span>`:''}
+            </div>
+            <div class="rec-card-titulo">${esc(r.descricao||r.cultura||'—')}</div>
+          </div>
         </div>
         <div class="rec-card-top-right">
-          <span class="rec-status ${r.status}">${statusDot} ${statusLabel[r.status]||r.status}</span>
-          ${aplicarBtn}
+          <span class="rec-status ${r.status}">${statusLabel[r.status]||r.status}</span>
+          ${btnAplicar}
+          ${atrasoTag}
         </div>
       </div>
 
-      <!-- Talhões -->
-      ${(r.talhoes||[]).length ? `
-      <div class="rec-card-talh-section">
-        <div class="rec-card-talh-label">📍 Talhões (${(r.talhoes||[]).length})</div>
-        <div class="rec-card-talhoes">${(r.talhoes||[]).map(t=>`<span class="rec-talhao-chip">${esc(t.nome)}</span>`).join('')}</div>
-      </div>` : ''}
+      ${chips ? `<div class="rec-card-talhoes">${chips}</div>` : ''}
 
-      <!-- Impresso + atraso -->
-      ${r.impresso||atrasoDias>0 ? `<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-        ${r.impresso?'<span class="rec-card-impresso">🖨️ Impresso</span>':''}
-        ${atrasoTag}
-      </div>` : ''}
+      ${impressoTag ? `<div style="margin-top:10px">${impressoTag}</div>` : ''}
 
-      <!-- Rodapé 3 colunas: Equipamento | Responsável | Data -->
       <div class="rec-card-footer">
-        <div class="rec-card-footer-col">
-          <span class="rec-footer-label">Equipamento</span>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:2px">${opBadge}</div>
-          ${r.status==='finalizado'&&r.aplicador?`<span style="font-size:11px;color:#166534;font-weight:600;margin-top:2px">Operador: <strong>${esc(r.aplicador)}</strong></span>`:''}
+        <div class="rec-footer-box">
+          <strong>${eqIcon} Equipamento</strong>
+          <small>${eqNome}${r.status==='finalizado'&&r.aplicador?` · Operador: ${esc(r.aplicador)}`:''}</small>
         </div>
-        <div class="rec-card-footer-col center">
-          <span class="rec-footer-label">Responsável</span>
-          <span class="rec-footer-value">${esc(r.tecnico||'—')}</span>
+        <div class="rec-footer-box">
+          <strong>👤 Responsável</strong>
+          <small>${esc(r.tecnico||'—')}</small>
         </div>
-        <div class="rec-card-footer-col right">
-          <span class="rec-footer-label">Data</span>
-          <span class="rec-footer-value">${dataFmt}</span>
+        <div class="rec-footer-box">
+          <strong>📅 ${r.status==='finalizado'?'Aplicação':'Criado em'}</strong>
+          <small>${r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '—'}</small>
         </div>
       </div>
 
