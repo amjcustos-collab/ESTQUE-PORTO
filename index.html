@@ -10258,20 +10258,28 @@ function abrirDiagnosticoCaracteres() {
         </div>
         <div id="diagCaracteresLista">
           ${suspeitos.map(p => `
-            <div style="display:flex;gap:8px;align-items:center;padding:10px 12px;background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin-bottom:8px">
-              <div style="flex:1">
+            <div style="display:flex;gap:8px;align-items:end;padding:10px 12px;background:#fff5f5;border:1px solid #fecaca;border-radius:8px;margin-bottom:8px;flex-wrap:wrap">
+              <div style="flex:2;min-width:160px">
                 <label style="font-size:10px;color:var(--texto-suave);font-weight:700;text-transform:uppercase">Nome do produto</label>
                 <input type="text" id="diag_nome_${p.id}" value="${(p.nome||'').replace(/"/g,'&quot;')}"
-                  style="width:100%;padding:7px 10px;border:1.5px solid #f87171;border-radius:6px;font-size:13px;box-sizing:border-box">
+                  style="width:100%;padding:7px 10px;border:1.5px solid ${_temSuspeitaCorrupcao(p.nome)?'#f87171':'var(--borda)'};border-radius:6px;font-size:13px;box-sizing:border-box">
               </div>
-              <div style="flex:1">
+              <div style="flex:2;min-width:160px">
                 <label style="font-size:10px;color:var(--texto-suave);font-weight:700;text-transform:uppercase">Princípio Ativo</label>
                 <input type="text" id="diag_pa_${p.id}" value="${(p.pa||'').replace(/"/g,'&quot;')}"
-                  style="width:100%;padding:7px 10px;border:1.5px solid var(--borda);border-radius:6px;font-size:13px;box-sizing:border-box">
+                  style="width:100%;padding:7px 10px;border:1.5px solid ${_temSuspeitaCorrupcao(p.pa)?'#f87171':'var(--borda)'};border-radius:6px;font-size:13px;box-sizing:border-box">
+              </div>
+              <div style="flex:1.5;min-width:140px">
+                <label style="font-size:10px;color:var(--texto-suave);font-weight:700;text-transform:uppercase">Classe</label>
+                <select id="diag_classe_${p.id}"
+                  style="width:100%;padding:7px 10px;border:1.5px solid ${_temSuspeitaCorrupcao(p.classe)?'#f87171':'var(--borda)'};border-radius:6px;font-size:13px;box-sizing:border-box">
+                  ${['ADJUVANTE','BIOLÓGICO','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'].map(c =>
+                    `<option value="${c}" ${_normComparar(p.classe)===_normComparar(c)?'selected':''}>${c}</option>`).join('')}
+                </select>
               </div>
               <button onclick="window.AppEstoque.salvarCorrecaoCaractere('${p.id}')"
                 style="background:var(--verde);color:white;border:none;border-radius:6px;padding:8px 14px;
-                font-size:12px;font-weight:700;cursor:pointer;align-self:flex-end;white-space:nowrap">✓ Salvar</button>
+                font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">✓ Salvar</button>
             </div>
           `).join('')}
         </div>
@@ -10286,9 +10294,10 @@ function abrirDiagnosticoCaracteres() {
 async function salvarCorrecaoCaractere(produtoId) {
   const nome = document.getElementById(`diag_nome_${produtoId}`)?.value.trim();
   const pa = document.getElementById(`diag_pa_${produtoId}`)?.value.trim();
+  const classe = document.getElementById(`diag_classe_${produtoId}`)?.value;
   if (!nome) { mostrarToast('Nome não pode ficar vazio.', 'erro'); return; }
   try {
-    await updateDoc(doc(db, 'produtos', produtoId), { nome, pa });
+    await updateDoc(doc(db, 'produtos', produtoId), { nome, pa, classe });
     mostrarToast('Produto corrigido!', 'sucesso');
     // Remove da lista do diagnóstico após salvar
     const item = document.getElementById(`diag_nome_${produtoId}`)?.closest('div[style*="background:#fff5f5"]');
