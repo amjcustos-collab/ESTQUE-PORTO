@@ -5724,24 +5724,29 @@ async function abrirEditorPivo(id) {
     }
   }
 
-  // Popular select de fazendas a partir do cadastro central (só fazendas com talhão PC)
+  const p = id ? irrigPivotos.find(x => x.id === id) : null;
+
+  // Popular select de fazendas a partir do cadastro central (só fazendas com talhão PC).
+  // Se estivermos editando um pivô cuja fazenda não tem talhão PC visível (ex: nome
+  // divergente em Agricultura), incluímos ela mesmo assim para não deixar o campo vazio.
   const fazSel = document.getElementById('editorPivoFazenda');
-  const fazendasComPC = [...new Set(
+  let fazendasComPC = [...new Set(
     agriFazendas
       .filter(f => (f.talhoes||[]).some(t => t.tipo === 'PC' && t.ativo !== false))
       .map(f => f.nome)
-  )].sort();
+  )];
+  if (p && !fazendasComPC.some(f => f.trim().toUpperCase() === p.fazenda.trim().toUpperCase())) {
+    fazendasComPC.push(p.fazenda);
+    console.warn(`[Editor Pivô] A fazenda "${p.fazenda}" do pivô "${p.pivo}" não tem talhão Irrigado (PC) cadastrado em Agricultura. Verifique se o nome bate exatamente.`);
+  }
+  fazendasComPC = [...new Set(fazendasComPC)].sort();
   fazSel.innerHTML = '<option value="">Selecione...</option>' + fazendasComPC.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
   if (!fazendasComPC.length) {
     mostrarToast('Nenhum talhão Irrigado (PC) cadastrado em Agricultura ainda. Cadastre lá primeiro.', 'erro');
   }
 
-  if (id) {
-    const p = irrigPivotos.find(x => x.id === id);
-    if (!p) return;
+  if (p) {
     if (titulo) titulo.textContent = 'Editar Pivô';
-    // Matching tolerante a diferença de espaços/maiúsculas entre o pivô salvo
-    // e as fazendas disponíveis no select (evita ficar sem seleção por divergência sutil).
     const fazExata = fazendasComPC.find(f => f === p.fazenda)
       || fazendasComPC.find(f => f.trim().toUpperCase() === p.fazenda.trim().toUpperCase());
     fazSel.value = fazExata || p.fazenda;
