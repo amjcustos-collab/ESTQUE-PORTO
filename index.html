@@ -1891,6 +1891,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <!-- Aba Pivôs -->
       <div id="gestaoSecPivotos" style="padding:16px 20px">
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <button class="somente-admin" style="background:#c2410c;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.corrigirFiguerao()" title="Corrige pivôs com FIGUERÃO (sem o I) para FIGUEIRÃO">✏️ Corrigir FIGUERÃO</button>
           <button class="somente-admin" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.auditarPivosDivergentes()">🔍 Auditar divergências</button>
           <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
         </div>
@@ -5699,7 +5700,54 @@ function _normComparar(s) {
     .trim().toUpperCase().replace(/\s+/g, ' ');
 }
 
-// ── Auditoria: pivôs cujo nome/fazenda não bate com nenhum talhão PC ──
+// ── Correção pontual: "FIGUERÃO" (erro de digitação) → "FIGUEIRÃO" ──
+async function corrigirFiguerao() {
+  await recarregarPivotos();
+  const pivosErrados = irrigPivotos.filter(p => _normComparar(p.fazenda) === _normComparar('FIGUERÃO'));
+
+  if (!pivosErrados.length) {
+    mostrarToast('Nenhum pivô encontrado com "FIGUERÃO". Nada para corrigir.', 'erro');
+    return;
+  }
+
+  const listaTxt = pivosErrados.map(p => `• ${esc(p.pivo)}`).join('<br>');
+  const ok = await confirmarGenerico({
+    titulo: 'Corrigir FIGUERÃO → FIGUEIRÃO',
+    icone: '✏️',
+    mensagem: `Encontrados <strong>${pivosErrados.length} pivô(s)</strong> com o nome de fazenda digitado errado ("FIGUERÃO"):<br><br>${listaTxt}<br><br>
+      Cada pivô será recriado na fazenda <strong>FIGUEIRÃO</strong> (nome correto) com a tabela MM completa preservada.<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Lançamentos já registrados não serão afetados.</span>`,
+    corBtn: 'var(--azul)',
+    labelBtn: '✏️ Corrigir agora'
+  });
+  if (!ok) return;
+
+  try {
+    let copiados = 0, jaExistiam = 0;
+    for (const p of pivosErrados) {
+      const novoId = normalize('FIGUEIRÃO') + '___' + normalize(p.pivo);
+      const jaExiste = irrigPivotos.some(x => _normComparar(x.fazenda) === _normComparar('FIGUEIRÃO') && _normComparar(x.pivo) === _normComparar(p.pivo));
+      if (jaExiste) { jaExistiam++; continue; }
+      await setDoc(doc(db, 'irrigacao_pivotos', novoId), {
+        fazenda: 'FIGUEIRÃO', pivo: p.pivo, tabela: p.tabela, ativo: true,
+        atualizadoEm: new Date().toISOString(), corrigidoDe: 'FIGUERÃO'
+      });
+      copiados++;
+    }
+    for (const p of pivosErrados) {
+      await deleteDoc(doc(db, 'irrigacao_pivotos', p.id));
+    }
+    await recarregarPivotos();
+    popularFiltrosFazenda();
+    renderGestaoIrrigLista();
+    mostrarToast(`✓ Correção concluída! ${copiados} pivô(s) movido(s) para FIGUEIRÃO${jaExistiam ? `, ${jaExistiam} já existia(m)` : ''}.`, 'sucesso');
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro durante a correção. Nenhum dado foi perdido — tente novamente.', 'erro');
+  }
+}
+
+
 function auditarPivosDivergentes() {
   const divergentes = [];
   irrigPivotos.forEach(p => {
@@ -10267,7 +10315,7 @@ window.AppEstoque = {
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
   abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
   adicionarCultura, adicionarSafra, moverItem, removerItem,
-  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo, restaurarPivosPerdidos, auditarPivosDivergentes,
+  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo, restaurarPivosPerdidos, auditarPivosDivergentes, corrigirFiguerao,
   exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
