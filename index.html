@@ -1156,6 +1156,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   <button class="btn-novo-produto" id="btnNovoProdutoFiltro" style="display:none" onclick="window.AppEstoque.abrirNovoProduto()">+ Novo Produto</button>
   <button class="btn-novo-produto somente-admin" id="btnImportarEstoque" style="display:none;background:#1a5fb4" onclick="window.AppEstoque.abrirImportarEstoque()">📥 Importar Planilha</button>
   <button class="btn-novo-produto somente-admin" id="btnDiagCaracteres" style="display:none;background:#c2410c" onclick="window.AppEstoque.abrirDiagnosticoCaracteres()">🔤 Corrigir Caracteres</button>
+  <button class="btn-novo-produto somente-admin" id="btnUnifClasses" style="display:none;background:#7c3aed" onclick="window.AppEstoque.abrirUnificarClasses()">🏷️ Unificar Classes</button>
   <button class="btn-receita-filtros" id="btnReceitaFiltro" style="display:none" onclick="window.AppEstoque.abrirReceita()">🧾 Baixa com Receita</button>
   <button class="btn-compra-filtros" id="btnCompraFiltro" style="display:none" onclick="window.AppEstoque.abrirCompra()">📦 Entrada de Compras</button>
   <div class="contador" id="contador"></div>
@@ -9761,6 +9762,8 @@ function navegarModulo(modulo) {
   if (btnImportarNav) btnImportarNav.style.display = (modulo === 'estoque' && isAdmin()) ? 'inline-block' : 'none';
   const btnDiagNav = document.getElementById('btnDiagCaracteres');
   if (btnDiagNav) btnDiagNav.style.display = (modulo === 'estoque' && isAdmin()) ? 'inline-block' : 'none';
+  const btnUnifNav = document.getElementById('btnUnifClasses');
+  if (btnUnifNav) btnUnifNav.style.display = (modulo === 'estoque' && isAdmin()) ? 'inline-block' : 'none';
   // Irrigação
   show('btnIrrigExcelHeader', modulo === 'irrigacao' && temRelat);
   show('btnIrrigPDFHeader',   modulo === 'irrigacao' && temRelat);
@@ -10236,6 +10239,96 @@ function _temSuspeitaCorrupcao(texto) {
   return false;
 }
 
+// ── Unificação de Classes: mostra TODAS as classes existentes no banco ──
+// (mesmo as que não parecem corrompidas) para o admin escolher unificar
+// variações como "BIOLÃGICO", "Biologico", "BIOLOGICO" em "BIOLÓGICO".
+function abrirUnificarClasses() {
+  // Agrupar produtos por classe exata salva no banco
+  const porClasse = {};
+  produtos.forEach(p => {
+    const c = p.classe || '(sem classe)';
+    if (!porClasse[c]) porClasse[c] = [];
+    porClasse[c].push(p);
+  });
+
+  const classesOficiais = ['ADJUVANTE','BIOLÓGICO','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'];
+  const todasClasses = Object.keys(porClasse).sort((a,b) => porClasse[b].length - porClasse[a].length);
+
+  const modal = document.createElement('div');
+  modal.id = 'overlayUnificarClasses';
+  modal.className = 'overlay aberto';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.innerHTML = `
+    <div class="modal" style="max-width:680px">
+      <div class="modal-header" style="background:linear-gradient(90deg,#7c2d12,#c2410c)">
+        <h2>🏷️ Unificar Classes de Produtos</h2>
+        <button class="btn-fechar" onclick="document.getElementById('overlayUnificarClasses').remove()">×</button>
+      </div>
+      <div class="modal-body" style="padding:16px 20px;max-height:75vh;overflow-y:auto">
+        <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px">
+          📋 Todas as classes encontradas no banco (${todasClasses.length} variações para ${produtos.length} produtos). Classes diferentes da lista oficial estão destacadas — escolha para qual classe oficial mover os produtos.
+        </div>
+        <div id="unificarClassesLista">
+          ${todasClasses.map(c => {
+            const ehOficial = classesOficiais.includes(c);
+            const qtd = porClasse[c].length;
+            const nomesAmostra = porClasse[c].slice(0,3).map(p=>p.nome).join(', ') + (qtd>3 ? ` +${qtd-3}` : '');
+            return `
+            <div style="display:flex;gap:10px;align-items:center;padding:10px 12px;
+              background:${ehOficial?'#f0fdf4':'#fff5f5'};border:1px solid ${ehOficial?'#86efac':'#fecaca'};
+              border-radius:8px;margin-bottom:8px">
+              <div style="flex:1;min-width:0">
+                <div style="font-size:13px;font-weight:700;color:${ehOficial?'#166534':'#991b1b'}">${esc(c)} ${ehOficial?'✓':'⚠️'}</div>
+                <div style="font-size:11px;color:var(--texto-suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${qtd} produto${qtd!==1?'s':''} · ${esc(nomesAmostra)}</div>
+              </div>
+              ${!ehOficial ? `
+                <select id="unif_destino_${esc(c).replace(/[^a-zA-Z0-9]/g,'_')}" style="padding:6px 10px;border:1.5px solid var(--borda);border-radius:6px;font-size:12px">
+                  <option value="">Manter como está</option>
+                  ${classesOficiais.map(co => `<option value="${co}">→ ${co}</option>`).join('')}
+                </select>
+                <button onclick="window.AppEstoque.moverProdutosParaClasse('${esc(c).replace(/'/g,"\\\\'")}','${esc(c).replace(/[^a-zA-Z0-9]/g,'_')}')"
+                  style="background:var(--azul);color:white;border:none;border-radius:6px;padding:7px 12px;
+                  font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Mover ${qtd}</button>
+              ` : '<span style="font-size:11px;color:var(--texto-suave);padding:0 8px">classe oficial</span>'}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" onclick="document.getElementById('overlayUnificarClasses').remove()">Fechar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function moverProdutosParaClasse(classeOrigem, idSeguro) {
+  const destino = document.getElementById(`unif_destino_${idSeguro}`)?.value;
+  if (!destino) { mostrarToast('Selecione a classe de destino.', 'erro'); return; }
+  const afetados = produtos.filter(p => (p.classe || '(sem classe)') === classeOrigem);
+  if (!afetados.length) { mostrarToast('Nenhum produto encontrado nessa classe.', 'erro'); return; }
+
+  const ok = await confirmarGenerico({
+    titulo: 'Mover produtos de classe',
+    icone: '🏷️',
+    mensagem: `Mover <strong>${afetados.length} produto(s)</strong> de "${esc(classeOrigem)}" para <strong>${esc(destino)}</strong>?<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">O estoque, histórico e vínculos com receitas não são afetados — só o campo de classe muda.</span>`,
+    corBtn: 'var(--azul)',
+    labelBtn: '🏷️ Mover agora'
+  });
+  if (!ok) return;
+
+  try {
+    for (const p of afetados) {
+      await updateDoc(doc(db, 'produtos', p.id), { classe: destino });
+    }
+    mostrarToast(`✓ ${afetados.length} produto(s) movido(s) para ${destino}!`, 'sucesso');
+    document.getElementById('overlayUnificarClasses')?.remove();
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao mover produtos.', 'erro');
+  }
+}
+
 function abrirDiagnosticoCaracteres() {
   const suspeitos = produtos.filter(p =>
     _temSuspeitaCorrupcao(p.nome) || _temSuspeitaCorrupcao(p.pa) || _temSuspeitaCorrupcao(p.classe)
@@ -10368,6 +10461,7 @@ window.AppEstoque = {
   abrirNovoProduto, fecharNovoProduto, confirmarNovoProduto,
   abrirImportarEstoque, fecharImportarEstoque, executarImportacao,
   abrirDiagnosticoCaracteres, salvarCorrecaoCaractere,
+  abrirUnificarClasses, moverProdutosParaClasse,
   toggleMenuAcoes, fecharTodosMenus,
   abrirHistorico, fecharHistorico, limparHistorico,
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
