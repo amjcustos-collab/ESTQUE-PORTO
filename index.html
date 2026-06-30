@@ -700,6 +700,8 @@ header {
 .bico-chip.selecionado { border-color:var(--verde); background:#e8f5e9; }
 .bico-chip span { font-size:13px; font-weight:700; color:var(--texto); }
 .bico-chip.selecionado span { color:#1b5e20; }
+#recBicoGrupo.campo-erro .bico-opcoes { outline: 2px solid var(--vermelho); outline-offset: 4px; border-radius: 12px; }
+#recBicoGrupo.campo-erro .label-campo { color: var(--vermelho); }
 
 .rec-card-produtos { margin-top:10px; padding-top:10px; border-top:1px solid var(--borda);
   display:flex; flex-wrap:wrap; gap:6px; }
@@ -1350,7 +1352,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
           <input type="number" id="recTanque" class="campo-input" placeholder="Ex: 40" min="1">
         </div>
         <div class="campo-group" id="recBicoGrupo" style="display:none">
-          <label class="label-campo">Tipo de bico</label>
+          <label class="label-campo">Tipo de bico *</label>
           <input type="hidden" id="recBico">
           <div class="bico-opcoes">
             <div class="bico-chip" data-val="Conico" onclick="window.AppEstoque.selecionarBico(this)"><svg width="20" height="20" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="25" cy="12" rx="10" ry="6" fill="#f59e0b" stroke="#92400e" stroke-width="2"/><rect x="20" y="8" width="10" height="8" rx="2" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><path d="M15 20 Q25 16 35 20 L28 42 Q25 46 22 42 Z" fill="#fcd34d" stroke="#92400e" stroke-width="1.5"/><circle cx="25" cy="44" r="3" fill="#60a5fa"/></svg><span>Cônico</span></div>
@@ -6886,6 +6888,14 @@ async function salvarReceita() {
   if (!_recTalhoesSel.length) {
     mostrarToast('Selecione pelo menos um talhão.', 'erro'); return;
   }
+  if (operacao === 'autopropelido' && !bico) {
+    mostrarToast('Selecione o tipo de bico para a pulverização autopropelida.', 'erro');
+    const bicoGrp = document.getElementById('recBicoGrupo');
+    bicoGrp?.classList.add('campo-erro');
+    bicoGrp?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => bicoGrp?.classList.remove('campo-erro'), 2500);
+    return;
+  }
   if (!_recItens.length || _recItens.some(i => !i.nome)) {
     mostrarToast('Adicione pelo menos um produto com nome.', 'erro'); return;
   }
@@ -8476,13 +8486,16 @@ function renderDashboard() {
     return Math.round(fazendas.reduce((acc, f) => acc + Object.values(agr[f]).reduce((a, b) => a + b, 0), 0) * 10) / 10;
   })();
 
+  const recPendentes  = recReceitas.filter(r => r.status === 'pendente').length;
+  const recEmAberto   = recReceitas.filter(r => r.status === 'em_aberto').length;
+
   const cards = [
     { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
     { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '' },
     { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
-    { valor: baixos,              label: 'Estoque baixo',        sub: '≤ 10 unidades',                     cls: baixos  > 0 ? 'alerta'  : '' },
+    { valor: recPendentes,        label: 'Receitas pendentes',   sub: 'aguardando aceite',                 cls: recPendentes > 0 ? 'alerta' : '' },
     { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
-    { valor: pluvMes.toFixed(1)  + ' mm', label: 'Chuva média no mês', sub: 'média entre fazendas',       cls: 'verde' },
+    { valor: recEmAberto,         label: 'Receitas em aberto',   sub: 'em execução',                       cls: recEmAberto > 0 ? 'azul' : '' },
     { valor: pluvTotal.toFixed(1) + ' mm', label: 'Chuva total no mês', sub: 'soma de todas as fazendas', cls: 'verde' },
   ];
 
