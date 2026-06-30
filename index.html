@@ -410,7 +410,10 @@ header {
 
 /* Cards de resumo topo */
 .dash-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-.dash-card  { background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 16px 18px; }
+.dash-card  { background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 16px 18px; transition: transform 0.12s, box-shadow 0.12s; }
+.dash-card.clicavel { cursor: pointer; }
+.dash-card.clicavel:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.1); }
+.dash-card.clicavel:active { transform: translateY(0); }
 .dash-card-valor { font-size: 28px; font-weight: 900; line-height: 1; }
 .dash-card-label { font-size: 11px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 5px; }
 .dash-card-sub   { font-size: 11px; color: var(--texto-suave); margin-top: 2px; }
@@ -662,6 +665,12 @@ header {
 .rec-item-field-qde     { grid-column: 5; }
 .rec-item-field-del     { grid-column: 6; }
 @media (max-width: 640px) {
+  /* Modal Finalizar Receita — touch-friendly */
+  .finalizar-datas-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  #overlayFinalizarReceita .campo-input { padding: 12px 14px !important; font-size: 16px !important; }
+  #overlayFinalizarReceita .modal-footer button { flex: 1; padding: 14px !important; font-size: 15px !important; }
+  #overlayFinalizarReceita .modal-footer { flex-direction: row; }
+
   /* Cards de receita */
   .rec-card { padding: 16px; border-radius: 16px; }
   .rec-card-header { flex-direction: column; align-items: flex-start; gap: 12px; }
@@ -1070,6 +1079,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <!-- Botões da Pluviometria -->
     <button class="btn-header verde" id="btnPluvExcelHeader" onclick="window.AppEstoque.confirmarPluvXLS()" style="display:none">📊 <span>Excel</span></button>
     <button class="btn-header destaque" id="btnPluvPDFHeader" onclick="window.AppEstoque.confirmarPluvPDF()" style="display:none">🖨️ <span>PDF</span></button>
+    <!-- Botões das Receitas -->
+    <button class="btn-header verde" id="btnRecExcelHeader" onclick="window.AppEstoque.abrirRelatorioReceitasXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnRecPDFHeader" onclick="window.AppEstoque.abrirRelatorioReceitasPDF()" style="display:none">🖨️ <span>Relatório</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.solicitarRedefinicaoSenha()" title="Alterar minha senha" style="margin-right:2px">🔑</button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -1456,9 +1468,16 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
         padding:12px 16px;margin-bottom:16px;font-size:13px"></div>
       <div class="campo-group">
         <label class="label-campo">Aplicador / Operador *</label>
-        <input type="text" id="finalizarAplicador" class="campo-input" placeholder="Nome do aplicador">
+        <div style="display:flex;gap:8px">
+          <input type="text" id="finalizarAplicador" class="campo-input" placeholder="Nome do aplicador" style="flex:1">
+          <button type="button" onclick="window.AppEstoque.preencherAplicadorEuMesmo()"
+            style="background:var(--cinza-claro);border:1.5px solid var(--borda);border-radius:8px;
+            padding:0 14px;font-size:12px;font-weight:600;color:var(--texto-suave);cursor:pointer;white-space:nowrap">
+            👤 Eu mesmo
+          </button>
+        </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+      <div class="finalizar-datas-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
         <div class="campo-group">
           <label class="label-campo">Data de início *</label>
           <input type="date" id="finalizarDataInicio" class="campo-input">
@@ -1523,7 +1542,56 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   </div>
 </div>
 
-<!-- MODAL EDITAR TALHÃO -->
+<!-- MODAL RELATÓRIO DE RECEITAS (PDF/Excel) -->
+<div class="overlay" id="overlayRelatorioReceitas" onclick="if(event.target===this)window.AppEstoque.fecharRelatorioReceitas()">
+  <div class="modal estreito">
+    <div class="modal-header" id="relRecHeader" style="background:linear-gradient(90deg,#0f2545,#1a4080)">
+      <h2 id="relRecTitulo">🖨️ Relatório de Receitas</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharRelatorioReceitas()">×</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <p style="font-size:13px;color:var(--texto-suave);margin:0 0 16px">Selecione o período e os filtros desejados para gerar o relatório.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="campo-group">
+          <label class="label-campo">Data início</label>
+          <input type="date" id="relRecDataIni" class="campo-input">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Data fim</label>
+          <input type="date" id="relRecDataFim" class="campo-input">
+        </div>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Status</label>
+        <select id="relRecStatus" class="campo-input">
+          <option value="">Todos os status</option>
+          <option value="pendente">Pendente</option>
+          <option value="em_aberto">Em aberto</option>
+          <option value="finalizado">Finalizado</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Fazenda</label>
+        <select id="relRecFazenda" class="campo-input"><option value="">Todas as fazendas</option></select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:14px;padding:10px 12px;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px">
+        <input type="checkbox" id="relRecSoAtrasadas" style="width:16px;height:16px;accent-color:#c05a00;cursor:pointer">
+        <label for="relRecSoAtrasadas" style="font-size:13px;font-weight:600;color:#8a4500;cursor:pointer">⚠️ Mostrar apenas receitas atrasadas</label>
+      </div>
+      <div id="relRecResumo" style="margin-top:14px;font-size:13px;color:var(--texto-suave)"></div>
+    </div>
+    <div class="modal-footer" style="gap:10px">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharRelatorioReceitas()">Cancelar</button>
+      <button id="relRecBtnGerar" style="background:var(--azul);color:white;border:none;border-radius:8px;
+        padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.gerarRelatorioReceitas()">
+        Gerar
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <div class="overlay" id="overlayEditarTalhao" onclick="">
   <div class="modal estreito">
     <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
@@ -7026,7 +7094,10 @@ function abrirDetReceita(id) {
   const linhasProd = (r.itens||[]).map(it => {
     const isBio = it.biologico;
     const isSub = !!it.substituidoPor;
-    const subInfo = isSub ? `<br><span style="color:#e65100;font-size:11px">↔ Substituiu: ${esc(it.nomeOriginal||'')}</span>` : '';
+    const subDataTxt = it.substituidoEm ? new Date(it.substituidoEm).toLocaleDateString('pt-BR') + ' às ' + new Date(it.substituidoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const subInfo = isSub ? `<div style="margin-top:4px;padding:5px 8px;background:#fff3e0;border-left:3px solid #e65100;border-radius:4px;font-size:11px;color:#8a4500">
+        ↔ Substituiu <strong>${esc(it.nomeOriginal||'')}</strong>${it.substituidoPorNome ? ' · por '+esc(it.substituidoPorNome) : ''}${subDataTxt ? '<br><span style="opacity:.75">'+subDataTxt+'</span>' : ''}
+      </div>` : '';
     return `<tr style="${isBio?'background:#f1f8e9':''}">
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;font-weight:${isBio?700:400}">${esc(it.nome)}${subInfo}</td>
       <td style="padding:7px 10px;border-bottom:1px solid #e8edf2;text-align:center">${esc(it.tipo||'—')}</td>
@@ -7728,15 +7799,24 @@ function abrirFinalizarReceita(id) {
   document.getElementById('finalizarReceitaInfo').innerHTML =
     `<strong>Receita #${String(r.numero||0).padStart(4,'0')}</strong> · ${esc(r.fazenda)} · ${esc(r.cultura||'')}`;
   document.getElementById('finalizarAplicador').value = '';
-  document.getElementById('finalizarDataInicio').value = r.dataInicio || '';
-  document.getElementById('finalizarDataFim').value    = r.dataFim   || '';
+  // Pré-preenche com a data de hoje — agilizando o registro no campo
+  const hojeISO = new Date().toISOString().split('T')[0];
+  document.getElementById('finalizarDataInicio').value = r.dataInicio || hojeISO;
+  document.getElementById('finalizarDataFim').value    = hojeISO;
   document.getElementById('finalizarObs').value        = '';
   document.getElementById('overlayFinalizarReceita').classList.add('aberto');
+  setTimeout(() => document.getElementById('finalizarAplicador')?.focus(), 150);
 }
 
 function fecharFinalizarReceita() {
   document.getElementById('overlayFinalizarReceita').classList.remove('aberto');
   _recFinalizandoId = null;
+}
+
+function preencherAplicadorEuMesmo() {
+  const nome = sessaoAtual?.label || sessaoAtual?.email || '';
+  const inp = document.getElementById('finalizarAplicador');
+  if (inp) { inp.value = nome; inp.focus(); }
 }
 
 async function confirmarFinalizar() {
@@ -7764,6 +7844,196 @@ async function confirmarFinalizar() {
 
 
 // ── PDF de Recomendação ─────────────────────────────────────────────
+// ── Relatório de Receitas (PDF / Excel) ──────────────────────────────
+function abrirRelatorioReceitasXLS() {
+  _relRecModo = 'xls';
+  _abrirModalRelatorioReceitas('📊 Exportar Excel — Receitas', 'linear-gradient(90deg,#1a4a3b,#1a7a3b)', '📊 Baixar Excel');
+}
+function abrirRelatorioReceitasPDF() {
+  _relRecModo = 'pdf';
+  _abrirModalRelatorioReceitas('🖨️ Relatório PDF — Receitas', 'linear-gradient(90deg,#0f2545,#1a4080)', '🖨️ Gerar PDF');
+}
+let _relRecModo = 'pdf';
+
+function _abrirModalRelatorioReceitas(titulo, corHeader, labelBtn) {
+  document.getElementById('relRecTitulo').textContent = titulo;
+  document.getElementById('relRecHeader').style.background = corHeader;
+  document.getElementById('relRecBtnGerar').textContent = labelBtn;
+  document.getElementById('relRecBtnGerar').style.background = _relRecModo === 'xls' ? 'var(--verde)' : 'var(--azul)';
+
+  // Popular fazendas
+  const fazSel = document.getElementById('relRecFazenda');
+  const fazendas = [...new Set(recReceitas.map(r => r.fazenda))].sort();
+  fazSel.innerHTML = '<option value="">Todas as fazendas</option>' + fazendas.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+
+  // Período padrão: mês atual
+  const hoje = new Date();
+  const primeiroDia = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
+  document.getElementById('relRecDataIni').value = primeiroDia;
+  document.getElementById('relRecDataFim').value = hoje.toISOString().split('T')[0];
+  document.getElementById('relRecStatus').value = '';
+  document.getElementById('relRecSoAtrasadas').checked = false;
+
+  _atualizarResumoRelatorioReceitas();
+  ['relRecDataIni','relRecDataFim','relRecStatus','relRecFazenda','relRecSoAtrasadas'].forEach(id => {
+    document.getElementById(id).onchange = _atualizarResumoRelatorioReceitas;
+  });
+
+  document.getElementById('overlayRelatorioReceitas').classList.add('aberto');
+}
+function fecharRelatorioReceitas() {
+  document.getElementById('overlayRelatorioReceitas').classList.remove('aberto');
+}
+
+function _receitaEstaAtrasada(r) {
+  if (r.status === 'cancelado') return false;
+  if (r.status === 'finalizado') return (r.diasAtraso || 0) > 0;
+  // pendente/em_aberto: atrasada se dataFim planejada já passou
+  if (!r.dataFim) return false;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const fim = new Date(r.dataFim + 'T00:00:00');
+  return fim < hoje;
+}
+
+function _filtrarReceitasRelatorio() {
+  const dIni = document.getElementById('relRecDataIni').value;
+  const dFim = document.getElementById('relRecDataFim').value;
+  const status = document.getElementById('relRecStatus').value;
+  const fazenda = document.getElementById('relRecFazenda').value;
+  const soAtrasadas = document.getElementById('relRecSoAtrasadas').checked;
+
+  return recReceitas.filter(r => {
+    if (status && r.status !== status) return false;
+    if (fazenda && r.fazenda !== fazenda) return false;
+    // Filtro de período: usa dataInicio da receita
+    if (dIni && r.dataInicio && r.dataInicio < dIni) return false;
+    if (dFim && r.dataInicio && r.dataInicio > dFim) return false;
+    if (soAtrasadas && !_receitaEstaAtrasada(r)) return false;
+    return true;
+  }).sort((a,b) => (b.numero||0) - (a.numero||0));
+}
+
+function _atualizarResumoRelatorioReceitas() {
+  const items = _filtrarReceitasRelatorio();
+  const atrasadas = items.filter(_receitaEstaAtrasada).length;
+  const el = document.getElementById('relRecResumo');
+  if (el) {
+    el.innerHTML = `📋 <strong>${items.length}</strong> receita${items.length!==1?'s':''} encontrada${items.length!==1?'s':''}` +
+      (atrasadas > 0 ? ` · <span style="color:#c00;font-weight:700">⚠️ ${atrasadas} atrasada${atrasadas!==1?'s':''}</span>` : '');
+  }
+}
+
+function gerarRelatorioReceitas() {
+  const items = _filtrarReceitasRelatorio();
+  if (items.length === 0) { mostrarToast('Nenhuma receita encontrada com esses filtros.', 'erro'); return; }
+  fecharRelatorioReceitas();
+  if (_relRecModo === 'xls') _exportarReceitasXLS(items);
+  else _exportarReceitasPDF(items);
+}
+
+function _exportarReceitasXLS(items) {
+  const statusLabel = { pendente: 'Pendente', em_aberto: 'Em Aberto', finalizado: 'Finalizado', cancelado: 'Cancelado' };
+  const linhas = items.map(r => ({
+    'Receita':        '#' + String(r.numero||0).padStart(4,'0'),
+    'Status':         statusLabel[r.status] || r.status,
+    'Atrasada':       _receitaEstaAtrasada(r) ? 'Sim' : 'Não',
+    'Fazenda':        r.fazenda || '',
+    'Cultura':        r.cultura || '',
+    'Safra':          r.safra || '',
+    'Descrição':      r.descricao || '',
+    'Talhões':        (r.talhoes||[]).map(t => t.nome).join(', '),
+    'Área Total (ha)':r.areaTotal || 0,
+    'Operação':       r.operacao === 'drone' ? 'Drone' : r.operacao === 'autopropelido' ? 'Autopropelido' : (r.operacao||''),
+    'Vazão (L/ha)':   r.vazao || '',
+    'Data Início':    r.dataInicio || '',
+    'Data Fim Planejada': r.dataFim || '',
+    'Técnico':        r.tecnico || '',
+    'Aplicador':      r.aplicador || '',
+    'Início Real':    r.aplicacaoInicio || '',
+    'Fim Real':       r.aplicacaoFim || '',
+    'Dias de Atraso': r.diasAtraso || 0,
+    'Criado em':      r.criadoEm ? new Date(r.criadoEm).toLocaleDateString('pt-BR') : '',
+  }));
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws['!cols'] = Object.keys(linhas[0]).map(k => ({ wch: Math.max(k.length + 2, 12) }));
+  XLSX.utils.book_append_sheet(wb, ws, 'Receitas');
+  const nome = `receitas_${configGlobal.fazenda.replace(/\s+/g,'-')}_${new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')}`;
+  XLSX.writeFile(wb, `${nome}.xlsx`);
+  mostrarToast(`✓ ${linhas.length} receitas exportadas!`, 'sucesso');
+}
+
+function _exportarReceitasPDF(items) {
+  const statusInfo = {
+    pendente:  { label: 'Pendente',  cor: '#854d0e', bg: '#fef3c7' },
+    em_aberto: { label: 'Em Aberto', cor: '#1d4ed8', bg: '#dbeafe' },
+    finalizado:{ label: 'Finalizado',cor: '#166534', bg: '#dcfce7' },
+    cancelado: { label: 'Cancelado', cor: '#991b1b', bg: '#fee2e2' },
+  };
+  const dIni = document.getElementById('relRecDataIni')?.value || '';
+  const dFim = document.getElementById('relRecDataFim')?.value || '';
+  const periodoTxt = (dIni && dFim)
+    ? new Date(dIni+'T12:00:00').toLocaleDateString('pt-BR') + ' a ' + new Date(dFim+'T12:00:00').toLocaleDateString('pt-BR')
+    : 'Todos os períodos';
+  const totalAtrasadas = items.filter(_receitaEstaAtrasada).length;
+
+  const linhas = items.map(r => {
+    const st = statusInfo[r.status] || { label: r.status, cor: '#666', bg: '#eee' };
+    const atrasada = _receitaEstaAtrasada(r);
+    const talhoesTxt = (r.talhoes||[]).map(t => t.nome).join(', ') || '—';
+    return '<tr style="' + (atrasada ? 'background:#fff5f5' : '') + '">'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;font-weight:700">#' + String(r.numero||0).padStart(4,'0') + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee">' + esc(r.fazenda||'') + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee">' + esc(r.cultura||'') + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(talhoesTxt) + '">' + esc(talhoesTxt) + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center">' + (r.areaTotal ? r.areaTotal.toFixed(1) : '—') + ' ha</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center">' + (r.dataInicio ? new Date(r.dataInicio+'T12:00:00').toLocaleDateString('pt-BR') : '—') + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center">' + (r.dataFim ? new Date(r.dataFim+'T12:00:00').toLocaleDateString('pt-BR') : '—') + '</td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center"><span style="background:' + st.bg + ';color:' + st.cor + ';padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700">' + st.label + '</span></td>'
+      + '<td style="padding:7px 8px;border-bottom:1px solid #eee;text-align:center">' + (atrasada ? '<span style="color:#c00;font-weight:700">⚠️ Sim</span>' : '—') + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const dataEmit = new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  const html = '<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório de Receitas</title>'
+    + '<style>'
+    + '@page{size:A4 landscape;margin:1cm}'
+    + 'body{font-family:Inter,Arial,sans-serif;margin:0;color:#1a2535;background:#f4f6fa}'
+    + '.pg{max-width:1100px;margin:0 auto;background:white}'
+    + '.hdr{background:linear-gradient(90deg,#0f2545,#1a4080);color:white;padding:20px 28px;display:flex;justify-content:space-between;align-items:center}'
+    + '.hdr h1{margin:0;font-size:20px}'
+    + '.hdr .sub{font-size:12px;opacity:.85;margin-top:4px}'
+    + '.resumo-bar{display:flex;gap:14px;padding:14px 28px;background:#eef2fb;flex-wrap:wrap}'
+    + '.resumo-chip{background:white;border-radius:8px;padding:8px 16px;font-size:12px;color:#475569;border:1px solid #dbe3ef}'
+    + '.resumo-chip strong{color:#1a4080;font-size:15px}'
+    + 'table{width:100%;border-collapse:collapse;margin:0;font-size:12px}'
+    + 'thead th{background:#1a4080;color:white;padding:9px 8px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.3px}'
+    + '.footer{padding:14px 28px;text-align:center;font-size:10px;color:#94a3b8;border-top:1px solid #eee}'
+    + '@media print{body{background:white}.pg{max-width:100%}}'
+    + '</style></head><body>'
+    + '<div class="pg">'
+    + '<div class="hdr"><div><h1>📋 Relatório de Receitas</h1><div class="sub">' + esc(configGlobal.fazenda||'AMJ Agropecuária') + ' · Período: ' + periodoTxt + '</div></div>'
+    + '<div style="text-align:right;font-size:11px;opacity:.8">Gerado em<br>' + dataEmit + '</div></div>'
+    + '<div class="resumo-bar">'
+    + '<div class="resumo-chip">Total de receitas<br><strong>' + items.length + '</strong></div>'
+    + '<div class="resumo-chip">Atrasadas<br><strong style="color:' + (totalAtrasadas>0?'#c00':'#166534') + '">' + totalAtrasadas + '</strong></div>'
+    + '</div>'
+    + '<table><thead><tr>'
+    + '<th>Receita</th><th>Fazenda</th><th>Cultura</th><th>Talhões</th><th>Área</th><th>Início</th><th>Fim Planej.</th><th>Status</th><th>Atrasada</th>'
+    + '</tr></thead><tbody>' + linhas + '</tbody></table>'
+    + '<div class="footer">AMJ Agro Gestão · Relatório gerado automaticamente · ' + items.length + ' receita(s) listada(s)</div>'
+    + '</div>'
+    + '<script>window.onload=()=>window.print()<\/script>'
+    + '</body></html>';
+
+  const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado.', 'erro'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
+}
+
 async function imprimirReceita(id) {
   const r = recReceitas.find(x => x.id === id);
   if (!r) return;
@@ -7817,7 +8087,7 @@ async function imprimirReceita(id) {
   const rows = (r.itens||[]).map((it, i) => {
     const isBio = it.biologico;
     const nome  = it.substituidoPor
-      ? esc(it.nome)+'<br><span style="font-size:10px;color:#ea580c">Sub: '+esc(it.nomeOriginal||'')+'</span>'
+      ? esc(it.nome)+'<br><span style="font-size:10px;color:#ea580c">↔ Substituiu: '+esc(it.nomeOriginal||'')+'</span>'
       : esc(it.nome);
     const doseHa    = it.doseHa || 0;
     const qdeTot    = it.qdeTotalArea || 0;
@@ -8536,6 +8806,28 @@ function irParaReceitaDoSino(receitaId) {
   setTimeout(() => abrirDetReceita(receitaId), 400);
 }
 
+function irParaReceitasFiltradas(status) {
+  navegarModulo('receitas');
+  setTimeout(() => {
+    const sel = document.getElementById('recFiltroStatus');
+    if (sel) {
+      sel.value = status || '';
+      renderReceitas(true);
+    }
+  }, 150);
+}
+
+function irParaEstoqueFiltrado(status) {
+  navegarModulo('estoque');
+  setTimeout(() => {
+    const sel = document.getElementById('filtroStatus');
+    if (sel) {
+      sel.value = status || '';
+      filtrar();
+    }
+  }, 150);
+}
+
 function renderDashboard() {
   const agora    = new Date();
   const hora     = agora.getHours();
@@ -8584,17 +8876,17 @@ function renderDashboard() {
 
   const cards = [
     { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
-    { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '' },
-    { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
-    { valor: recPendentes,        label: 'Receitas pendentes',   sub: 'aguardando aceite',                 cls: 'receita' },
-    { valor: recEmAberto,         label: 'Receitas em aberto',   sub: 'em execução',                       cls: 'receita' },
+    { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '', onclick: "window.AppEstoque.irParaEstoqueFiltrado('negativo')" },
+    { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '', onclick: "window.AppEstoque.irParaEstoqueFiltrado('zerado')" },
+    { valor: recPendentes,        label: 'Receitas pendentes',   sub: 'aguardando aceite',                 cls: 'receita', onclick: "window.AppEstoque.irParaReceitasFiltradas('pendente')" },
+    { valor: recEmAberto,         label: 'Receitas em aberto',   sub: 'em execução',                       cls: 'receita', onclick: "window.AppEstoque.irParaReceitasFiltradas('em_aberto')" },
     { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
     { valor: pluvTotal.toFixed(1) + ' mm', label: 'Chuva total no mês', sub: 'soma de todas as fazendas', cls: 'verde' },
   ];
 
   if (el('dashCards')) {
     el('dashCards').innerHTML = cards.map(c => `
-      <div class="dash-card ${c.cls}">
+      <div class="dash-card ${c.cls} ${c.onclick ? 'clicavel' : ''}" ${c.onclick ? `onclick="${c.onclick}"` : ''}>
         <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'negativo' ? 'color:#7b1fa2' : c.cls === 'receita' ? 'color:#0d9488' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
         <div class="dash-card-label">${c.label}</div>
         ${c.sub ? `<div class="dash-card-sub">${c.sub}</div>` : ''}
@@ -8750,7 +9042,9 @@ function navegarModulo(modulo) {
   // Pluviometria
   show('btnPluvExcelHeader', modulo === 'pluviometria' && temRelat);
   show('btnPluvPDFHeader',   modulo === 'pluviometria' && temRelat);
-  // Receitas — sem botões extras no header (ações ficam dentro dos cards)
+  // Receitas
+  show('btnRecExcelHeader', modulo === 'receitas' && temRelat);
+  show('btnRecPDFHeader',   modulo === 'receitas' && temRelat);
 
   // Listeners de irrigação e pluv ficam sempre ativos (Dashboard os consome).
   // Só iniciam se ainda não estiverem rodando.
@@ -9268,6 +9562,8 @@ window.AppEstoque = {
   carregarMaisHistorico, recarregarHistorico,
   navegarModulo, renderDashboard,
   toggleSinoDropdown, fecharSinoDropdown, irParaReceitaDoSino, renderSino,
+  irParaReceitasFiltradas, irParaEstoqueFiltrado,
+  abrirRelatorioReceitasXLS, abrirRelatorioReceitasPDF, fecharRelatorioReceitas, gerarRelatorioReceitas,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
   renderTabelaPluv,
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
@@ -9282,7 +9578,7 @@ window.AppEstoque = {
   abrirDetReceita, fecharDetReceita, cancelarReceita,
   abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto, clonarReceita, _filtrarSubstProd, _selecionarSubstProd, _confirmarSubstProd,
   cadastrarProdutoNoAceite, _confirmarQuickCad,
-  abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar,
+  abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar, preencherAplicadorEuMesmo,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
   abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
