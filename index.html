@@ -1881,6 +1881,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <div id="gestaoSecPivotos" style="padding:16px 20px">
         <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
           <button class="somente-admin" style="background:#92400e;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.migrarPortoMarcelo()" title="Unifica os pivôs de PORTO - MARCELO na fazenda PORTO">🌾 Corrigir PORTO - MARCELO</button>
+          <button class="somente-admin" style="background:#b91c1c;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.restaurarPivosPerdidos()" title="Restaura pivôs de JUPIA, PONTAL e MAOA perdidos">🔧 Restaurar pivôs perdidos</button>
           <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
         </div>
         <div class="pivos-lista" id="gestaoIrrigLista"></div>
@@ -5797,6 +5798,54 @@ async function salvarPivo() {
     mostrarToast('Erro ao salvar o pivô.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Salvar';
+  }
+}
+
+
+// ── Restauração pontual: pivôs perdidos de JUPIA, PONTAL e MAOA ────
+// Dados recuperados da planilha original enviada pelo usuário (talhões_irriger.xlsx).
+const _PIVOS_RESTAURAR = JSON.parse(atob('W3siZmF6ZW5kYSI6ICJKVVBJQSIsICJwaXZvIjogIkJVUklUSSIsICJ0YWJlbGEiOiB7IjUiOiA2MS4xOCwgIjEwIjogMzAuNTksICIxNSI6IDIwLjM5LCAiMjAiOiAxNS4yOSwgIjI1IjogMTIuMjQsICIzMCI6IDEwLjIsICIzNSI6IDguNzQsICI0MCI6IDcuNjUsICI0NSI6IDYuOCwgIjUwIjogNi4xMiwgIjU1IjogNS41NiwgIjYwIjogNS4xLCAiNjUiOiA0LjcxLCAiNzAiOiA0LjM3LCAiNzUiOiA0LjA4LCAiODAiOiAzLjgyLCAiODUiOiAzLjYsICI5MCI6IDMuNCwgIjk1IjogMy4yMiwgIjEwMCI6IDMuMDZ9fSwgeyJmYXplbmRhIjogIkpVUElBIiwgInBpdm8iOiAiSkFCT1RJQ0FCQSIsICJ0YWJlbGEiOiB7IjUiOiA3My45OCwgIjEwIjogMzYuOTksICIxNSI6IDI0LjY2LCAiMjAiOiAxOC41LCAiMjUiOiAxNC44LCAiMzAiOiAxMi4zMywgIjM1IjogMTAuNTcsICI0MCI6IDkuMjUsICI0NSI6IDguMjIsICI1MCI6IDcuNCwgIjU1IjogNi43MywgIjYwIjogNi4xNywgIjY1IjogNS42OSwgIjcwIjogNS4yOCwgIjc1IjogNC45MywgIjgwIjogNC42MiwgIjg1IjogNC4zNSwgIjkwIjogNC4xMSwgIjk1IjogMy44OSwgIjEwMCI6IDMuN319LCB7ImZhemVuZGEiOiAiSlVQSUEiLCAicGl2byI6ICJKRU5JUEFQTyIsICJ0YWJlbGEiOiB7IjUiOiA3NC4zLCAiMTAiOiAzNy4xNSwgIjE1IjogMjQuNzcsICIyMCI6IDE4LjU3LCAiMjUiOiAxNC44NiwgIjMwIjogMTIuMzgsICIzNSI6IDEwLjYxLCAiNDAiOiA5LjI5LCAiNDUiOiA4LjI2LCAiNTAiOiA3LjQzLCAiNTUiOiA2Ljc1LCAiNjAiOiA2LjE5LCAiNjUiOiA1LjcyLCAiNzAiOiA1LjMxLCAiNzUiOiA0Ljk1LCAiODAiOiA0LjY0LCAiODUiOiA0LjM3LCAiOTAiOiA0LjEzLCAiOTUiOiAzLjkxLCAiMTAwIjogMy43MX19LCB7ImZhemVuZGEiOiAiSlVQSUEiLCAicGl2byI6ICJNQU1BTyIsICJ0YWJlbGEiOiB7IjUiOiA1Ni45NiwgIjEwIjogMjguNDgsICIxNSI6IDE4Ljk5LCAiMjAiOiAxNC4yNCwgIjI1IjogMTEuMzksICIzMCI6IDkuNDksICIzNSI6IDguMTQsICI0MCI6IDcuMTIsICI0NSI6IDYuMzMsICI1MCI6IDUuNywgIjU1IjogNS4xOCwgIjYwIjogNC43NSwgIjY1IjogNC4zOCwgIjcwIjogNC4wNywgIjc1IjogMy44LCAiODAiOiAzLjU2LCAiODUiOiAzLjM1LCAiOTAiOiAzLjE2LCAiOTUiOiAzLjAsICIxMDAiOiAyLjg1fX0sIHsiZmF6ZW5kYSI6ICJNQU9BIiwgInBpdm8iOiAiUElWTyAxIiwgInRhYmVsYSI6IHsiNSI6IDEwMy4yNCwgIjEwIjogNTEuNjIsICIxNSI6IDM0LjQxLCAiMjAiOiAyNS44MSwgIjI1IjogMjAuNjUsICIzMCI6IDE3LjIxLCAiMzUiOiAxNC43NSwgIjQwIjogMTIuOTEsICI0NSI6IDExLjQ3LCAiNTAiOiAxMC4zMiwgIjU1IjogOS4zOSwgIjYwIjogOC42LCAiNjUiOiA3Ljk0LCAiNzAiOiA3LjM3LCAiNzUiOiA2Ljg4LCAiODAiOiA2LjQ1LCAiODUiOiA2LjA3LCAiOTAiOiA1Ljc0LCAiOTUiOiA1LjQzLCAiMTAwIjogNS4xNn19LCB7ImZhemVuZGEiOiAiTUFPQSIsICJwaXZvIjogIlBJVk8gMiIsICJ0YWJlbGEiOiB7IjUiOiAxMTQuMTcsICIxMCI6IDU3LjA4LCAiMTUiOiAzOC4wNiwgIjIwIjogMjguNTQsICIyNSI6IDIyLjgzLCAiMzAiOiAxOS4wMywgIjM1IjogMTYuMzEsICI0MCI6IDE0LjI3LCAiNDUiOiAxMi42OSwgIjUwIjogMTEuNDIsICI1NSI6IDEwLjM4LCAiNjAiOiA5LjUxLCAiNjUiOiA4Ljc4LCAiNzAiOiA4LjE1LCAiNzUiOiA3LjYxLCAiODAiOiA3LjE0LCAiODUiOiA2LjcyLCAiOTAiOiA2LjM0LCAiOTUiOiA2LjAxLCAiMTAwIjogNS43MX19LCB7ImZhemVuZGEiOiAiTUFPQSIsICJwaXZvIjogIlBJVk8gMyIsICJ0YWJlbGEiOiB7IjUiOiAxNTAuNSwgIjEwIjogNzUuMjUsICIxNSI6IDUwLjE3LCAiMjAiOiAzNy42MiwgIjI1IjogMzAuMSwgIjMwIjogMjUuMDgsICIzNSI6IDIxLjUsICI0MCI6IDE4LjgxLCAiNDUiOiAxNi43MiwgIjUwIjogMTUuMDUsICI1NSI6IDEzLjY4LCAiNjAiOiAxMi41NCwgIjY1IjogMTEuNTgsICI3MCI6IDEwLjc1LCAiNzUiOiAxMC4wMywgIjgwIjogOS40MSwgIjg1IjogOC44NSwgIjkwIjogOC4zNiwgIjk1IjogNy45MiwgIjEwMCI6IDcuNTJ9fSwgeyJmYXplbmRhIjogIlBPTlRBTCIsICJwaXZvIjogIkdBSVJPVkEiLCAidGFiZWxhIjogeyI1IjogMTA0LjQsICIxMCI6IDUyLjIsICIxNSI6IDM0LjgsICIyMCI6IDI2LjEsICIyNSI6IDIwLjg4LCAiMzAiOiAxNy40LCAiMzUiOiAxNC45MSwgIjQwIjogMTMuMDUsICI0NSI6IDExLjYsICI1MCI6IDEwLjQ0LCAiNTUiOiA5LjQ5LCAiNjAiOiA4LjcsICI2NSI6IDguMDMsICI3MCI6IDcuNDYsICI3NSI6IDYuOTYsICI4MCI6IDYuNTIsICI4NSI6IDYuMTQsICI5MCI6IDUuOCwgIjk1IjogNS40OSwgIjEwMCI6IDUuMjJ9fSwgeyJmYXplbmRhIjogIlBPTlRBTCIsICJwaXZvIjogIkdPSUFCQSIsICJ0YWJlbGEiOiB7IjUiOiAxMDQuNjQsICIxMCI6IDUyLjMyLCAiMTUiOiAzNC44OCwgIjIwIjogMjYuMTYsICIyNSI6IDIwLjkzLCAiMzAiOiAxNy40NCwgIjM1IjogMTQuOTUsICI0MCI6IDEzLjA4LCAiNDUiOiAxMS42MywgIjUwIjogMTAuNDYsICI1NSI6IDkuNTEsICI2MCI6IDguNzIsICI2NSI6IDguMDUsICI3MCI6IDcuNDcsICI3NSI6IDYuOTgsICI4MCI6IDYuNTQsICI4NSI6IDYuMTYsICI5MCI6IDUuODEsICI5NSI6IDUuNTEsICIxMDAiOiA1LjIzfX0sIHsiZmF6ZW5kYSI6ICJQT05UQUwiLCAicGl2byI6ICJTQVBVQ0FJIDEiLCAidGFiZWxhIjogeyI1IjogNzMuNzYsICIxMCI6IDM2Ljg4LCAiMTUiOiAyNC41OSwgIjIwIjogMTguNDQsICIyNSI6IDE0Ljc1LCAiMzAiOiAxMi4yOSwgIjM1IjogMTAuNTQsICI0MCI6IDkuMjIsICI0NSI6IDguMiwgIjUwIjogNy4zOCwgIjU1IjogNi43MSwgIjYwIjogNi4xNSwgIjY1IjogNS42NywgIjcwIjogNS4yNywgIjc1IjogNC45MiwgIjgwIjogNC42MSwgIjg1IjogNC4zNCwgIjkwIjogNC4xLCAiOTUiOiAzLjg4LCAiMTAwIjogMy42OX19LCB7ImZhemVuZGEiOiAiUE9OVEFMIiwgInBpdm8iOiAiU0FQVUNBSSAyIiwgInRhYmVsYSI6IHsiNSI6IDkzLjA5LCAiMTAiOiA0Ni41NCwgIjE1IjogMzEuMDMsICIyMCI6IDIzLjI3LCAiMjUiOiAxOC42MiwgIjMwIjogMTUuNTEsICIzNSI6IDEzLjMsICI0MCI6IDExLjY0LCAiNDUiOiAxMC4zNCwgIjUwIjogOS4zMSwgIjU1IjogOC40NiwgIjYwIjogNy43NiwgIjY1IjogNy4xNiwgIjcwIjogNi42NSwgIjc1IjogNi4yMSwgIjgwIjogNS44MiwgIjg1IjogNS40OCwgIjkwIjogNS4xNywgIjk1IjogNC45LCAiMTAwIjogNC42NX19LCB7ImZhemVuZGEiOiAiUE9OVEFMIiwgInBpdm8iOiAiU0VSSU5HVUVJUkEiLCAidGFiZWxhIjogeyI1IjogMTA1LjEyLCAiMTAiOiA1Mi41NiwgIjE1IjogMzUuMDQsICIyMCI6IDI2LjI4LCAiMjUiOiAyMS4wMiwgIjMwIjogMTcuNTIsICIzNSI6IDE1LjAyLCAiNDAiOiAxMy4xNCwgIjQ1IjogMTEuNjgsICI1MCI6IDEwLjUxLCAiNTUiOiA5LjU2LCAiNjAiOiA4Ljc2LCAiNjUiOiA4LjA5LCAiNzAiOiA3LjUxLCAiNzUiOiA3LjAxLCAiODAiOiA2LjU3LCAiODUiOiA2LjE4LCAiOTAiOiA1Ljg0LCAiOTUiOiA1LjUzLCAiMTAwIjogNS4yNn19XQ=='));
+
+async function restaurarPivosPerdidos() {
+  await recarregarPivotos();
+  const jaExistem = _PIVOS_RESTAURAR.filter(p =>
+    irrigPivotos.some(x => x.fazenda === p.fazenda && x.pivo === p.pivo)
+  );
+  const aRestaurar = _PIVOS_RESTAURAR.filter(p =>
+    !irrigPivotos.some(x => x.fazenda === p.fazenda && x.pivo === p.pivo)
+  );
+
+  if (!aRestaurar.length) {
+    mostrarToast('Todos os pivôs já estão presentes — nada para restaurar.', 'sucesso');
+    return;
+  }
+
+  const lista = aRestaurar.map(p => `• ${p.fazenda} / ${p.pivo}`).join('<br>');
+  const ok = await confirmarGenerico({
+    titulo: 'Restaurar pivôs perdidos',
+    icone: '🔧',
+    mensagem: `Serão restaurados <strong>${aRestaurar.length} pivô(s)</strong> com a tabela MM completa (recuperados da planilha original):<br><br>${lista}` +
+      (jaExistem.length ? `<br><br><span style="font-size:12px;color:var(--texto-suave)">${jaExistem.length} já existem e não serão alterados.</span>` : ''),
+    corBtn: 'var(--verde)',
+    labelBtn: '🔧 Restaurar agora'
+  });
+  if (!ok) return;
+
+  try {
+    for (const p of aRestaurar) {
+      const docId = normalize(p.fazenda) + '___' + normalize(p.pivo);
+      await setDoc(doc(db, 'irrigacao_pivotos', docId), {
+        fazenda: p.fazenda, pivo: p.pivo, tabela: p.tabela, ativo: true,
+        atualizadoEm: new Date().toISOString(), restauradoEm: new Date().toISOString()
+      });
+    }
+    await recarregarPivotos();
+    popularFiltrosFazenda();
+    renderGestaoIrrigLista();
+    mostrarToast(`✓ ${aRestaurar.length} pivô(s) restaurado(s) com sucesso!`, 'sucesso');
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro ao restaurar pivôs.', 'erro');
   }
 }
 
@@ -10114,7 +10163,7 @@ window.AppEstoque = {
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
   abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
   adicionarCultura, adicionarSafra, moverItem, removerItem,
-  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo,
+  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo, restaurarPivosPerdidos,
   exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
