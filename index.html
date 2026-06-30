@@ -1879,7 +1879,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 
       <!-- Aba Pivôs -->
       <div id="gestaoSecPivotos" style="padding:16px 20px">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <button class="somente-admin" style="background:#92400e;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.migrarPortoMarcelo()" title="Unifica os pivôs de PORTO - MARCELO na fazenda PORTO">🌾 Corrigir PORTO - MARCELO</button>
           <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
         </div>
         <div class="pivos-lista" id="gestaoIrrigLista"></div>
@@ -1921,11 +1922,20 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <div class="irrig-form-row">
         <div>
           <label class="label-campo">Fazenda</label>
-          <input type="text" id="editorPivoFazenda" placeholder="Ex: SEMPRE VERDE" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+          <select id="editorPivoFazenda" onchange="window.AppEstoque.onEditorPivoFazendaChange()"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+            <option value="">Selecione...</option>
+          </select>
         </div>
         <div>
-          <label class="label-campo">Pivô</label>
-          <input type="text" id="editorPivoNome" placeholder="Ex: CURRAL" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+          <label class="label-campo">Talhão (pivô)</label>
+          <select id="editorPivoNome"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+            <option value="">Selecione a fazenda primeiro</option>
+          </select>
+          <div style="font-size:11px;color:var(--texto-suave);margin-top:4px">
+            🌾 Só talhões cadastrados como <strong>Irrigado (PC)</strong> em Agricultura aparecem aqui.
+          </div>
         </div>
       </div>
       <label class="label-campo" style="margin-bottom:4px;display:block">Tabela de MM por percentímetro</label>
@@ -5693,19 +5703,31 @@ function abrirEditorPivo(id) {
   const titulo = document.getElementById('editorPivoTitulo');
   const pcts   = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
 
+  // Popular select de fazendas a partir do cadastro central (só fazendas com talhão PC)
+  const fazSel = document.getElementById('editorPivoFazenda');
+  const fazendasComPC = [...new Set(
+    agriFazendas
+      .filter(f => (f.talhoes||[]).some(t => t.tipo === 'PC' && t.ativo !== false))
+      .map(f => f.nome)
+  )].sort();
+  fazSel.innerHTML = '<option value="">Selecione...</option>' + fazendasComPC.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+  if (!fazendasComPC.length) {
+    mostrarToast('Nenhum talhão Irrigado (PC) cadastrado em Agricultura ainda. Cadastre lá primeiro.', 'erro');
+  }
+
   if (id) {
     const p = irrigPivotos.find(x => x.id === id);
     if (!p) return;
     if (titulo) titulo.textContent = 'Editar Pivô';
-    document.getElementById('editorPivoFazenda').value = p.fazenda;
-    document.getElementById('editorPivoNome').value    = p.pivo;
+    fazSel.value = p.fazenda;
+    onEditorPivoFazendaChange(p.pivo);
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
       `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" value="${p.tabela[pct] || ''}"></div>`
     ).join('');
   } else {
     if (titulo) titulo.textContent = 'Novo Pivô';
-    document.getElementById('editorPivoFazenda').value = '';
-    document.getElementById('editorPivoNome').value    = '';
+    fazSel.value = '';
+    onEditorPivoFazendaChange();
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
       `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" placeholder="0.00"></div>`
     ).join('');
@@ -5713,14 +5735,37 @@ function abrirEditorPivo(id) {
   document.getElementById('overlayEditorPivo').classList.add('aberto');
 }
 
+// Atualiza o select de talhão (pivô) quando a fazenda muda — só talhões PC
+function onEditorPivoFazendaChange(selecionarNome) {
+  const fazNome = document.getElementById('editorPivoFazenda')?.value || '';
+  const pivoSel = document.getElementById('editorPivoNome');
+  if (!pivoSel) return;
+  if (!fazNome) {
+    pivoSel.innerHTML = '<option value="">Selecione a fazenda primeiro</option>';
+    return;
+  }
+  const fazenda = agriFazendas.find(f => f.nome === fazNome);
+  const talhoesPC = (fazenda?.talhoes || []).filter(t => t.tipo === 'PC' && t.ativo !== false).map(t => t.nome).sort();
+  // Já existem pivôs cadastrados para essa fazenda — não listar de novo (evita duplicidade),
+  // a menos que estejamos editando esse mesmo pivô.
+  const pivosJaUsados = new Set(
+    irrigPivotos.filter(p => p.fazenda === fazNome && p.id !== _editandoPivoId).map(p => p.pivo)
+  );
+  const disponiveis = talhoesPC.filter(n => !pivosJaUsados.has(n));
+  pivoSel.innerHTML = disponiveis.length
+    ? '<option value="">Selecione...</option>' + disponiveis.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
+    : '<option value="">Nenhum talhão PC disponível</option>';
+  if (selecionarNome) pivoSel.value = selecionarNome;
+}
+
 function fecharEditorPivo() {
   document.getElementById('overlayEditorPivo').classList.remove('aberto');
 }
 
 async function salvarPivo() {
-  const fazenda = document.getElementById('editorPivoFazenda').value.trim().toUpperCase();
-  const pivo    = document.getElementById('editorPivoNome').value.trim().toUpperCase();
-  if (!fazenda || !pivo) { mostrarToast('Informe a fazenda e o nome do pivô.', 'erro'); return; }
+  const fazenda = document.getElementById('editorPivoFazenda').value.trim();
+  const pivo    = document.getElementById('editorPivoNome').value.trim();
+  if (!fazenda || !pivo) { mostrarToast('Selecione a fazenda e o talhão (pivô).', 'erro'); return; }
 
   const pcts = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
   const tabela = {};
@@ -5752,6 +5797,64 @@ async function salvarPivo() {
     mostrarToast('Erro ao salvar o pivô.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '💾 Salvar';
+  }
+}
+
+// ── Migração pontual: unificar fazenda "PORTO - MARCELO" em "PORTO" ──
+// Transporta todos os pivôs (incluindo a tabela MM completa) da fazenda
+// errada para a correta, sem perder nenhum dado, e só então remove a antiga.
+async function migrarPortoMarcelo() {
+  await recarregarPivotos();
+  const pivosErrados = irrigPivotos.filter(p => p.fazenda.toUpperCase().trim() === 'PORTO - MARCELO' || p.fazenda.toUpperCase().trim() === 'PORTO-MARCELO');
+
+  if (!pivosErrados.length) {
+    mostrarToast('Nenhum pivô encontrado em "PORTO - MARCELO". Nada para migrar.', 'erro');
+    return;
+  }
+
+  const listaTxt = pivosErrados.map(p => `• ${esc(p.pivo)}`).join('<br>');
+  const ok = await confirmarGenerico({
+    titulo: 'Migrar PORTO - MARCELO → PORTO',
+    icone: '🌾',
+    mensagem: `Encontrados <strong>${pivosErrados.length} pivô(s)</strong> em "PORTO - MARCELO":<br><br>${listaTxt}<br><br>
+      Cada pivô será recriado na fazenda <strong>PORTO</strong> com a tabela MM completa preservada, e a fazenda
+      "PORTO - MARCELO" será removida.<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Lançamentos já registrados não serão afetados.</span>`,
+    corBtn: 'var(--azul)',
+    labelBtn: '🌾 Migrar agora'
+  });
+  if (!ok) return;
+
+  try {
+    let copiados = 0, jaExistiam = 0;
+    for (const p of pivosErrados) {
+      const novoId = normalize('PORTO') + '___' + normalize(p.pivo);
+      const jaExiste = irrigPivotos.some(x => x.fazenda === 'PORTO' && x.pivo === p.pivo);
+      if (jaExiste) {
+        jaExistiam++;
+        continue; // não sobrescreve um pivô que já existe corretamente em PORTO
+      }
+      await setDoc(doc(db, 'irrigacao_pivotos', novoId), {
+        fazenda: 'PORTO',
+        pivo: p.pivo,
+        tabela: p.tabela,
+        ativo: true,
+        atualizadoEm: new Date().toISOString(),
+        migradoDe: 'PORTO - MARCELO'
+      });
+      copiados++;
+    }
+    // Remove os pivôs antigos só depois de confirmado que a cópia funcionou
+    for (const p of pivosErrados) {
+      await deleteDoc(doc(db, 'irrigacao_pivotos', p.id));
+    }
+    await recarregarPivotos();
+    popularFiltrosFazenda();
+    renderGestaoIrrigLista();
+    mostrarToast(`✓ Migração concluída! ${copiados} pivô(s) movido(s) para PORTO${jaExistiam ? `, ${jaExistiam} já existia(m) e foi(ram) mantido(s)` : ''}.`, 'sucesso');
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro durante a migração. Nenhum dado foi perdido — tente novamente.', 'erro');
   }
 }
 
@@ -10011,7 +10114,7 @@ window.AppEstoque = {
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
   abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
   adicionarCultura, adicionarSafra, moverItem, removerItem,
-  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo,
+  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo,
   exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
