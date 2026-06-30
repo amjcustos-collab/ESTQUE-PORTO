@@ -399,6 +399,7 @@ header {
 .dash-card.alerta  { border-color: #f0b860; background: #fffdf5; }
 .dash-card.critico { border-color: var(--vermelho); background: var(--vermelho-fundo); }
 .dash-card.negativo { border-color: #7b1fa2; background: #f9f0ff; }
+.dash-card.receita { border-color: #0d9488; background: #f0fdfa; }
 .dash-card.azul    { border-color: #1a5fb4; background: #f0f4ff; }
 .dash-card.verde   { border-color: #2a7a2a; background: #f0faf0; }
 
@@ -543,6 +544,9 @@ header {
 .campo-group label { font-size: 12px; font-weight: 600; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; }
 .campo-group input, .campo-group select { padding: 10px 12px; border: 1.5px solid var(--borda); border-radius: 8px; font-size: 15px; outline: none; background: white; transition: border-color 0.15s; }
 .campo-group input:focus, .campo-group select:focus { border-color: var(--azul-claro); }
+.campo-input { width: 100%; padding: 10px 12px; border: 1.5px solid var(--borda); border-radius: 8px; font-size: 14px; outline: none; background: white; transition: border-color 0.15s; box-sizing: border-box; font-family: inherit; color: var(--texto); }
+.campo-input:focus { border-color: var(--azul-claro); }
+.campo-input::placeholder { color: #9aa5b1; }
 .painel-acoes { display: flex; gap: 8px; align-items: flex-end; }
 .btn-confirmar-saida { background: var(--vermelho); color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 15px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .btn-confirmar-saida:hover { background: #9e2525; }
@@ -8493,16 +8497,16 @@ function renderDashboard() {
     { valor: totalProd,           label: 'Produtos cadastrados', sub: '',                                  cls: '' },
     { valor: negativos,           label: 'Estoque negativo',     sub: 'aguardando entrada',                cls: negativos > 0 ? 'negativo' : '' },
     { valor: zerados,             label: 'Zerados',              sub: 'necessitam reposição',              cls: zerados > 0 ? 'critico' : '' },
-    { valor: recPendentes,        label: 'Receitas pendentes',   sub: 'aguardando aceite',                 cls: recPendentes > 0 ? 'alerta' : '' },
+    { valor: recPendentes,        label: 'Receitas pendentes',   sub: 'aguardando aceite',                 cls: 'receita' },
+    { valor: recEmAberto,         label: 'Receitas em aberto',   sub: 'em execução',                       cls: 'receita' },
     { valor: irrigMes.toFixed(1) + ' mm', label: 'Irrigação no mês', sub: mesLabel,                       cls: 'azul' },
-    { valor: recEmAberto,         label: 'Receitas em aberto',   sub: 'em execução',                       cls: recEmAberto > 0 ? 'azul' : '' },
     { valor: pluvTotal.toFixed(1) + ' mm', label: 'Chuva total no mês', sub: 'soma de todas as fazendas', cls: 'verde' },
   ];
 
   if (el('dashCards')) {
     el('dashCards').innerHTML = cards.map(c => `
       <div class="dash-card ${c.cls}">
-        <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'negativo' ? 'color:#7b1fa2' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
+        <div class="dash-card-valor" style="${c.cls === 'critico' ? 'color:var(--vermelho)' : c.cls === 'alerta' ? 'color:#c47a00' : c.cls === 'negativo' ? 'color:#7b1fa2' : c.cls === 'receita' ? 'color:#0d9488' : c.cls === 'azul' ? 'color:#1a5fb4' : c.cls === 'verde' ? 'color:#2a7a2a' : 'color:var(--texto)'}">${c.valor}</div>
         <div class="dash-card-label">${c.label}</div>
         ${c.sub ? `<div class="dash-card-sub">${c.sub}</div>` : ''}
       </div>`).join('');
