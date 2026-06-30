@@ -406,6 +406,20 @@ header {
 .tela-receitas.ativa { display: block; }
 .tela-agricultura { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-agricultura.ativa { display: block; }
+.agri-resumo-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 18px; }
+.agri-resumo-card { background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 14px 16px; text-align: center; }
+.agri-resumo-card.destaque { border-color: #1a4080; background: #f0f4ff; }
+.agri-resumo-card.pc { border-color: #3b82f6; background: #eff6ff; }
+.agri-resumo-card.seq { border-color: #d97706; background: #fffbeb; }
+.agri-resumo-card.filtro { border-color: var(--texto-suave); background: var(--cinza-claro); }
+.agri-resumo-num { font-size: 24px; font-weight: 800; color: var(--texto); line-height: 1.1; }
+.agri-resumo-card.destaque .agri-resumo-num { color: #1a4080; }
+.agri-resumo-card.pc .agri-resumo-num { color: #1d4ed8; }
+.agri-resumo-card.seq .agri-resumo-num { color: #92400e; }
+.agri-resumo-label { font-size: 11px; color: var(--texto-suave); margin-top: 4px; font-weight: 600; }
+@media (max-width: 900px) {
+  .agri-resumo-grid { grid-template-columns: repeat(2, 1fr); }
+}
 
 .dash-saudacao { font-size: 20px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
 .dash-sub      { font-size: 13px; color: var(--texto-suave); margin-bottom: 20px; }
@@ -1342,9 +1356,6 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <button class="btn-rec-novo somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirNovoTalhaoAgri()">
       ✚ Novo Talhão
     </button>
-    <button class="btn-rec-novo somente-admin" style="background:#92400e;border-color:#92400e" onclick="window.AppEstoque.migrarParaAgricultura()">
-      🌾 Migrar de Receitas
-    </button>
   </div>
   <div class="rec-filtros">
     <select class="rec-filtro-select" id="agriFiltroFazenda" onchange="window.AppEstoque.renderAgricultura()">
@@ -1358,7 +1369,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <input class="rec-busca" type="text" id="agriBusca" placeholder="Buscar fazenda ou talhao..." oninput="window.AppEstoque.renderAgricultura()">
   </div>
   <div style="padding:0 4px">
-    <div id="agriResumo" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--cinza-claro);border-radius:8px;margin-bottom:14px;font-size:12px;color:var(--texto-suave)"></div>
+    <div id="agriResumo" class="agri-resumo-grid"></div>
     <div id="agriLista">
       <div class="rec-vazio">Carregando...</div>
     </div>
@@ -1879,9 +1890,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 
       <!-- Aba Pivôs -->
       <div id="gestaoSecPivotos" style="padding:16px 20px">
-        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
-          <button class="somente-admin" style="background:#92400e;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.migrarPortoMarcelo()" title="Unifica os pivôs de PORTO - MARCELO na fazenda PORTO">🌾 Corrigir PORTO - MARCELO</button>
-          <button class="somente-admin" style="background:#b91c1c;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.restaurarPivosPerdidos()" title="Restaura pivôs de JUPIA, PONTAL e MAOA perdidos">🔧 Restaurar pivôs perdidos</button>
+        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
           <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
         </div>
         <div class="pivos-lista" id="gestaoIrrigLista"></div>
@@ -5722,6 +5731,11 @@ function abrirEditorPivo(id) {
     if (titulo) titulo.textContent = 'Editar Pivô';
     fazSel.value = p.fazenda;
     onEditorPivoFazendaChange(p.pivo);
+    // Garantia extra: reforça a seleção depois de qualquer onchange que possa ter disparado
+    setTimeout(() => {
+      const pivoSel = document.getElementById('editorPivoNome');
+      if (pivoSel) pivoSel.value = p.pivo;
+    }, 0);
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
       `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" value="${p.tabela[pct] || ''}"></div>`
     ).join('');
@@ -5752,7 +5766,12 @@ function onEditorPivoFazendaChange(selecionarNome) {
   const pivosJaUsados = new Set(
     irrigPivotos.filter(p => p.fazenda === fazNome && p.id !== _editandoPivoId).map(p => p.pivo)
   );
-  const disponiveis = talhoesPC.filter(n => !pivosJaUsados.has(n));
+  let disponiveis = talhoesPC.filter(n => !pivosJaUsados.has(n));
+  // Garante que o pivô atualmente sendo editado sempre aparece na lista,
+  // mesmo que algum filtro o tivesse excluído (evita seleção errada/em branco).
+  if (selecionarNome && !disponiveis.includes(selecionarNome)) {
+    disponiveis = [selecionarNome, ...disponiveis].sort();
+  }
   pivoSel.innerHTML = disponiveis.length
     ? '<option value="">Selecione...</option>' + disponiveis.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
     : '<option value="">Nenhum talhão PC disponível</option>';
@@ -8717,13 +8736,19 @@ function renderAgricultura() {
   const totalTalhoes = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false).length, 0);
   const totalPC = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='PC').length, 0);
   const totalSEQ = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='SEQ').length, 0);
+  const areaTotal = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false).reduce((a,t)=>a+(t.area||0),0), 0);
+  const areaPC = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='PC').reduce((a,t)=>a+(t.area||0),0), 0);
+  const areaSEQ = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='SEQ').reduce((a,t)=>a+(t.area||0),0), 0);
 
   if (resumo) {
-    resumo.innerHTML = `📍 <strong style="color:var(--texto)">${totalFazendas}</strong> fazenda${totalFazendas!==1?'s':''}
-      · <strong style="color:var(--texto)">${totalTalhoes}</strong> talhão${totalTalhoes!==1?'ões':''} no total
-      · <span style="color:#1d4ed8">🔵 ${totalPC} irrigado${totalPC!==1?'s':''}</span>
-      · <span style="color:#92400e">🟤 ${totalSEQ} sequeiro${totalSEQ!==1?'s':''}</span>
-      ${linhas.length !== totalTalhoes ? ` <span style="margin-left:6px">(${linhas.length} exibido${linhas.length!==1?'s':''} com filtro)</span>` : ''}`;
+    resumo.innerHTML = `
+      <div class="agri-resumo-card"><div class="agri-resumo-num">${totalFazendas}</div><div class="agri-resumo-label">📍 Fazenda${totalFazendas!==1?'s':''}</div></div>
+      <div class="agri-resumo-card"><div class="agri-resumo-num">${totalTalhoes}</div><div class="agri-resumo-label">🗺️ Talhão${totalTalhoes!==1?'ões':''}</div></div>
+      <div class="agri-resumo-card destaque"><div class="agri-resumo-num">${areaTotal.toFixed(1)} <span style="font-size:13px;font-weight:600">ha</span></div><div class="agri-resumo-label">📐 Área Total</div></div>
+      <div class="agri-resumo-card pc"><div class="agri-resumo-num">${totalPC}</div><div class="agri-resumo-label">🔵 Irrigados <span style="opacity:.7">(${areaPC.toFixed(1)} ha)</span></div></div>
+      <div class="agri-resumo-card seq"><div class="agri-resumo-num">${totalSEQ}</div><div class="agri-resumo-label">🟤 Sequeiros <span style="opacity:.7">(${areaSEQ.toFixed(1)} ha)</span></div></div>
+      ${linhas.length !== totalTalhoes ? `<div class="agri-resumo-card filtro"><div class="agri-resumo-num">${linhas.length}</div><div class="agri-resumo-label">🔍 Exibidos (filtro)</div></div>` : ''}
+    `;
   }
 
   if (!agriFazendas.length) {
