@@ -1890,7 +1890,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
 
       <!-- Aba Pivôs -->
       <div id="gestaoSecPivotos" style="padding:16px 20px">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px">
+          <button class="somente-admin" style="background:#7c3aed;color:white;border:none;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.auditarPivosDivergentes()">🔍 Auditar divergências</button>
           <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPivo(null)">+ Novo Pivô</button>
         </div>
         <div class="pivos-lista" id="gestaoIrrigLista"></div>
@@ -5691,6 +5692,44 @@ function fecharGestaoIrrig() {
   document.getElementById('overlayGestaoIrrig').classList.remove('aberto');
 }
 
+// ── Auditoria: pivôs cujo nome/fazenda não bate com nenhum talhão PC ──
+function auditarPivosDivergentes() {
+  const divergentes = [];
+  irrigPivotos.forEach(p => {
+    const fazenda = agriFazendas.find(f => f.nome.trim().toUpperCase() === p.fazenda.trim().toUpperCase());
+    if (!fazenda) {
+      divergentes.push({ ...p, motivo: `Fazenda "${p.fazenda}" não existe em Agricultura` });
+      return;
+    }
+    const talhao = (fazenda.talhoes || []).find(t => t.nome.trim().toUpperCase() === p.pivo.trim().toUpperCase());
+    if (!talhao) {
+      divergentes.push({ ...p, motivo: `Talhão "${p.pivo}" não existe em ${fazenda.nome}` });
+    } else if (talhao.tipo !== 'PC') {
+      divergentes.push({ ...p, motivo: `Talhão "${p.pivo}" está cadastrado como Sequeiro (SEQ), não Irrigado (PC)` });
+    }
+  });
+
+  if (!divergentes.length) {
+    mostrarToast('✓ Todos os pivôs estão corretamente vinculados a talhões PC em Agricultura!', 'sucesso');
+    return;
+  }
+
+  const lista = divergentes.map(d => `<div style="padding:8px 12px;background:#fff5f5;border-left:3px solid #c00;border-radius:4px;margin-bottom:6px;font-size:12px">
+    <strong>${esc(d.fazenda)} / ${esc(d.pivo)}</strong><br>
+    <span style="color:#991b1b">${esc(d.motivo)}</span>
+  </div>`).join('');
+
+  confirmarGenerico({
+    titulo: `⚠️ ${divergentes.length} pivô(s) com divergência`,
+    icone: '⚠️',
+    mensagem: `Encontrei pivôs cujo nome de fazenda/talhão não bate exatamente com o cadastro de Agricultura:<br><br>
+      <div style="max-height:300px;overflow-y:auto">${lista}</div><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Corrija o nome em Agricultura, ou edite o pivô para apontar para o talhão certo.</span>`,
+    corBtn: 'var(--azul)',
+    labelBtn: 'Entendi'
+  });
+}
+
 function renderGestaoIrrigLista() {
   const lista = document.getElementById('gestaoIrrigLista');
   if (!lista) return;
@@ -5780,24 +5819,29 @@ function onEditorPivoFazendaChange(selecionarNome) {
   if (!fazenda) {
     fazenda = agriFazendas.find(f => f.nome.trim().toUpperCase() === fazNome.trim().toUpperCase());
   }
-  const talhoesPC = (fazenda?.talhoes || []).filter(t => t.tipo === 'PC' && t.ativo !== false).map(t => t.nome).sort();
-  // Já existem pivôs cadastrados para essa fazenda — não listar de novo (evita duplicidade),
-  // a menos que estejamos editando esse mesmo pivô.
-  const pivosJaUsados = new Set(
-    irrigPivotos.filter(p => p.fazenda === fazNome && p.id !== _editandoPivoId).map(p => p.pivo)
-  );
-  let disponiveis = talhoesPC.filter(n => !pivosJaUsados.has(n));
-  // Garante que o pivô atualmente sendo editado sempre aparece na lista,
-  // mesmo que algum filtro o tivesse excluído (evita seleção errada/em branco).
-  if (selecionarNome && !disponiveis.includes(selecionarNome)) {
-    disponiveis = [selecionarNome, ...disponiveis].sort();
+  let talhoesPC = (fazenda?.talhoes || []).filter(t => t.tipo === 'PC' && t.ativo !== false).map(t => t.nome).sort();
+
+  // Garante que o talhão do pivô sendo editado sempre aparece, mesmo que
+  // não esteja cadastrado como PC em Agricultura (nome divergente, etc).
+  if (selecionarNome && !talhoesPC.some(n => n.trim().toUpperCase() === selecionarNome.trim().toUpperCase())) {
+    talhoesPC = [...talhoesPC, selecionarNome].sort();
   }
-  pivoSel.innerHTML = disponiveis.length
-    ? '<option value="">Selecione...</option>' + disponiveis.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
-    : '<option value="">Nenhum talhão PC disponível</option>';
+
+  // Mostra TODOS os talhões PC da fazenda — incluindo os que já têm pivô
+  // cadastrado, marcados com 🔵 para não esconder nada e evitar confusão.
+  const pivosExistentes = new Map(
+    irrigPivotos.filter(p => p.fazenda === fazNome && p.id !== _editandoPivoId).map(p => [p.pivo.trim().toUpperCase(), true])
+  );
+  pivoSel.innerHTML = talhoesPC.length
+    ? '<option value="">Selecione...</option>' + talhoesPC.map(n => {
+        const jaTemPivo = pivosExistentes.has(n.trim().toUpperCase());
+        return `<option value="${esc(n)}">${esc(n)}${jaTemPivo ? ' (já tem pivô)' : ''}</option>`;
+      }).join('')
+    : '<option value="">Nenhum talhão PC cadastrado nessa fazenda</option>';
+
   if (selecionarNome) {
-    const pivExato = disponiveis.find(n => n === selecionarNome)
-      || disponiveis.find(n => n.trim().toUpperCase() === selecionarNome.trim().toUpperCase());
+    const pivExato = talhoesPC.find(n => n === selecionarNome)
+      || talhoesPC.find(n => n.trim().toUpperCase() === selecionarNome.trim().toUpperCase());
     pivoSel.value = pivExato || selecionarNome;
   }
 }
@@ -10212,7 +10256,7 @@ window.AppEstoque = {
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
   abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
   adicionarCultura, adicionarSafra, moverItem, removerItem,
-  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo, restaurarPivosPerdidos,
+  abrirEditorPivo, fecharEditorPivo, salvarPivo, excluirPivo, onEditorPivoFazendaChange, migrarPortoMarcelo, restaurarPivosPerdidos, auditarPivosDivergentes,
   exportarIrrigXLS, exportarIrrigPDF,
   abrirHistoricoProduto, fecharHistoricoProduto,
   abrirDetalheLancamento, fecharDetalheLancamento,
