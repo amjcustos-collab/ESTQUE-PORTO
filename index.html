@@ -1154,7 +1154,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <option value="negativo">Negativo ⚠️</option>
   </select>
   <button class="btn-novo-produto" id="btnNovoProdutoFiltro" style="display:none" onclick="window.AppEstoque.abrirNovoProduto()">+ Novo Produto</button>
-  <button class="btn-novo-produto somente-admin" id="btnGestaoAdmin" style="display:none;background:#374151" onclick="window.AppEstoque.abrirGestaoAdmin()">⚙️ Gestão Admin</button>
+  <button class="somente-admin" id="btnGestaoAdmin" style="display:none;padding:9px 14px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;background:white;color:var(--texto-suave);font-weight:600;cursor:pointer" onclick="window.AppEstoque.abrirGestaoAdmin()">⚙️ Gestão</button>
   <button class="btn-receita-filtros" id="btnReceitaFiltro" style="display:none" onclick="window.AppEstoque.abrirReceita()">🧾 Baixa com Receita</button>
   <button class="btn-compra-filtros" id="btnCompraFiltro" style="display:none" onclick="window.AppEstoque.abrirCompra()">📦 Entrada de Compras</button>
   <div class="contador" id="contador"></div>
