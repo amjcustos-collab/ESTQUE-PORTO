@@ -7629,14 +7629,19 @@ function _filtrarSubstProd() {
   const matches = produtos.filter(p => p.nome.toLowerCase().includes(q)).slice(0, 12);
   if (!matches.length) { sugs.style.display = 'none'; return; }
   sugs.innerHTML = matches.map(p =>
-    `<div onmousedown="event.preventDefault();window.AppEstoque._selecionarSubstProd(${JSON.stringify(p.id)},${JSON.stringify(p.nome)},${JSON.stringify(p.unidade||'')})"
-      style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center"
-      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background=''">
+    `<div class="subst-prod-item" data-id="${esc(p.id)}" data-nome="${esc(p.nome)}" data-unidade="${esc(p.unidade||'')}"
+      style="padding:9px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;background:white"
+      onmouseover="this.style.background='#f0f6ff'" onmouseout="this.style.background='white'">
       <span>${esc(p.nome)}</span>
       <span style="font-size:11px;color:#999">${esc(p.unidade||'')} · Saldo: ${fmt(p.estoque||0)}</span>
     </div>`
   ).join('');
   sugs.style.display = 'block';
+  sugs.querySelectorAll('.subst-prod-item').forEach(div => {
+    div.addEventListener('click', () => {
+      window.AppEstoque._selecionarSubstProd(div.dataset.id, div.dataset.nome, div.dataset.unidade);
+    });
+  });
 }
 
 function _selecionarSubstProd(id, nome, unidade) {
