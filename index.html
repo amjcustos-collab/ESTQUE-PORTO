@@ -2436,6 +2436,23 @@ try {
   db = getFirestore(firebaseApp);
 }
 
+// Detecta o erro clássico de "lease" travado quando há abas conflitantes
+// do mesmo app abertas ao mesmo tempo (mesmo com multi-tab manager).
+// Mostra um aviso amigável orientando a fechar as abas extras.
+let _avisoLeaseMostrado = false;
+window.addEventListener('unhandledrejection', (event) => {
+  const msg = String(event?.reason?.message || event?.reason || '');
+  if (msg.includes('primary lease') && !_avisoLeaseMostrado) {
+    _avisoLeaseMostrado = true;
+    console.warn('Conflito de aba detectado no Firestore (primary lease).');
+    setTimeout(() => {
+      if (typeof mostrarToast === 'function') {
+        mostrarToast('⚠️ Detectamos outra aba do sistema aberta. Feche as abas extras e recarregue a página.', 'erro');
+      }
+    }, 500);
+  }
+});
+
 // =====================================================================
 // CAMADA DE PERSISTÊNCIA (desacoplada — toda leitura/escrita passa por aqui)
 // =====================================================================
@@ -4422,14 +4439,24 @@ async function recarregarHistorico() {
   const total = document.getElementById('totalMov');
   lista.innerHTML = '<div class="vazio" style="color:#aaa">Carregando…</div>';
   try {
-    const res = await Persistencia.carregarHistorico(100);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject({ code: 'timeout' }), 12000)
+    );
+    const res = await Promise.race([Persistencia.carregarHistorico(100), timeoutPromise]);
     historico = res.lista;
     histUltimoDoc = res.ultimoDoc;
     histTemMais = res.temMais;
     renderHistorico();
   } catch (e) {
-    console.error(e);
-    lista.innerHTML = '<div class="vazio">Erro ao carregar o histórico. Verifique sua conexão.</div>';
+    console.error('Erro ao carregar histórico:', e);
+    const msgErro = e?.code === 'permission-denied'
+      ? 'Sem permissão para acessar o histórico. Fale com o administrador.'
+      : e?.code === 'unavailable'
+      ? 'Sem conexão com o servidor. Verifique sua internet.'
+      : e?.code === 'timeout'
+      ? 'O carregamento demorou demais. Verifique sua conexão e tente novamente.'
+      : `Erro ao carregar o histórico (${e?.code || e?.message || 'desconhecido'}).`;
+    lista.innerHTML = `<div class="vazio">${msgErro}</div>`;
     if (total) total.textContent = '';
   }
 }
@@ -6447,6 +6474,8 @@ function renderReceitas(resetPagina) {
 
   if (!items.length) {
     lista.innerHTML = `<div class="rec-vazio">📋 Nenhuma receita encontrada.</div>`;
+    const pagVazia = document.getElementById('recPaginacao');
+    if (pagVazia) pagVazia.innerHTML = '';
     return;
   }
 
