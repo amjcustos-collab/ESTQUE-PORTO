@@ -5708,10 +5708,21 @@ function renderGestaoIrrigLista() {
     </div>`).join('');
 }
 
-function abrirEditorPivo(id) {
+async function abrirEditorPivo(id) {
   _editandoPivoId = id;
   const titulo = document.getElementById('editorPivoTitulo');
   const pcts   = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
+
+  // Garantia: se por algum motivo o listener global de Agricultura ainda não
+  // populou agriFazendas (ex: usuário navegou rápido demais), busca direto.
+  if (!agriFazendas.length) {
+    try {
+      const snap = await getDocs(collection(db, 'agricultura_fazendas'));
+      agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+    } catch(e) {
+      console.warn('Não foi possível carregar Agricultura para o editor de pivô:', e);
+    }
+  }
 
   // Popular select de fazendas a partir do cadastro central (só fazendas com talhão PC)
   const fazSel = document.getElementById('editorPivoFazenda');
@@ -5729,13 +5740,12 @@ function abrirEditorPivo(id) {
     const p = irrigPivotos.find(x => x.id === id);
     if (!p) return;
     if (titulo) titulo.textContent = 'Editar Pivô';
-    fazSel.value = p.fazenda;
+    // Matching tolerante a diferença de espaços/maiúsculas entre o pivô salvo
+    // e as fazendas disponíveis no select (evita ficar sem seleção por divergência sutil).
+    const fazExata = fazendasComPC.find(f => f === p.fazenda)
+      || fazendasComPC.find(f => f.trim().toUpperCase() === p.fazenda.trim().toUpperCase());
+    fazSel.value = fazExata || p.fazenda;
     onEditorPivoFazendaChange(p.pivo);
-    // Garantia extra: reforça a seleção depois de qualquer onchange que possa ter disparado
-    setTimeout(() => {
-      const pivoSel = document.getElementById('editorPivoNome');
-      if (pivoSel) pivoSel.value = p.pivo;
-    }, 0);
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
       `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" value="${p.tabela[pct] || ''}"></div>`
     ).join('');
@@ -5752,14 +5762,19 @@ function abrirEditorPivo(id) {
 
 // Atualiza o select de talhão (pivô) quando a fazenda muda — só talhões PC
 function onEditorPivoFazendaChange(selecionarNome) {
-  const fazNome = document.getElementById('editorPivoFazenda')?.value || '';
+  const fazSel = document.getElementById('editorPivoFazenda');
+  const fazNome = fazSel?.value || '';
   const pivoSel = document.getElementById('editorPivoNome');
   if (!pivoSel) return;
   if (!fazNome) {
     pivoSel.innerHTML = '<option value="">Selecione a fazenda primeiro</option>';
     return;
   }
-  const fazenda = agriFazendas.find(f => f.nome === fazNome);
+  // Matching tolerante: tenta nome exato, depois normalizado (trim+uppercase)
+  let fazenda = agriFazendas.find(f => f.nome === fazNome);
+  if (!fazenda) {
+    fazenda = agriFazendas.find(f => f.nome.trim().toUpperCase() === fazNome.trim().toUpperCase());
+  }
   const talhoesPC = (fazenda?.talhoes || []).filter(t => t.tipo === 'PC' && t.ativo !== false).map(t => t.nome).sort();
   // Já existem pivôs cadastrados para essa fazenda — não listar de novo (evita duplicidade),
   // a menos que estejamos editando esse mesmo pivô.
@@ -5775,7 +5790,11 @@ function onEditorPivoFazendaChange(selecionarNome) {
   pivoSel.innerHTML = disponiveis.length
     ? '<option value="">Selecione...</option>' + disponiveis.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('')
     : '<option value="">Nenhum talhão PC disponível</option>';
-  if (selecionarNome) pivoSel.value = selecionarNome;
+  if (selecionarNome) {
+    const pivExato = disponiveis.find(n => n === selecionarNome)
+      || disponiveis.find(n => n.trim().toUpperCase() === selecionarNome.trim().toUpperCase());
+    pivoSel.value = pivExato || selecionarNome;
+  }
 }
 
 function fecharEditorPivo() {
