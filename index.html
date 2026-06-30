@@ -89,6 +89,24 @@ header {
 .btn-header.verde { background: var(--verde); border-color: var(--verde); font-weight: 600; }
 .btn-header.verde:hover { background: var(--verde-claro); }
 .badge-usuario { font-size: 11px; color: rgba(255,255,255,0.65); padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,0.08); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+
+/* Sininho de notificações */
+.sino-wrap { position: relative; }
+.sino-btn { background: rgba(255,255,255,0.08); border: none; color: white; font-size: 17px; padding: 7px 10px; border-radius: 8px; cursor: pointer; position: relative; display: flex; align-items: center; transition: background 0.15s; }
+.sino-btn:hover { background: rgba(255,255,255,0.18); }
+.sino-badge { position: absolute; top: -4px; right: -2px; background: #e53935; color: white; font-size: 10px; font-weight: 800; min-width: 17px; height: 17px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 4px; border: 2px solid #0f2545; }
+.sino-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-width: 90vw; background: white; border-radius: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.25); overflow: hidden; z-index: 500; }
+.sino-dropdown.aberto { display: block; }
+.sino-dropdown-header { background: #fef3c7; color: #854d0e; font-weight: 700; font-size: 13px; padding: 12px 16px; }
+.sino-dropdown-lista { max-height: 320px; overflow-y: auto; }
+.sino-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.1s; }
+.sino-item:hover { background: #fafbfc; }
+.sino-item:last-child { border-bottom: none; }
+.sino-item-num { font-size: 11px; font-weight: 700; color: #854d0e; font-family: monospace; min-width: 36px; }
+.sino-item-info { flex: 1; min-width: 0; }
+.sino-item-nome { font-size: 13px; font-weight: 700; color: #1a2530; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sino-item-sub { font-size: 11px; color: #64748b; margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sino-vazio { padding: 24px 16px; text-align: center; color: #94a3b8; font-size: 13px; }
 .badge-usuario .ponto { width: 6px; height: 6px; border-radius: 50%; background: #4a9e4a; }
 /* Indicador de conexão — só visível quando offline */
 .badge-offline {
@@ -604,6 +622,7 @@ header {
 .rec-talhao-chip { background:#f3f7fb; border:1px solid #d8e3ef; padding:8px 14px;
   border-radius:999px; font-weight:600; color:#334155; font-size:13px; white-space:nowrap; }
 .rec-card-footer { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:18px; }
+.rec-footer-operador { color: #166534; font-weight: 600; }
 .rec-footer-box { background:#f8fbff; border:1px solid #dbe7f2; border-radius:14px; padding:14px 16px; }
 .rec-footer-box strong { display:block; color:#1e3a5f; font-size:13px; font-weight:700; }
 .rec-footer-box small { display:block; margin-top:5px; color:#64748b; font-size:13px; font-weight:600; }
@@ -1029,6 +1048,16 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   </div>
   <div class="header-right">
     <span class="badge-offline" id="badgeOffline"><span class="ponto-off"></span>Offline — sincronizando ao reconectar</span>
+    <div class="sino-wrap" id="sinoWrap">
+      <button class="sino-btn" onclick="event.stopPropagation();window.AppEstoque.toggleSinoDropdown()" title="Receitas pendentes">
+        🔔
+        <span class="sino-badge" id="sinoBadge" style="display:none">0</span>
+      </button>
+      <div class="sino-dropdown" id="sinoDropdown">
+        <div class="sino-dropdown-header">🧪 Receitas Pendentes</div>
+        <div class="sino-dropdown-lista" id="sinoLista"></div>
+      </div>
+    </div>
     <span class="badge-usuario" id="badgeUsuario"><span class="ponto"></span><span class="txt">usuário</span></span>
     <button class="btn-header somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirUsuarios()">👤 <span>Usuários</span></button>
     <!-- Botões do Estoque -->
@@ -2805,6 +2834,10 @@ async function sair() {
 // (login bem-sucedido, logout, ou sessão restaurada ao reabrir o app).
 // Fecha o menu de ações ao clicar em qualquer lugar fora dele
 document.addEventListener('click', () => fecharTodosMenus());
+document.addEventListener('click', (e) => {
+  const wrap = document.getElementById('sinoWrap');
+  if (wrap && !wrap.contains(e.target)) fecharSinoDropdown();
+});
 
 // =====================================================================
 // INDICADOR DE STATUS DE REDE
@@ -2970,6 +3003,7 @@ async function iniciarListenersTempoReal() {
         _recProxNum = nums.length ? Math.max(...nums) + 1 : 1;
         if (moduloAtivo === 'receitas') renderReceitas();
         if (moduloAtivo === 'dashboard') renderDashboard();
+        renderSino();
       }
     );
   }
@@ -6154,7 +6188,7 @@ const TALHOES_PADRAO = [
   {fazenda:'JUPIÁ', nome:'MAMÃO', area:21.68},
   {fazenda:'JUPIÁ', nome:'BURITI', area:38.00},
   {fazenda:'JUPIÁ', nome:'JENIPAPO', area:25.22},
-  {fazenda:'JUPIÁ', nome:'JABUTICABA', area:15.03},
+  {fazenda:'JUPIÁ', nome:'JABOTICABA', area:15.03},
   {fazenda:'JUPIÁ', nome:'SEQUEIRO JUPIÁ', area:40.00},
   // MAOA
   {fazenda:'MAOA', nome:'PIVÔ 1', area:46.58},
@@ -6162,7 +6196,7 @@ const TALHOES_PADRAO = [
   {fazenda:'MAOA', nome:'PIVÔ 3', area:14.48},
   // PALMITAL
   {fazenda:'PALMITAL', nome:'ANGELIM', area:13.97},
-  {fazenda:'PALMITAL', nome:'COQUEIRÃO', area:20.30},
+  {fazenda:'PALMITAL', nome:'COQUEIRO', area:20.30},
   {fazenda:'PALMITAL', nome:'PEQUI', area:37.41},
   {fazenda:'PALMITAL', nome:'CAJU', area:13.09},
   {fazenda:'PALMITAL', nome:'JACA', area:7.06},
@@ -6190,7 +6224,8 @@ const TALHOES_PADRAO = [
   {fazenda:'PORTO', nome:'PEROBA', area:71.05},
   {fazenda:'PORTO', nome:'JACARANDÁ', area:25.00},
   {fazenda:'PORTO', nome:'FLAMBOYANT', area:30.97},
-  {fazenda:'PORTO', nome:'SANTA MARIA 1 E 2', area:36.00},
+  {fazenda:'PORTO', nome:'SANTA MARIA 1', area:18.00},
+  {fazenda:'PORTO', nome:'SANTA MARIA 2', area:18.00},
   {fazenda:'PORTO', nome:'MACAÚBA', area:24.30},
   {fazenda:'PORTO', nome:'FIGUEIRA', area:124.04},
   {fazenda:'PORTO', nome:'BACABA', area:47.74},
@@ -8452,6 +8487,55 @@ function exportarPluvXLS() {
 // DASHBOARD
 // =====================================================================
 
+// ── Sininho de notificações — Receitas Pendentes ────────────────────
+function renderSino() {
+  const badge = document.getElementById('sinoBadge');
+  const lista = document.getElementById('sinoLista');
+  if (!badge || !lista) return;
+
+  const pendentes = recReceitas
+    .filter(r => r.status === 'pendente')
+    .sort((a, b) => (b.numero || 0) - (a.numero || 0));
+
+  if (pendentes.length > 0) {
+    badge.textContent = pendentes.length > 99 ? '99+' : pendentes.length;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+
+  lista.innerHTML = pendentes.length === 0
+    ? '<div class="sino-vazio">✅ Nenhuma receita pendente</div>'
+    : pendentes.map(r => {
+        const num = String(r.numero || 0).padStart(4, '0');
+        const talhoes = (r.talhoes || []).map(t => t.nome);
+        const talhoesTxt = talhoes.length > 2
+          ? talhoes.slice(0, 2).join(', ') + ` +${talhoes.length - 2}`
+          : talhoes.join(', ') || '—';
+        return `<div class="sino-item" onclick="window.AppEstoque.irParaReceitaDoSino('${r.id}')">
+          <span class="sino-item-num">#${num}</span>
+          <div class="sino-item-info">
+            <div class="sino-item-nome">${esc(r.descricao || r.cultura || '—')}</div>
+            <div class="sino-item-sub">${esc(r.fazenda)} · ${esc(talhoesTxt)}</div>
+          </div>
+        </div>`;
+      }).join('');
+}
+
+function toggleSinoDropdown() {
+  document.getElementById('sinoDropdown')?.classList.toggle('aberto');
+}
+
+function fecharSinoDropdown() {
+  document.getElementById('sinoDropdown')?.classList.remove('aberto');
+}
+
+function irParaReceitaDoSino(receitaId) {
+  fecharSinoDropdown();
+  navegarModulo('receitas');
+  setTimeout(() => abrirDetReceita(receitaId), 400);
+}
+
 function renderDashboard() {
   const agora    = new Date();
   const hora     = agora.getHours();
@@ -9183,6 +9267,7 @@ window.AppEstoque = {
   filtrarHistorico, limparFiltrosHistorico, toggleItensReceita,
   carregarMaisHistorico, recarregarHistorico,
   navegarModulo, renderDashboard,
+  toggleSinoDropdown, fecharSinoDropdown, irParaReceitaDoSino, renderSino,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
   renderTabelaPluv,
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
