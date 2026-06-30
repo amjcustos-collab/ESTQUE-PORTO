@@ -404,6 +404,8 @@ header {
 .tela-dash.ativa { display: block; }
 .tela-receitas { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
 .tela-receitas.ativa { display: block; }
+.tela-agricultura { display: none; padding: 20px; max-width: 1400px; margin: 0 auto; }
+.tela-agricultura.ativa { display: block; }
 
 .dash-saudacao { font-size: 20px; font-weight: 800; color: var(--texto); margin-bottom: 4px; }
 .dash-sub      { font-size: 13px; color: var(--texto-suave); margin-bottom: 20px; }
@@ -1092,6 +1094,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   <button class="modulo-tab ativo" onclick="window.AppEstoque.navegarModulo('dashboard')" id="tab-dashboard">
     📊 Dashboard
   </button>
+  <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('agricultura')" id="tab-agricultura">
+    🌾 Agricultura
+  </button>
   <button class="modulo-tab" onclick="window.AppEstoque.navegarModulo('estoque')" id="tab-estoque">
     📦 Estoque
   </button>
@@ -1324,6 +1329,98 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   </div>
   <div class="rec-lista" id="recLista">
     <div class="rec-vazio">Carregando receitas...</div>
+  </div>
+</div>
+
+<!-- ===== MÓDULO AGRICULTURA — Cadastro Central de Fazenda/Talhão ===== -->
+<div class="tela-agricultura" id="telaAgricultura">
+  <div class="rec-toolbar">
+    <h2 style="display:inline-flex;align-items:center;gap:10px">🌾 Fazendas e Talhões</h2>
+    <button class="btn-rec-novo somente-admin" onclick="window.AppEstoque.abrirNovaFazenda()">
+      ✚ Nova Fazenda
+    </button>
+    <button class="btn-rec-novo somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirNovoTalhaoAgri()">
+      ✚ Novo Talhão
+    </button>
+    <button class="btn-rec-novo somente-admin" style="background:#92400e;border-color:#92400e" onclick="window.AppEstoque.migrarParaAgricultura()">
+      🌾 Migrar de Receitas
+    </button>
+  </div>
+  <div class="rec-filtros">
+    <select class="rec-filtro-select" id="agriFiltroFazenda" onchange="window.AppEstoque.renderAgricultura()">
+      <option value="">Todas as fazendas</option>
+    </select>
+    <select class="rec-filtro-select" id="agriFiltroTipo" onchange="window.AppEstoque.renderAgricultura()">
+      <option value="">Todos os tipos</option>
+      <option value="PC">Pivo / Irrigado (PC)</option>
+      <option value="SEQ">Sequeiro (SEQ)</option>
+    </select>
+    <input class="rec-busca" type="text" id="agriBusca" placeholder="Buscar fazenda ou talhao..." oninput="window.AppEstoque.renderAgricultura()">
+  </div>
+  <div style="padding:0 4px">
+    <div id="agriResumo" style="display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--cinza-claro);border-radius:8px;margin-bottom:14px;font-size:12px;color:var(--texto-suave)"></div>
+    <div id="agriLista">
+      <div class="rec-vazio">Carregando...</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA/EDITAR FAZENDA -->
+<div class="overlay" id="overlayEditarFazenda" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="editarFazendaTitulo">+ Nova Fazenda</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarFazenda()">x</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <input type="hidden" id="editarFazendaIdOriginal">
+      <div class="campo-group">
+        <label class="label-campo">Nome da fazenda *</label>
+        <input type="text" id="editarFazendaNome" class="campo-input" placeholder="Ex: PORTO" style="text-transform:uppercase">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarFazenda()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarFazendaAgri()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVO/EDITAR TALHAO (Agricultura) -->
+<div class="overlay" id="overlayEditarTalhaoAgri" onclick="">
+  <div class="modal estreito">
+    <div class="modal-header" style="background:linear-gradient(90deg,#1a4a3b,#1a7a3b)">
+      <h2 id="editarTalhaoAgriTitulo">+ Novo Talhao</h2>
+      <button class="btn-fechar" onclick="window.AppEstoque.fecharEditarTalhaoAgri()">x</button>
+    </div>
+    <div class="modal-body" style="padding:20px 24px">
+      <input type="hidden" id="editarTalhaoAgriId">
+      <div class="campo-group">
+        <label class="label-campo">Fazenda *</label>
+        <select id="editarTalhaoAgriFazenda" class="campo-input"><option value="">Selecione...</option></select>
+      </div>
+      <div class="campo-group" style="margin-top:12px">
+        <label class="label-campo">Nome do talhao *</label>
+        <input type="text" id="editarTalhaoAgriNome" class="campo-input" placeholder="Ex: ANGICO" style="text-transform:uppercase">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+        <div class="campo-group">
+          <label class="label-campo">Area (ha) *</label>
+          <input type="number" id="editarTalhaoAgriArea" class="campo-input" min="0" step="0.01" placeholder="0.00">
+        </div>
+        <div class="campo-group">
+          <label class="label-campo">Tipo *</label>
+          <select id="editarTalhaoAgriTipo" class="campo-input">
+            <option value="PC">Pivo / Irrigado (PC)</option>
+            <option value="SEQ">Sequeiro (SEQ)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancelar" onclick="window.AppEstoque.fecharEditarTalhaoAgri()">Cancelar</button>
+      <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.salvarTalhaoAgri()">Salvar</button>
+    </div>
   </div>
 </div>
 
@@ -2703,8 +2800,8 @@ function temAcessoModulo(modulo) {
   if (!sessaoAtual) return false;
   if (sessaoAtual.nivel === 'admin') return true;
   const chave = 'modulo_' + modulo;
-  // dashboard sempre acessível
-  if (modulo === 'dashboard') return true;
+  // dashboard e agricultura (cadastro base usado por outros módulos) sempre acessíveis
+  if (modulo === 'dashboard' || modulo === 'agricultura') return true;
   return !!(sessaoAtual.permissoes && sessaoAtual.permissoes[chave]);
 }
 
@@ -6346,6 +6443,8 @@ const FAZENDAS_RECEITAS = [...new Set(TALHOES_PADRAO.map(t => t.fazenda))].sort(
 // Estado do módulo
 let recReceitas       = [];   // lista carregada do Firestore
 let recTalhoes        = [];   // talhões carregados do Firestore
+let agriFazendas       = [];  // fazendas do módulo Agricultura: [{id, nome, talhoes:[{id,nome,area,tipo,ativo}]}]
+let unsubAgricultura   = null;
 let recPaginaAtual    = 1;
 const REC_POR_PAGINA  = 10;
 let _recEditandoId    = null; // id da receita em edição
@@ -8404,7 +8503,281 @@ async function imprimirReceita(id) {
   setTimeout(()=>{ try{w.print();}catch(e){} },600);
 }
 
-// ── Gestão de Talhões ───────────────────────────────────────────────
+// ═════════════════════════════════════════════════════════════════════
+// MÓDULO AGRICULTURA — Cadastro central de Fazenda/Talhão
+// ═════════════════════════════════════════════════════════════════════
+
+function iniciarModuloAgricultura() {
+  popularSelectsFazendasAgri();
+  if (!unsubAgricultura) {
+    unsubAgricultura = onSnapshot(
+      query(collection(db, 'agricultura_fazendas'), orderBy('nome')),
+      snap => {
+        agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+        popularSelectsFazendasAgri();
+        renderAgricultura();
+      }
+    );
+  } else {
+    renderAgricultura();
+  }
+}
+
+function popularSelectsFazendasAgri() {
+  const nomes = agriFazendas.map(f => f.nome).sort();
+  const opts = '<option value="">Todas as fazendas</option>' + nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const optsSel = '<option value="">Selecione...</option>' + nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  const f1 = document.getElementById('agriFiltroFazenda'); if (f1) f1.innerHTML = opts;
+  const f2 = document.getElementById('editarTalhaoAgriFazenda'); if (f2) f2.innerHTML = optsSel;
+}
+
+function renderAgricultura() {
+  const lista = document.getElementById('agriLista');
+  const resumo = document.getElementById('agriResumo');
+  if (!lista) return;
+
+  const filtroFaz  = document.getElementById('agriFiltroFazenda')?.value || '';
+  const filtroTipo = document.getElementById('agriFiltroTipo')?.value || '';
+  const busca = (document.getElementById('agriBusca')?.value || '').toLowerCase();
+
+  // Montar lista flat de talhões com referência à fazenda
+  let linhas = [];
+  agriFazendas.forEach(f => {
+    if (filtroFaz && f.nome !== filtroFaz) return;
+    (f.talhoes || []).filter(t => t.ativo !== false).forEach(t => {
+      if (filtroTipo && t.tipo !== filtroTipo) return;
+      if (busca && !(f.nome.toLowerCase().includes(busca) || t.nome.toLowerCase().includes(busca))) return;
+      linhas.push({ fazendaId: f.id, fazendaNome: f.nome, ...t });
+    });
+  });
+  linhas.sort((a,b) => a.fazendaNome.localeCompare(b.fazendaNome) || a.nome.localeCompare(b.nome));
+
+  const totalFazendas = agriFazendas.length;
+  const totalTalhoes = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false).length, 0);
+  const totalPC = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='PC').length, 0);
+  const totalSEQ = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false && t.tipo==='SEQ').length, 0);
+
+  if (resumo) {
+    resumo.innerHTML = `📍 <strong style="color:var(--texto)">${totalFazendas}</strong> fazenda${totalFazendas!==1?'s':''}
+      · <strong style="color:var(--texto)">${totalTalhoes}</strong> talhão${totalTalhoes!==1?'ões':''} no total
+      · <span style="color:#1d4ed8">🔵 ${totalPC} irrigado${totalPC!==1?'s':''}</span>
+      · <span style="color:#92400e">🟤 ${totalSEQ} sequeiro${totalSEQ!==1?'s':''}</span>
+      ${linhas.length !== totalTalhoes ? ` <span style="margin-left:6px">(${linhas.length} exibido${linhas.length!==1?'s':''} com filtro)</span>` : ''}`;
+  }
+
+  if (!agriFazendas.length) {
+    lista.innerHTML = `<div class="rec-vazio">🌾 Nenhuma fazenda cadastrada ainda. Clique em "+ Nova Fazenda" para começar.</div>`;
+    return;
+  }
+  if (!linhas.length) {
+    lista.innerHTML = `<div class="rec-vazio">📋 Nenhum talhão encontrado com esses filtros.</div>`;
+    return;
+  }
+
+  const isAdminUser = isAdmin();
+  let html = '';
+  let fazAtual = '';
+  linhas.forEach(t => {
+    if (t.fazendaNome !== fazAtual) {
+      if (fazAtual) html += '</div>';
+      const contFaz = linhas.filter(x => x.fazendaNome === t.fazendaNome).length;
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
+        <span style="font-size:12px;font-weight:700;color:var(--azul);text-transform:uppercase;letter-spacing:.5px">📍 ${esc(t.fazendaNome)}</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:11px;color:var(--texto-suave)">${contFaz} talhão${contFaz!==1?'ões':''}</span>
+          ${isAdminUser ? `<button onclick="window.AppEstoque.excluirFazendaAgri('${t.fazendaId}')"
+            style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:6px;
+            padding:3px 9px;font-size:11px;font-weight:700;cursor:pointer" title="Excluir fazenda">🗑 Fazenda</button>` : ''}
+        </span>
+      </div><div>`;
+      fazAtual = t.fazendaNome;
+    }
+    const tipoCfg = t.tipo === 'SEQ'
+      ? { label: 'Sequeiro', cor: '#92400e', bg: '#fef3c7', icone: '🟤' }
+      : { label: 'Irrigado', cor: '#1d4ed8', bg: '#dbeafe', icone: '🔵' };
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;
+      background:white;border:1px solid var(--borda);border-radius:8px;margin-bottom:6px">
+      <span style="background:${tipoCfg.bg};color:${tipoCfg.cor};font-size:10px;font-weight:700;
+        padding:3px 8px;border-radius:999px;flex-shrink:0">${tipoCfg.icone} ${tipoCfg.label}</span>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${esc(t.nome)}</div>
+        <div style="font-size:12px;color:var(--texto-suave)">${t.area} ha</div>
+      </div>
+      ${isAdminUser ? `
+      <button onclick="window.AppEstoque.abrirEditarTalhaoAgri('${t.fazendaId}','${t.id}')"
+        style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:7px;
+        padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+      <button onclick="window.AppEstoque.excluirTalhaoAgri('${t.fazendaId}','${t.id}')"
+        style="background:var(--vermelho-fundo);color:var(--vermelho);border:none;border-radius:7px;
+        padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer">🗑</button>` : ''}
+    </div>`;
+  });
+  if (fazAtual) html += '</div>';
+  lista.innerHTML = html;
+}
+
+// ── Fazenda: CRUD ─────────────────────────────────────────────────
+function abrirNovaFazenda() {
+  document.getElementById('editarFazendaIdOriginal').value = '';
+  document.getElementById('editarFazendaNome').value = '';
+  document.getElementById('editarFazendaTitulo').textContent = '+ Nova Fazenda';
+  document.getElementById('overlayEditarFazenda').classList.add('aberto');
+}
+function fecharEditarFazenda() {
+  document.getElementById('overlayEditarFazenda').classList.remove('aberto');
+}
+async function salvarFazendaAgri() {
+  const nome = document.getElementById('editarFazendaNome').value.trim().toUpperCase();
+  if (!nome) { mostrarToast('Informe o nome da fazenda.', 'erro'); return; }
+  const docId = normalize(nome);
+  if (agriFazendas.some(f => f.id === docId)) { mostrarToast('Essa fazenda já existe.', 'erro'); return; }
+  try {
+    await setDoc(doc(db, 'agricultura_fazendas', docId), { nome, talhoes: [] });
+    mostrarToast('Fazenda criada!', 'sucesso');
+    fecharEditarFazenda();
+  } catch(e) { console.error(e); mostrarToast('Erro ao criar fazenda.', 'erro'); }
+}
+async function excluirFazendaAgri(fazendaId) {
+  const f = agriFazendas.find(x => x.id === fazendaId);
+  if (!f) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Excluir fazenda',
+    icone: '🗑',
+    mensagem: `Excluir a fazenda <strong>${esc(f.nome)}</strong> e todos os seus ${ (f.talhoes||[]).length } talhões?<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Esta ação é irreversível. Receitas e lançamentos já criados não serão afetados.</span>`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!ok) return;
+  try {
+    await deleteDoc(doc(db, 'agricultura_fazendas', fazendaId));
+    mostrarToast(`Fazenda ${f.nome} excluída.`, 'sucesso');
+  } catch(e) { console.error(e); mostrarToast('Erro ao excluir fazenda.', 'erro'); }
+}
+
+// ── Talhão: CRUD (array embutido na fazenda) ───────────────────────
+function abrirNovoTalhaoAgri() {
+  if (!agriFazendas.length) { mostrarToast('Cadastre uma fazenda primeiro.', 'erro'); return; }
+  document.getElementById('editarTalhaoAgriId').value = '';
+  document.getElementById('editarTalhaoAgriFazenda').value = '';
+  document.getElementById('editarTalhaoAgriNome').value = '';
+  document.getElementById('editarTalhaoAgriArea').value = '';
+  document.getElementById('editarTalhaoAgriTipo').value = 'PC';
+  document.getElementById('editarTalhaoAgriTitulo').textContent = '+ Novo Talhão';
+  document.getElementById('overlayEditarTalhaoAgri').classList.add('aberto');
+}
+function abrirEditarTalhaoAgri(fazendaId, talhaoId) {
+  const f = agriFazendas.find(x => x.id === fazendaId);
+  const t = f?.talhoes?.find(x => x.id === talhaoId);
+  if (!f || !t) return;
+  document.getElementById('editarTalhaoAgriId').value = talhaoId;
+  document.getElementById('editarTalhaoAgriFazenda').value = f.nome;
+  document.getElementById('editarTalhaoAgriFazenda').dataset.fazendaId = fazendaId;
+  document.getElementById('editarTalhaoAgriNome').value = t.nome;
+  document.getElementById('editarTalhaoAgriArea').value = t.area;
+  document.getElementById('editarTalhaoAgriTipo').value = t.tipo || 'PC';
+  document.getElementById('editarTalhaoAgriTitulo').textContent = '✏️ Editar Talhão';
+  document.getElementById('overlayEditarTalhaoAgri').classList.add('aberto');
+}
+function fecharEditarTalhaoAgri() {
+  document.getElementById('overlayEditarTalhaoAgri').classList.remove('aberto');
+  document.getElementById('editarTalhaoAgriFazenda').dataset.fazendaId = '';
+}
+async function salvarTalhaoAgri() {
+  const talhaoId = document.getElementById('editarTalhaoAgriId').value;
+  const fazendaNome = document.getElementById('editarTalhaoAgriFazenda').value;
+  const nome = document.getElementById('editarTalhaoAgriNome').value.trim().toUpperCase();
+  const area = parseFloat(document.getElementById('editarTalhaoAgriArea').value) || 0;
+  const tipo = document.getElementById('editarTalhaoAgriTipo').value;
+  if (!fazendaNome || !nome || !area) { mostrarToast('Preencha todos os campos.', 'erro'); return; }
+
+  const f = agriFazendas.find(x => x.nome === fazendaNome);
+  if (!f) { mostrarToast('Fazenda não encontrada.', 'erro'); return; }
+
+  const talhoes = [...(f.talhoes || [])];
+  if (talhaoId) {
+    const idx = talhoes.findIndex(t => t.id === talhaoId);
+    if (idx >= 0) talhoes[idx] = { ...talhoes[idx], nome, area, tipo };
+  } else {
+    if (talhoes.some(t => t.nome === nome && t.ativo !== false)) { mostrarToast('Já existe um talhão com esse nome nessa fazenda.', 'erro'); return; }
+    talhoes.push({ id: 'tlh_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), nome, area, tipo, ativo: true });
+  }
+  try {
+    await updateDoc(doc(db, 'agricultura_fazendas', f.id), { talhoes });
+    mostrarToast('Talhão salvo!', 'sucesso');
+    fecharEditarTalhaoAgri();
+  } catch(e) { console.error(e); mostrarToast('Erro ao salvar talhão.', 'erro'); }
+}
+async function excluirTalhaoAgri(fazendaId, talhaoId) {
+  const f = agriFazendas.find(x => x.id === fazendaId);
+  const t = f?.talhoes?.find(x => x.id === talhaoId);
+  if (!f || !t) return;
+  const ok = await confirmarGenerico({
+    titulo: 'Excluir talhão',
+    icone: '🗑',
+    mensagem: `Excluir o talhão <strong>${esc(t.nome)}</strong> (${f.nome} · ${t.area} ha)?<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Esta ação é irreversível. Receitas e lançamentos já criados não serão afetados.</span>`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🗑 Excluir'
+  });
+  if (!ok) return;
+  try {
+    const talhoes = (f.talhoes || []).filter(x => x.id !== talhaoId);
+    await updateDoc(doc(db, 'agricultura_fazendas', f.id), { talhoes });
+    mostrarToast(`Talhão ${t.nome} excluído.`, 'sucesso');
+  } catch(e) { console.error(e); mostrarToast('Erro ao excluir talhão.', 'erro'); }
+}
+
+// ── Migração única: TALHOES_PADRAO → agricultura_fazendas ──────────
+// Roda manualmente uma vez (botão de admin) para popular o cadastro central.
+// Classifica automaticamente tipo PC (irrigado) ou SEQ (sequeiro) pelo nome.
+async function migrarParaAgricultura() {
+  const ok = await confirmarGenerico({
+    titulo: 'Migrar talhões para Agricultura',
+    icone: '🌾',
+    mensagem: `Isso vai criar o cadastro central de fazendas/talhões a partir dos dados existentes em Receitas.<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Talhões com "SEQUEIRO" no nome serão classificados como Sequeiro (SEQ); os demais como Irrigado (PC). Fazendas já existentes em Agricultura não serão duplicadas.</span>`,
+    corBtn: 'var(--verde)',
+    labelBtn: '🌾 Migrar agora'
+  });
+  if (!ok) return;
+
+  try {
+    const porFazenda = {};
+    TALHOES_PADRAO.forEach(t => {
+      if (!porFazenda[t.fazenda]) porFazenda[t.fazenda] = [];
+      const tipo = t.nome.toUpperCase().includes('SEQUEIRO') ? 'SEQ' : 'PC';
+      porFazenda[t.fazenda].push({
+        id: 'tlh_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+        nome: t.nome, area: t.area, tipo, ativo: true
+      });
+    });
+
+    let criadas = 0, atualizadas = 0;
+    for (const fazendaNome of Object.keys(porFazenda)) {
+      const docId = normalize(fazendaNome);
+      const existente = agriFazendas.find(f => f.id === docId);
+      if (existente) {
+        // Mesclar: manter talhões já cadastrados manualmente, adicionar só os que faltam
+        const nomesExistentes = new Set((existente.talhoes||[]).map(t => t.nome));
+        const novos = porFazenda[fazendaNome].filter(t => !nomesExistentes.has(t.nome));
+        if (novos.length) {
+          await updateDoc(doc(db, 'agricultura_fazendas', docId), { talhoes: [...(existente.talhoes||[]), ...novos] });
+          atualizadas++;
+        }
+      } else {
+        await setDoc(doc(db, 'agricultura_fazendas', docId), { nome: fazendaNome, talhoes: porFazenda[fazendaNome] });
+        criadas++;
+      }
+    }
+    mostrarToast(`✓ Migração concluída! ${criadas} fazenda(s) criada(s), ${atualizadas} atualizada(s).`, 'sucesso');
+  } catch(e) {
+    console.error(e);
+    mostrarToast('Erro durante a migração.', 'erro');
+  }
+}
+
+// ── Gestão de Talhões (legado — Receitas) ───────────────────────────
 function abrirGestaoTalhoes() {
   popularSelectsFazendasReceitas();
   renderGestaoTalhoes();
@@ -9032,6 +9405,7 @@ function navegarModulo(modulo) {
   const telaPluv = document.getElementById('telaPluv');
   const telaDash = document.getElementById('telaDash');
   const telaRec  = document.getElementById('telaReceitas');
+  const telaAgri = document.getElementById('telaAgricultura');
   const filtros  = document.querySelector('.filtros');
 
   if (telaEst)   telaEst.classList.toggle('ativa',   modulo === 'estoque');
@@ -9039,6 +9413,7 @@ function navegarModulo(modulo) {
   if (telaPluv)  telaPluv.classList.toggle('ativa',  modulo === 'pluviometria');
   if (telaDash)  telaDash.classList.toggle('ativa',  modulo === 'dashboard');
   if (telaRec)   telaRec.classList.toggle('ativa',   modulo === 'receitas');
+  if (telaAgri)  telaAgri.classList.toggle('ativa',  modulo === 'agricultura');
   if (filtros)   filtros.style.display = modulo === 'estoque' ? '' : 'none';
 
   document.querySelectorAll('.modulo-tab:not(.futuro)').forEach(btn => {
@@ -9051,6 +9426,7 @@ function navegarModulo(modulo) {
     irrigacao:    `AMJ Agro Gestão — Irrigação`,
     pluviometria: `AMJ Agro Gestão — Pluviometria`,
     receitas:     `AMJ Agro Gestão — Receitas`,
+    agricultura:  `AMJ Agro Gestão — Agricultura`,
   };
   const el = document.getElementById('headerFazendaNome');
   if (el && titulos[modulo]) el.textContent = titulos[modulo];
@@ -9082,6 +9458,7 @@ function navegarModulo(modulo) {
   // Receitas: o listener global fica sempre ativo (Dashboard o consome).
   // Ao entrar no módulo, apenas inicializa os selects/talhões.
   if (modulo === 'receitas') iniciarModuloReceitas();
+  if (modulo === 'agricultura') iniciarModuloAgricultura();
   if (modulo === 'dashboard')    renderDashboard();
 }
 
@@ -9610,6 +9987,10 @@ window.AppEstoque = {
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar, preencherAplicadorEuMesmo,
   imprimirReceita,
   abrirGestaoTalhoes, fecharGestaoTalhoes, renderGestaoTalhoes,
+  iniciarModuloAgricultura, renderAgricultura, popularSelectsFazendasAgri,
+  abrirNovaFazenda, fecharEditarFazenda, salvarFazendaAgri, excluirFazendaAgri,
+  abrirNovoTalhaoAgri, abrirEditarTalhaoAgri, fecharEditarTalhaoAgri, salvarTalhaoAgri, excluirTalhaoAgri,
+  migrarParaAgricultura,
   abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
