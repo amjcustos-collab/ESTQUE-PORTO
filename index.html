@@ -1307,8 +1307,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <button class="btn-rec-novo somente-agronomo-admin" onclick="window.AppEstoque.abrirNovaReceita()">
       ✚ Nova Receita
     </button>
-    <button class="btn-rec-novo" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirGestaoTalhoes()">
-      ⚙️ Talhões
+    <button class="btn-rec-novo" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.navegarModulo('agricultura')" title="Gerenciar fazendas e talhões">
+      🌾 Fazendas/Talhões
     </button>
   </div>
   <div class="rec-filtros">
@@ -3186,6 +3186,29 @@ async function iniciarListenersTempoReal() {
         if (moduloAtivo === 'receitas') renderReceitas();
         if (moduloAtivo === 'dashboard') renderDashboard();
         renderSino();
+      }
+    );
+  }
+
+  // Listener de Agricultura (cadastro central de fazenda/talhão) — global,
+  // pois Receitas (e futuramente Irrigação) dependem dele para popular selects.
+  if (!unsubAgricultura) {
+    unsubAgricultura = onSnapshot(
+      query(collection(db, 'agricultura_fazendas'), orderBy('nome')),
+      snap => {
+        agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+        // Achatar para o formato que Receitas já espera: {id,fazenda,nome,area,tipo,ativo}
+        const achatado = [];
+        agriFazendas.forEach(f => {
+          (f.talhoes || []).forEach(t => {
+            if (t.ativo === false) return;
+            achatado.push({ id: t.id, fazenda: f.nome, nome: t.nome, area: t.area, tipo: t.tipo || 'PC', ativo: true });
+          });
+        });
+        if (achatado.length > 0) recTalhoes = achatado;
+        popularSelectsFazendasAgri();
+        if (moduloAtivo === 'receitas') popularSelectsFazendasReceitas();
+        if (moduloAtivo === 'agricultura') renderAgricultura();
       }
     );
   }
@@ -6488,41 +6511,37 @@ function pararModuloReceitas() {
 }
 
 async function carregarTalhoes() {
-  // Carregar sempre do Firestore primeiro
-  try {
-    const snap = await getDocs(collection(db, 'receitas_talhoes'));
-    if (!snap.empty) {
-      const carregados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      if (carregados.length >= 10) {
-        recTalhoes = carregados;
-        return; // dados válidos no Firestore
-      }
-      // Menos de 10 talhões = dados corrompidos/incompletos, refaz a migração
-    }
-  } catch(e) {
-    console.warn('Firestore indisponível para talhões:', e);
-  }
+  // O listener global de Agricultura (iniciado em iniciarListenersTempoReal)
+  // já mantém recTalhoes atualizado em tempo real a partir de agricultura_fazendas.
+  // Esta função só garante um fallback se, por algum motivo, o cadastro
+  // central ainda estiver vazio (ex: migração não rodada nesta conta).
+  if (recTalhoes.length > 0) return;
 
-  // Coleção vazia, erro ou dados insuficientes: usar dados padrão em memória
-  recTalhoes = TALHOES_PADRAO.map(t => ({
-    id: normalize(t.fazenda) + '___' + normalize(t.nome),
-    ...t, ativo: true
-  }));
-
-  // Tentar salvar no Firestore em background (não bloqueia a UI)
   try {
-    const batch = writeBatch(db);
-    recTalhoes.forEach(t => {
-      batch.set(doc(db, 'receitas_talhoes', t.id), {
-        fazenda: t.fazenda, nome: t.nome, area: t.area, ativo: true
+    const snap = await getDocs(collection(db, 'agricultura_fazendas'));
+    const achatado = [];
+    snap.docs.forEach(d => {
+      const data = d.data();
+      const fazendaNome = data.nome || d.id;
+      (data.talhoes || []).forEach(t => {
+        if (t.ativo === false) return;
+        achatado.push({ id: t.id, fazenda: fazendaNome, nome: t.nome, area: t.area, tipo: t.tipo || 'PC', ativo: true });
       });
     });
-    await batch.commit();
-    console.log('Talhões migrados para Firestore:', recTalhoes.length);
+    if (achatado.length > 0) { recTalhoes = achatado; return; }
   } catch(e) {
-    console.warn('Não foi possível salvar talhões no Firestore:', e);
-    // Continua com dados em memória — funciona offline
+    console.warn('Erro ao carregar talhões do módulo Agricultura:', e);
   }
+
+  // Fallback final: cadastro central ainda vazio (migração não rodada).
+  // Usa os dados padrão em memória só para não travar a tela; o admin
+  // deve rodar a migração em Agricultura para popular o cadastro central.
+  recTalhoes = TALHOES_PADRAO.map(t => ({
+    id: normalize(t.fazenda) + '___' + normalize(t.nome),
+    ...t,
+    tipo: t.nome.toUpperCase().includes('SEQUEIRO') ? 'SEQ' : 'PC',
+    ativo: true
+  }));
 }
 
 function popularSelectsFazendasReceitas() {
@@ -8508,19 +8527,9 @@ async function imprimirReceita(id) {
 // ═════════════════════════════════════════════════════════════════════
 
 function iniciarModuloAgricultura() {
+  // Listener global já ativo (iniciado em iniciarListenersTempoReal) — só re-renderiza
   popularSelectsFazendasAgri();
-  if (!unsubAgricultura) {
-    unsubAgricultura = onSnapshot(
-      query(collection(db, 'agricultura_fazendas'), orderBy('nome')),
-      snap => {
-        agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
-        popularSelectsFazendasAgri();
-        renderAgricultura();
-      }
-    );
-  } else {
-    renderAgricultura();
-  }
+  renderAgricultura();
 }
 
 function popularSelectsFazendasAgri() {
