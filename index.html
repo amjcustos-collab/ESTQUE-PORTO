@@ -1931,7 +1931,13 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <button class="btn-fechar" onclick="window.AppEstoque.fecharEditorPivo()">×</button>
     </div>
     <div class="modal-body" style="padding:16px 20px">
-      <div class="irrig-form-row">
+      <!-- Modo edição: fazenda/talhão fixos, só leitura -->
+      <div id="editorPivoFixo" style="display:none;margin-bottom:14px;padding:12px 14px;background:var(--cinza-claro);border-radius:8px">
+        <div style="font-size:11px;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.4px;font-weight:700">Fazenda / Talhão</div>
+        <div style="font-size:15px;font-weight:700;color:var(--texto);margin-top:2px" id="editorPivoFixoTexto">—</div>
+      </div>
+      <!-- Modo criação: selects para escolher fazenda e talhão -->
+      <div class="irrig-form-row" id="editorPivoSelects">
         <div>
           <label class="label-campo">Fazenda</label>
           <select id="editorPivoFazenda" onchange="window.AppEstoque.onEditorPivoFazendaChange()"
@@ -5811,49 +5817,49 @@ async function abrirEditorPivo(id) {
   const titulo = document.getElementById('editorPivoTitulo');
   const pcts   = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100];
 
-  // Garantia: se por algum motivo o listener global de Agricultura ainda não
-  // populou agriFazendas (ex: usuário navegou rápido demais), busca direto.
-  if (!agriFazendas.length) {
-    try {
-      const snap = await getDocs(collection(db, 'agricultura_fazendas'));
-      agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
-    } catch(e) {
-      console.warn('Não foi possível carregar Agricultura para o editor de pivô:', e);
-    }
-  }
-
+  const fixoWrap = document.getElementById('editorPivoFixo');
+  const fixoTexto = document.getElementById('editorPivoFixoTexto');
+  const selectsWrap = document.getElementById('editorPivoSelects');
   const p = id ? irrigPivotos.find(x => x.id === id) : null;
 
-  // Popular select de fazendas a partir do cadastro central (só fazendas com talhão PC).
-  // Se estivermos editando um pivô cuja fazenda não tem talhão PC visível (ex: nome
-  // divergente em Agricultura), incluímos ela mesmo assim para não deixar o campo vazio.
-  const fazSel = document.getElementById('editorPivoFazenda');
-  let fazendasComPC = [...new Set(
-    agriFazendas
-      .filter(f => (f.talhoes||[]).some(t => t.tipo === 'PC' && t.ativo !== false))
-      .map(f => f.nome)
-  )];
-  if (p && !fazendasComPC.some(f => _normComparar(f) === _normComparar(p.fazenda))) {
-    fazendasComPC.push(p.fazenda);
-    console.warn(`[Editor Pivô] A fazenda "${p.fazenda}" do pivô "${p.pivo}" não tem talhão Irrigado (PC) cadastrado em Agricultura. Verifique se o nome bate exatamente.`);
-  }
-  fazendasComPC = [...new Set(fazendasComPC)].sort();
-  fazSel.innerHTML = '<option value="">Selecione...</option>' + fazendasComPC.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
-  if (!fazendasComPC.length) {
-    mostrarToast('Nenhum talhão Irrigado (PC) cadastrado em Agricultura ainda. Cadastre lá primeiro.', 'erro');
-  }
-
   if (p) {
+    // ── Modo edição: fazenda/talhão são fixos, não dá pra trocar ──
     if (titulo) titulo.textContent = 'Editar Pivô';
-    const fazExata = fazendasComPC.find(f => f === p.fazenda)
-      || fazendasComPC.find(f => _normComparar(f) === _normComparar(p.fazenda));
-    fazSel.value = fazExata || p.fazenda;
-    onEditorPivoFazendaChange(p.pivo);
+    fixoWrap.style.display = 'block';
+    selectsWrap.style.display = 'none';
+    fixoTexto.textContent = `${p.fazenda} — ${p.pivo}`;
+    // Mantém os campos ocultos com o valor certo para salvarPivo() continuar funcionando
+    document.getElementById('editorPivoFazenda').innerHTML = `<option value="${esc(p.fazenda)}" selected>${esc(p.fazenda)}</option>`;
+    document.getElementById('editorPivoNome').innerHTML = `<option value="${esc(p.pivo)}" selected>${esc(p.pivo)}</option>`;
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
       `<div class="tabela-mm-item"><label>${pct}%</label><input type="number" id="mm_${pct}" step="0.01" value="${p.tabela[pct] || ''}"></div>`
     ).join('');
   } else {
+    // ── Modo criação: selects para escolher fazenda e talhão PC ──
     if (titulo) titulo.textContent = 'Novo Pivô';
+    fixoWrap.style.display = 'none';
+    selectsWrap.style.display = 'flex';
+
+    // Garantia: se o listener global de Agricultura ainda não populou agriFazendas
+    if (!agriFazendas.length) {
+      try {
+        const snap = await getDocs(collection(db, 'agricultura_fazendas'));
+        agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+      } catch(e) {
+        console.warn('Não foi possível carregar Agricultura para o editor de pivô:', e);
+      }
+    }
+
+    const fazSel = document.getElementById('editorPivoFazenda');
+    const fazendasComPC = [...new Set(
+      agriFazendas
+        .filter(f => (f.talhoes||[]).some(t => t.tipo === 'PC' && t.ativo !== false))
+        .map(f => f.nome)
+    )].sort();
+    fazSel.innerHTML = '<option value="">Selecione...</option>' + fazendasComPC.map(f => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
+    if (!fazendasComPC.length) {
+      mostrarToast('Nenhum talhão Irrigado (PC) cadastrado em Agricultura ainda. Cadastre lá primeiro.', 'erro');
+    }
     fazSel.value = '';
     onEditorPivoFazendaChange();
     document.getElementById('editorTabelaMM').innerHTML = pcts.map(pct =>
