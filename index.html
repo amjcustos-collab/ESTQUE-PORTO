@@ -1222,6 +1222,14 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <div class="dash-secao-body" id="dashPluv" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));padding:12px 16px;gap:10px"></div>
     </div>
 
+    <!-- Água total por fazenda (Chuva + Irrigação) -->
+    <div class="dash-secao" style="grid-column: 1 / -1">
+      <div class="dash-secao-header" style="color:#0d5f8a">
+        💧🌧️ Água Total por Fazenda — <span id="dashAguaMesNome"></span> <span style="font-weight:400;font-size:11px;color:var(--texto-suave)">(chuva + irrigação)</span>
+      </div>
+      <div class="dash-secao-body" id="dashAguaTotal"></div>
+    </div>
+
   </div>
 </div><!-- /tela-dash -->
 
@@ -5302,6 +5310,58 @@ function popularFiltroMesesIrrig() {
   sel.innerHTML = opcoes.join('');
 }
 
+// ── DADOS HISTÓRICOS COMPLETOS (além do que o listener em tempo real guarda) ──
+// O listener em tempo real (escutarLancamentosIrrig) só mantém os 500 lançamentos
+// mais recentes em memória, por performance. Isso é seguro para "Este mês",
+// "Últimos 7/30 dias" (sempre estão entre os mais recentes), mas NÃO é seguro
+// para "Mês específico" antigo, "Personalizado" ou "Todos" — nesses casos,
+// buscamos direto no Firestore, sem limite, para garantir que nada fique de fora.
+let _irrigDadosHistorico      = null;
+let _irrigDadosHistoricoChave = null;
+
+function _precisaHistoricoIrrig(periodo) {
+  return periodo === 'especifico' || periodo === 'personalizado' || periodo === 'todos';
+}
+
+async function buscarIrrigLancamentosCompleto(deStr, ateStr) {
+  const col = collection(db, 'irrigacao_lancamentos');
+  let q;
+  if (deStr && ateStr) q = query(col, where('data', '>=', deStr), where('data', '<=', ateStr), orderBy('data', 'desc'));
+  else if (deStr)      q = query(col, where('data', '>=', deStr), orderBy('data', 'desc'));
+  else                 q = query(col, orderBy('data', 'desc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+async function garantirDadosIrrig() {
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
+  if (!_precisaHistoricoIrrig(periodo)) return;
+
+  let deStr = null, ateStr = null, chave = periodo;
+  if (periodo === 'especifico') {
+    const val = document.getElementById('irrigFiltroMesEspecifico')?.value;
+    if (!val) return;
+    const [ano, mes] = val.split('-').map(Number);
+    deStr = `${ano}-${String(mes).padStart(2, '0')}-01`;
+    ateStr = new Date(ano, mes, 0).toISOString().slice(0, 10); // último dia do mês
+    chave = 'mes:' + val;
+  } else if (periodo === 'personalizado') {
+    deStr  = document.getElementById('irrigFiltroDataDe')?.value  || null;
+    ateStr = document.getElementById('irrigFiltroDataAte')?.value || null;
+    chave  = 'custom:' + (deStr || '') + ':' + (ateStr || '');
+  }
+
+  if (_irrigDadosHistoricoChave === chave && _irrigDadosHistorico) return; // já em cache
+
+  try {
+    _irrigDadosHistorico = await buscarIrrigLancamentosCompleto(deStr, ateStr);
+    _irrigDadosHistoricoChave = chave;
+  } catch (e) {
+    console.error('Erro ao buscar histórico completo de irrigação:', e);
+    mostrarToast('Erro ao carregar histórico completo. Tente novamente.', 'erro');
+  }
+}
+
 function onIrrigPeriodoChange() {
   const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
   const selMes  = document.getElementById('irrigFiltroMesEspecifico');
@@ -5313,7 +5373,13 @@ function onIrrigPeriodoChange() {
   filtrarIrrig();
 }
 
-function filtrarIrrig() {
+async function filtrarIrrig() {
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
+  if (_precisaHistoricoIrrig(periodo)) {
+    const tit = document.getElementById('irrigFazendasTitulo');
+    if (tit) tit.textContent = '🔄 Carregando histórico completo...';
+  }
+  await garantirDadosIrrig();
   const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
   popularFiltroPivos(fazenda);
   atualizarResumoIrrig();
@@ -5353,6 +5419,11 @@ function getLancamentosFiltrados() {
   const safra   = document.getElementById('irrigFiltroSafra')?.value   || '';
   const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
 
+  // Para períodos históricos, usa os dados buscados direto do Firestore (sem
+  // o limite de 500 do listener em tempo real). Se ainda não carregou, cai
+  // no array em memória como fallback temporário (evita tela vazia).
+  const fonteBase = (_precisaHistoricoIrrig(periodo) && _irrigDadosHistorico) ? _irrigDadosHistorico : irrigLancamentos;
+
   const agora = new Date();
   let de = null, ate = null;
   if (periodo === 'mes') de = new Date(agora.getFullYear(), agora.getMonth(), 1);
@@ -5372,7 +5443,7 @@ function getLancamentosFiltrados() {
     if (valAte) { ate = new Date(valAte + 'T00:00:00'); ate.setDate(ate.getDate() + 1); } // inclui o dia final inteiro
   }
 
-  return irrigLancamentos.filter(m => {
+  return fonteBase.filter(m => {
     if (fazenda && m.fazenda !== fazenda) return false;
     if (pivo    && m.pivo    !== pivo)    return false;
     if (cultura && m.cultura !== cultura) return false;
@@ -6243,7 +6314,8 @@ async function excluirPivo(id) {
 
 // ── EXPORTAÇÃO XLS ─────────────────────────────────────────────────────
 
-function exportarIrrigXLS() {
+async function exportarIrrigXLS() {
+  await garantirDadosIrrig();
   const items = getLancamentosFiltrados();
   if (items.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
   const linhas = items.map(m => ({
@@ -6269,7 +6341,8 @@ function exportarIrrigXLS() {
 
 // ── EXPORTAÇÃO PDF ─────────────────────────────────────────────────────
 
-function exportarIrrigPDF() {
+async function exportarIrrigPDF() {
+  await garantirDadosIrrig();
   const items = getLancamentosFiltrados();
   if (items.length === 0) { mostrarToast('Nenhum lançamento para exportar.', 'erro'); return; }
 
@@ -6475,9 +6548,26 @@ function onPluvFiltroAnoChange() {
   renderPluvView();
 }
 
+// ── DADOS COMPLETOS DO ANO (além do que o listener em tempo real guarda) ──
+// O listener (escutarLancamentosPluv) só mantém os 1000 lançamentos mais
+// recentes. Para "Ano completo" — especialmente anos anteriores — buscamos
+// direto no Firestore, sem esse limite, pra garantir que nada fique de fora.
+let _pluvDadosAnoCache = { ano: null, lista: null };
+
+async function buscarPluvLancamentosAno(ano) {
+  const q = query(
+    collection(db, 'pluv_lancamentos'),
+    where('data', '>=', `${ano}-01-01`),
+    where('data', '<=', `${ano}-12-31`),
+    orderBy('data', 'desc')
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
 // Alterna entre a visão mensal normal (resumo + tabela diária) e a visão de
 // ano completo (só total geral + total por fazenda, sem tabela diária).
-function renderPluvView() {
+async function renderPluvView() {
   const viewAno = document.getElementById('pluvAnoView');
   const wrapMes = document.getElementById('pluvTabelaWrap');
   const resumo  = document.querySelector('.pluv-resumo');
@@ -6485,6 +6575,19 @@ function renderPluvView() {
     if (resumo) resumo.style.display = 'none';
     if (wrapMes) wrapMes.style.display = 'none';
     if (viewAno) viewAno.style.display = 'block';
+
+    if (_pluvDadosAnoCache.ano !== pluvAnoAtivo) {
+      const totalEl = document.getElementById('pluvAnoTotalGeral');
+      if (totalEl) totalEl.textContent = '🔄 Carregando...';
+      try {
+        const lista = await buscarPluvLancamentosAno(pluvAnoAtivo);
+        _pluvDadosAnoCache = { ano: pluvAnoAtivo, lista };
+      } catch (e) {
+        console.error('Erro ao buscar lançamentos do ano:', e);
+        mostrarToast('Erro ao carregar dados do ano. Tente novamente.', 'erro');
+        return;
+      }
+    }
     renderAnoPluv(pluvAnoAtivo);
   } else {
     if (resumo) resumo.style.display = '';
@@ -6496,7 +6599,8 @@ function renderPluvView() {
 }
 
 function getLancamentosAno(ano) {
-  return pluvLancamentos.filter(m => (m.data || '').startsWith(ano));
+  if (_pluvDadosAnoCache.ano === ano && _pluvDadosAnoCache.lista) return _pluvDadosAnoCache.lista;
+  return pluvLancamentos.filter(m => (m.data || '').startsWith(ano)); // fallback enquanto carrega
 }
 
 function renderAnoPluv(ano) {
@@ -6747,6 +6851,7 @@ function fecharDetPluv() {
 
 function renderDetPluvLista() {
   const lista = document.getElementById('detPluvLista');
+  const isAdmin = ehAdminLocal();
   // Lançamentos desse dia/fazenda
   const lancs = pluvLancamentos.filter(m => m.data === _detPluvData && m.fazenda === _detPluvFazenda);
   if (lancs.length === 0) {
@@ -6762,7 +6867,7 @@ function renderDetPluvLista() {
       <div class="pluv-lanc-mm">${(m.mm || 0).toFixed(1)} mm</div>
       <div class="pluv-lanc-acoes">
         <button class="pluv-lanc-btn editar" onclick="window.AppEstoque.abrirEditarPluv('${m.id}')">✏️ Editar</button>
-        <button class="pluv-lanc-btn excluir" onclick="window.AppEstoque.pedirExclusaoPluv('${m.id}')">🗑</button>
+        ${isAdmin ? `<button class="pluv-lanc-btn excluir" onclick="window.AppEstoque.pedirExclusaoPluv('${m.id}')">🗑</button>` : ''}
       </div>
     </div>`).join('');
 }
@@ -10006,6 +10111,40 @@ function renderDashboard() {
           <span style="font-size:12px;font-weight:600;color:var(--texto)">${esc(faz)}</span>
           <span style="font-size:16px;font-weight:800;color:#1a7a5b">${mm.toFixed(1)} <span style="font-size:11px;font-weight:600">mm</span></span>
         </div>`).join('');
+  }
+
+  // ── ÁGUA TOTAL POR FAZENDA (CHUVA + IRRIGAÇÃO) ──────────────────────
+  if (el('dashAguaMesNome')) el('dashAguaMesNome').textContent = mesLabel;
+
+  const pluvPorFaz = Object.fromEntries(pluvFazList); // { fazenda: mm }
+  const todasFazendasAgua = [...new Set([...Object.keys(irrigPorFaz), ...Object.keys(pluvPorFaz)])];
+  const aguaFazList = todasFazendasAgua
+    .map(faz => {
+      const irrig = irrigPorFaz[faz] || 0;
+      const chuva = pluvPorFaz[faz] || 0;
+      return { faz, irrig, chuva, total: Math.round((irrig + chuva) * 10) / 10 };
+    })
+    .sort((a, b) => b.total - a.total);
+  const aguaMax = aguaFazList[0]?.total || 1;
+
+  if (el('dashAguaTotal')) {
+    el('dashAguaTotal').innerHTML = aguaFazList.length === 0
+      ? '<div class="dash-secao-vazio">Sem lançamentos de chuva ou irrigação neste mês</div>'
+      : aguaFazList.map(a => `
+        <div class="dash-secao-item">
+          <span class="dash-secao-item-nome">${esc(a.faz)}</span>
+          <div class="dash-bar-wrap">
+            <div style="display:flex;height:100%;width:${Math.round(a.total / aguaMax * 100)}%">
+              <div style="background:#1a5fb4;width:${a.total > 0 ? Math.round(a.irrig / a.total * 100) : 0}%" title="Irrigação: ${a.irrig.toFixed(1)} mm"></div>
+              <div style="background:#1a7a5b;width:${a.total > 0 ? Math.round(a.chuva / a.total * 100) : 0}%" title="Chuva: ${a.chuva.toFixed(1)} mm"></div>
+            </div>
+          </div>
+          <span class="dash-secao-item-val" style="color:#0d5f8a" title="💧 Irrigação: ${a.irrig.toFixed(1)} mm · 🌧️ Chuva: ${a.chuva.toFixed(1)} mm">${a.total.toFixed(1)} mm</span>
+        </div>`).join('') +
+        `<div style="display:flex;gap:16px;padding:8px 16px 4px;font-size:11px;color:var(--texto-suave)">
+          <span><span style="display:inline-block;width:8px;height:8px;background:#1a5fb4;border-radius:2px;margin-right:4px"></span>Irrigação</span>
+          <span><span style="display:inline-block;width:8px;height:8px;background:#1a7a5b;border-radius:2px;margin-right:4px"></span>Chuva</span>
+        </div>`;
   }
 }
 
