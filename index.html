@@ -9981,14 +9981,19 @@ function exportarAgriculturaPDF() {
   const blocosFazenda = fazendasOrdenadas.map(faz => {
     const talhoesFaz = porFazenda[faz];
     const areaFaz = talhoesFaz.reduce((s,t) => s + (t.area||0), 0);
+    const rotuloTalhoes = talhoesFaz.length !== 1 ? 'talhões' : 'talhão';
     const linhasTabela = talhoesFaz.map(t => `<tr>
       <td>${esc(t.nome)}</td>
       <td>${t.tipo === 'SEQ' ? '🟤 Sequeiro' : '🔵 Irrigado'}</td>
       <td>${(t.area||0).toFixed(2)}</td>
     </tr>`).join('');
     return `
-      <div class="sec-titulo">📍 ${esc(faz)} <span style="font-weight:400;text-transform:none">— ${talhoesFaz.length} talhão${talhoesFaz.length!==1?'ões':''} · ${areaFaz.toFixed(1)} ha</span></div>
+      <div class="faz-header">
+        <span class="faz-header-nome">📍 ${esc(faz)}</span>
+        <span class="faz-header-meta">${talhoesFaz.length} ${rotuloTalhoes} &middot; ${areaFaz.toFixed(1)} ha</span>
+      </div>
       <table>
+        <colgroup><col style="width:45%"><col style="width:30%"><col style="width:25%"></colgroup>
         <thead><tr><th style="text-align:left">TALHÃO</th><th>TIPO</th><th>ÁREA (HA)</th></tr></thead>
         <tbody>${linhasTabela}</tbody>
       </table>`;
@@ -10007,14 +10012,17 @@ function exportarAgriculturaPDF() {
     .r-card       { border:1.5px solid #c8d8ee; border-radius:8px; padding:10px 16px; min-width:110px; }
     .r-num        { font-size:22px; font-weight:800; color:#1a5fb4; line-height:1.2; }
     .r-lbl        { font-size:10px; color:#6a7a8a; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
-    table { width:100%; border-collapse:collapse; margin-top:8px; margin-bottom:18px; }
+    table { width:100%; table-layout:fixed; border-collapse:collapse; margin-top:0; margin-bottom:18px; }
     th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:center; border:1px solid #2a5aaa; }
     th:first-child { text-align:left; }
-    td { padding:6px 10px; text-align:center; border:1px solid #d0d8e0; font-size:11px; }
+    td { padding:6px 10px; text-align:center; border:1px solid #d0d8e0; font-size:11px; word-break:break-word; }
     td:first-child { text-align:left; font-weight:600; }
     tr:nth-child(even) td { background:#f7f9fc; }
-    .sec-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
-      color:#1a3a6b; border-bottom:2px solid #1a3a6b; padding-bottom:4px; margin-bottom:2px; margin-top:18px; }
+    .faz-header { display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+      background:#eaf0f9; border-left:5px solid #1a3a6b; border-radius:4px;
+      padding:9px 14px; margin-top:22px; margin-bottom:8px; }
+    .faz-header-nome { font-size:17px; font-weight:800; color:#1a3a6b; letter-spacing:0.3px; }
+    .faz-header-meta { font-size:11px; font-weight:600; color:#5a6472; white-space:nowrap; }
     .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
   </style></head><body>
   <div class="logo-wrap">
