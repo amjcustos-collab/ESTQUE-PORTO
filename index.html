@@ -1113,6 +1113,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <!-- Botões das Receitas -->
     <button class="btn-header verde" id="btnRecExcelHeader" onclick="window.AppEstoque.abrirRelatorioReceitasXLS()" style="display:none">📊 <span>Excel</span></button>
     <button class="btn-header destaque" id="btnRecPDFHeader" onclick="window.AppEstoque.abrirRelatorioReceitasPDF()" style="display:none">🖨️ <span>Relatório</span></button>
+    <!-- Botões da Agricultura -->
+    <button class="btn-header verde" id="btnAgriExcelHeader" onclick="window.AppEstoque.confirmarAgriXLS()" style="display:none">📊 <span>Excel</span></button>
+    <button class="btn-header destaque" id="btnAgriPDFHeader" onclick="window.AppEstoque.confirmarAgriPDF()" style="display:none">🖨️ <span>PDF</span></button>
     <button class="btn-sair" onclick="window.AppEstoque.solicitarRedefinicaoSenha()" title="Alterar minha senha" style="margin-right:2px">🔑</button>
     <button class="btn-sair" onclick="window.AppEstoque.sair()" title="Sair">🔒</button>
   </div>
@@ -7028,6 +7031,32 @@ function confirmarPluvPDF() {
     fn: exportarPluvPDF
   });
 }
+function confirmarAgriXLS() {
+  const n = getTalhoesAgriFiltrados().length;
+  abrirConfirmExport({
+    titulo: 'Exportar Excel — Agricultura',
+    icone: '📊',
+    desc: `Excel com fazendas e talhões cadastrados`,
+    sub: `${n} talhão${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''} (respeita os filtros aplicados)`,
+    corHeader: 'linear-gradient(90deg,#1a4a3b,#1a7a3b)',
+    corBtn: 'var(--verde)',
+    labelBtn: '📊 Baixar Excel',
+    fn: exportarAgriculturaXLS
+  });
+}
+function confirmarAgriPDF() {
+  const n = getTalhoesAgriFiltrados().length;
+  abrirConfirmExport({
+    titulo: 'Gerar PDF — Agricultura',
+    icone: '🖨️',
+    desc: `Relatório PDF de fazendas e talhões`,
+    sub: `${n} talhão${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''} (respeita os filtros aplicados)`,
+    corHeader: 'linear-gradient(90deg,#0f2545,#1a4080)',
+    corBtn: 'var(--azul)',
+    labelBtn: '🖨️ Gerar PDF',
+    fn: exportarAgriculturaPDF
+  });
+}
 
 
 // =====================================================================
@@ -9197,11 +9226,7 @@ function popularSelectsFazendasAgri() {
   const f2 = document.getElementById('editarTalhaoAgriFazenda'); if (f2) f2.innerHTML = optsSel;
 }
 
-function renderAgricultura() {
-  const lista = document.getElementById('agriLista');
-  const resumo = document.getElementById('agriResumo');
-  if (!lista) return;
-
+function getTalhoesAgriFiltrados() {
   const filtroFaz  = document.getElementById('agriFiltroFazenda')?.value || '';
   const filtroTipo = document.getElementById('agriFiltroTipo')?.value || '';
   const busca = (document.getElementById('agriBusca')?.value || '').toLowerCase();
@@ -9217,6 +9242,15 @@ function renderAgricultura() {
     });
   });
   linhas.sort((a,b) => a.fazendaNome.localeCompare(b.fazendaNome) || a.nome.localeCompare(b.nome));
+  return linhas;
+}
+
+function renderAgricultura() {
+  const lista = document.getElementById('agriLista');
+  const resumo = document.getElementById('agriResumo');
+  if (!lista) return;
+
+  const linhas = getTalhoesAgriFiltrados();
 
   const totalFazendas = agriFazendas.length;
   const totalTalhoes = agriFazendas.reduce((s,f) => s + (f.talhoes||[]).filter(t=>t.ativo!==false).length, 0);
@@ -9891,6 +9925,120 @@ function exportarPluvXLS() {
 }
 
 // =====================================================================
+// MÓDULO AGRICULTURA — Exportação (PDF/XLS de fazendas e talhões)
+// =====================================================================
+function exportarAgriculturaXLS() {
+  const linhas = getTalhoesAgriFiltrados();
+  if (!linhas.length) { mostrarToast('Nenhum talhão para exportar.', 'erro'); return; }
+
+  const dados = linhas.map(t => ({
+    'Fazenda': t.fazendaNome,
+    'Talhão': t.nome,
+    'Tipo': t.tipo === 'SEQ' ? 'Sequeiro' : 'Irrigado',
+    'Área (ha)': t.area
+  }));
+  const areaTotal = linhas.reduce((s,t) => s + (t.area||0), 0);
+  dados.push({ 'Fazenda': '', 'Talhão': '', 'Tipo': 'TOTAL', 'Área (ha)': Math.round(areaTotal*100)/100 });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(dados);
+  ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 14 }, { wch: 12 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Agricultura');
+
+  const hoje = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `agricultura_fazendas_talhoes_${hoje}.xlsx`);
+  mostrarToast('✓ XLS exportado!', 'sucesso');
+}
+
+function exportarAgriculturaPDF() {
+  const linhas = getTalhoesAgriFiltrados();
+  if (!linhas.length) { mostrarToast('Nenhum talhão para exportar.', 'erro'); return; }
+
+  // Agrupar por fazenda
+  const porFazenda = {};
+  linhas.forEach(t => {
+    if (!porFazenda[t.fazendaNome]) porFazenda[t.fazendaNome] = [];
+    porFazenda[t.fazendaNome].push(t);
+  });
+  const fazendasOrdenadas = Object.keys(porFazenda).sort();
+
+  const totalTalhoes = linhas.length;
+  const areaTotal = linhas.reduce((s,t) => s + (t.area||0), 0);
+  const totalPC = linhas.filter(t => t.tipo !== 'SEQ').length;
+  const totalSEQ = linhas.filter(t => t.tipo === 'SEQ').length;
+  const areaPC = linhas.filter(t => t.tipo !== 'SEQ').reduce((s,t) => s + (t.area||0), 0);
+  const areaSEQ = linhas.filter(t => t.tipo === 'SEQ').reduce((s,t) => s + (t.area||0), 0);
+  const emitido = new Date().toLocaleString('pt-BR');
+
+  const cardsResumo = `
+    <div class="r-card"><div class="r-num">${fazendasOrdenadas.length}</div><div class="r-lbl">Fazendas</div></div>
+    <div class="r-card"><div class="r-num">${totalTalhoes}</div><div class="r-lbl">Talhões</div></div>
+    <div class="r-card"><div class="r-num">${areaTotal.toFixed(1)} ha</div><div class="r-lbl">Área total</div></div>
+    <div class="r-card"><div class="r-num">${totalPC}<span style="font-size:12px;font-weight:400"> (${areaPC.toFixed(1)} ha)</span></div><div class="r-lbl">🔵 Irrigados</div></div>
+    <div class="r-card"><div class="r-num">${totalSEQ}<span style="font-size:12px;font-weight:400"> (${areaSEQ.toFixed(1)} ha)</span></div><div class="r-lbl">🟤 Sequeiros</div></div>
+  `;
+
+  const blocosFazenda = fazendasOrdenadas.map(faz => {
+    const talhoesFaz = porFazenda[faz];
+    const areaFaz = talhoesFaz.reduce((s,t) => s + (t.area||0), 0);
+    const linhasTabela = talhoesFaz.map(t => `<tr>
+      <td>${esc(t.nome)}</td>
+      <td>${t.tipo === 'SEQ' ? '🟤 Sequeiro' : '🔵 Irrigado'}</td>
+      <td>${(t.area||0).toFixed(2)}</td>
+    </tr>`).join('');
+    return `
+      <div class="sec-titulo">📍 ${esc(faz)} <span style="font-weight:400;text-transform:none">— ${talhoesFaz.length} talhão${talhoesFaz.length!==1?'ões':''} · ${areaFaz.toFixed(1)} ha</span></div>
+      <table>
+        <thead><tr><th style="text-align:left">TALHÃO</th><th>TIPO</th><th>ÁREA (HA)</th></tr></thead>
+        <tbody>${linhasTabela}</tbody>
+      </table>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Agricultura — Fazendas e Talhões</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .logo-wrap img { height:52px; }
+    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:18px; font-weight:900; }
+    .capa-titulo  { font-size:13px; color:#5a6472; }
+    .resumo       { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .r-card       { border:1.5px solid #c8d8ee; border-radius:8px; padding:10px 16px; min-width:110px; }
+    .r-num        { font-size:22px; font-weight:800; color:#1a5fb4; line-height:1.2; }
+    .r-lbl        { font-size:10px; color:#6a7a8a; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; margin-bottom:18px; }
+    th { background:#1a3a6b; color:white; padding:8px 10px; font-size:11px; text-align:center; border:1px solid #2a5aaa; }
+    th:first-child { text-align:left; }
+    td { padding:6px 10px; text-align:center; border:1px solid #d0d8e0; font-size:11px; }
+    td:first-child { text-align:left; font-weight:600; }
+    tr:nth-child(even) td { background:#f7f9fc; }
+    .sec-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+      color:#1a3a6b; border-bottom:2px solid #1a3a6b; padding-bottom:4px; margin-bottom:2px; margin-top:18px; }
+    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
+  </style></head><body>
+  <div class="logo-wrap">
+    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
+    <div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">AMJ Agro Gestão</div>
+      <div class="capa-titulo">Fazendas e Talhões &middot; Emitido em ${emitido}</div>
+    </div>
+  </div>
+  <div class="resumo">${cardsResumo}</div>
+  ${blocosFazenda}
+  <div class="rodape">${esc(configGlobal.empresa)} &middot; Cadastro de Fazendas e Talhões &middot; Gerado em ${emitido}</div>
+  <script>window.onload = () => window.print()<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
+}
+
+// =====================================================================
 // DASHBOARD
 // =====================================================================
 
@@ -10219,6 +10367,9 @@ function navegarModulo(modulo) {
   // Receitas
   show('btnRecExcelHeader', modulo === 'receitas' && temRelat);
   show('btnRecPDFHeader',   modulo === 'receitas' && temRelat);
+  // Agricultura
+  show('btnAgriExcelHeader', modulo === 'agricultura' && temRelat);
+  show('btnAgriPDFHeader',   modulo === 'agricultura' && temRelat);
 
   // Listeners de irrigação e pluv ficam sempre ativos (Dashboard os consome).
   // Só iniciam se ainda não estiverem rodando.
@@ -11233,6 +11384,7 @@ window.AppEstoque = {
   abrirNovaFazenda, fecharEditarFazenda, salvarFazendaAgri, excluirFazendaAgri,
   abrirNovoTalhaoAgri, abrirEditarTalhaoAgri, fecharEditarTalhaoAgri, salvarTalhaoAgri, excluirTalhaoAgri,
   migrarParaAgricultura,
+  exportarAgriculturaXLS, exportarAgriculturaPDF, confirmarAgriXLS, confirmarAgriPDF,
   abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
   abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista, sincronizarPluvComAgricultura,
