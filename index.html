@@ -1399,7 +1399,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <button class="btn-rec-novo somente-admin" onclick="window.AppEstoque.abrirNovaFazenda()">
       ✚ Nova Fazenda
     </button>
-    <button class="btn-rec-novo somente-admin" style="background:#1a6b7a;border-color:#1a6b7a" onclick="window.AppEstoque.abrirNovoTalhaoAgri()">
+    <button class="btn-rec-novo" id="btnNovoTalhaoAgri" style="background:#1a6b7a;border-color:#1a6b7a;display:none" onclick="window.AppEstoque.abrirNovoTalhaoAgri()">
       ✚ Novo Talhão
     </button>
   </div>
@@ -2855,6 +2855,7 @@ const PERMISSOES_DISPONIVEIS = [
   { chave: 'excluirProduto', label: 'Excluir produto',                 icone: '🗑' },
   { chave: 'cadastrarProduto', label: 'Cadastrar produto novo',        icone: '🆕' },
   { chave: 'verRelatorios',  label: 'Ver histórico e relatórios',      icone: '📊' },
+  { chave: 'editarAgricultura', label: 'Editar talhões (Agricultura)', icone: '🌾' },
   // ── Acesso por módulo ──────────────────────────────────────────────
   { chave: 'modulo_estoque',      label: 'Acessar módulo Estoque',      icone: '📦', grupo: 'módulos' },
   { chave: 'modulo_irrigacao',    label: 'Acessar módulo Irrigação',    icone: '💧', grupo: 'módulos' },
@@ -2867,6 +2868,7 @@ const PERMISSOES_DISPONIVEIS = [
 const PERMISSOES_PADRAO_ESTOQUE = {
   darEntrada: true, darBaixa: true, usarReceita: true, usarCompra: true,
   editarProduto: false, excluirProduto: false, cadastrarProduto: false, verRelatorios: true,
+  editarAgricultura: false,
   modulo_estoque: true, modulo_irrigacao: false, modulo_pluviometria: false, modulo_receitas: false
 };
 
@@ -2985,6 +2987,9 @@ function aplicarPermissoesUI() {
 
   const btnHistorico = document.getElementById('btnHistoricoHeader');
   if (btnHistorico) btnHistorico.style.display = temPermissao('verRelatorios') ? 'inline-flex' : 'none';
+
+  const btnNovoTalhao = document.getElementById('btnNovoTalhaoAgri');
+  if (btnNovoTalhao) btnNovoTalhao.style.display = (isAdmin() || temPermissao('editarAgricultura')) ? 'inline-flex' : 'none';
   // Visibilidade inicial dos botões é controlada por navegarModulo()
   // Dispara uma atualização para o módulo ativo atual
   navegarModulo(moduloAtivo || 'dashboard');
@@ -9242,6 +9247,7 @@ function renderAgricultura() {
   }
 
   const isAdminUser = isAdmin();
+  const podeEditarTalhao = isAdminUser || temPermissao('editarAgricultura');
   let html = '';
   let fazAtual = '';
   linhas.forEach(t => {
@@ -9270,7 +9276,7 @@ function renderAgricultura() {
         <div style="font-size:13px;font-weight:600">${esc(t.nome)}</div>
         <div style="font-size:12px;color:var(--texto-suave)">${t.area} ha</div>
       </div>
-      ${isAdminUser ? `
+      ${podeEditarTalhao ? `
       <button onclick="window.AppEstoque.abrirEditarTalhaoAgri('${t.fazendaId}','${t.id}')"
         style="background:var(--azul-fundo);color:var(--azul);border:none;border-radius:7px;
         padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
@@ -9324,6 +9330,7 @@ async function excluirFazendaAgri(fazendaId) {
 
 // ── Talhão: CRUD (array embutido na fazenda) ───────────────────────
 function abrirNovoTalhaoAgri() {
+  if (!exigirPermissao('editarAgricultura', 'Você não tem permissão para cadastrar talhões.')) return;
   if (!agriFazendas.length) { mostrarToast('Cadastre uma fazenda primeiro.', 'erro'); return; }
   document.getElementById('editarTalhaoAgriId').value = '';
   document.getElementById('editarTalhaoAgriFazenda').value = '';
@@ -9334,6 +9341,7 @@ function abrirNovoTalhaoAgri() {
   document.getElementById('overlayEditarTalhaoAgri').classList.add('aberto');
 }
 function abrirEditarTalhaoAgri(fazendaId, talhaoId) {
+  if (!exigirPermissao('editarAgricultura', 'Você não tem permissão para editar talhões.')) return;
   const f = agriFazendas.find(x => x.id === fazendaId);
   const t = f?.talhoes?.find(x => x.id === talhaoId);
   if (!f || !t) return;
@@ -9351,6 +9359,7 @@ function fecharEditarTalhaoAgri() {
   document.getElementById('editarTalhaoAgriFazenda').dataset.fazendaId = '';
 }
 async function salvarTalhaoAgri() {
+  if (!exigirPermissao('editarAgricultura', 'Você não tem permissão para editar talhões.')) return;
   const talhaoId = document.getElementById('editarTalhaoAgriId').value;
   const fazendaNome = document.getElementById('editarTalhaoAgriFazenda').value;
   const nome = document.getElementById('editarTalhaoAgriNome').value.trim().toUpperCase();
@@ -9376,6 +9385,7 @@ async function salvarTalhaoAgri() {
   } catch(e) { console.error(e); mostrarToast('Erro ao salvar talhão.', 'erro'); }
 }
 async function excluirTalhaoAgri(fazendaId, talhaoId) {
+  if (!exigirPermissao('editarAgricultura', 'Você não tem permissão para excluir talhões.')) return;
   const f = agriFazendas.find(x => x.id === fazendaId);
   const t = f?.talhoes?.find(x => x.id === talhaoId);
   if (!f || !t) return;
