@@ -1223,12 +1223,12 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     </div>
     <div class="irrig-stat">
       <div class="irrig-stat-valor" id="irrigMmMes">—</div>
-      <div class="irrig-stat-label">MM Este Mês</div>
+      <div class="irrig-stat-label">MM no Período</div>
       <div class="irrig-stat-sub" id="irrigMmMesSub"></div>
     </div>
     <div class="irrig-stat">
       <div class="irrig-stat-valor" id="irrigTotalLanc">—</div>
-      <div class="irrig-stat-label">Lançamentos no mês</div>
+      <div class="irrig-stat-label">Lançamentos no Período</div>
     </div>
   </div>
 
@@ -5331,20 +5331,63 @@ const getDataStr  = m => m.data || new Date(m.dataLocal).toISOString().slice(0, 
 // --- Resumo ---
 function atualizarResumoIrrig() {
   const hoje = new Date().toISOString().slice(0, 10);
-  const agora = new Date();
-  const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1);
-  const mesNome = agora.toLocaleDateString('pt-BR', { month: 'long' });
 
-  const todos = getLancamentosFiltrados();
-  const mmHoje = todos.filter(m => getDataStr(m) === hoje).reduce((s, m) => s + (m.mm || 0), 0);
-  const mmMes  = todos.filter(m => getDataLanc(m) >= inicioMes).reduce((s, m) => s + (m.mm || 0), 0);
-  const qtdMes = todos.filter(m => getDataLanc(m) >= inicioMes).length;
+  // "MM Hoje" independe do período escolhido (só respeita fazenda/pivô/cultura/safra)
+  const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
+  const pivo    = document.getElementById('irrigFiltroPivo')?.value    || '';
+  const cultura = document.getElementById('irrigFiltroCultura')?.value || '';
+  const safra   = document.getElementById('irrigFiltroSafra')?.value   || '';
+  const mmHoje = irrigLancamentos.filter(m => {
+    if (fazenda && m.fazenda !== fazenda) return false;
+    if (pivo    && m.pivo    !== pivo)    return false;
+    if (cultura && m.cultura !== cultura) return false;
+    if (safra   && m.safra   !== safra)   return false;
+    return getDataStr(m) === hoje;
+  }).reduce((s, m) => s + (m.mm || 0), 0);
+
+  // MM e lançamentos do período selecionado no filtro
+  const itensPeriodo = getLancamentosFiltrados();
+  const mmPeriodo  = itensPeriodo.reduce((s, m) => s + (m.mm || 0), 0);
+  const qtdPeriodo = itensPeriodo.length;
 
   const el = id => document.getElementById(id);
   if (el('irrigMmHoje'))    el('irrigMmHoje').textContent    = mmHoje.toFixed(2) + ' mm';
-  if (el('irrigMmMes'))     el('irrigMmMes').textContent     = mmMes.toFixed(2) + ' mm';
-  if (el('irrigMmMesSub'))  el('irrigMmMesSub').textContent  = mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
-  if (el('irrigTotalLanc')) el('irrigTotalLanc').textContent = qtdMes;
+  if (el('irrigMmMes'))     el('irrigMmMes').textContent     = mmPeriodo.toFixed(2) + ' mm';
+  if (el('irrigMmMesSub'))  el('irrigMmMesSub').textContent  = labelPeriodoIrrig();
+  if (el('irrigTotalLanc')) el('irrigTotalLanc').textContent = qtdPeriodo;
+}
+
+function fmtDataBR(iso) {
+  const [a, m, d] = iso.split('-');
+  return `${d}/${m}/${a}`;
+}
+
+function labelPeriodoIrrig() {
+  const periodo = document.getElementById('irrigFiltroPeriodo')?.value || 'mes';
+  const agora = new Date();
+  if (periodo === 'mes') {
+    const mesNome = agora.toLocaleDateString('pt-BR', { month: 'long' });
+    return mesNome.charAt(0).toUpperCase() + mesNome.slice(1);
+  }
+  if (periodo === '7d')  return 'Últimos 7 dias';
+  if (periodo === '30d') return 'Últimos 30 dias';
+  if (periodo === 'todos') return 'Todo o histórico';
+  if (periodo === 'especifico') {
+    const val = document.getElementById('irrigFiltroMesEspecifico')?.value;
+    if (val) {
+      const [ano, mes] = val.split('-').map(Number);
+      const label = new Date(ano, mes - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+      return label.charAt(0).toUpperCase() + label.slice(1);
+    }
+  }
+  if (periodo === 'personalizado') {
+    const valDe  = document.getElementById('irrigFiltroDataDe')?.value;
+    const valAte = document.getElementById('irrigFiltroDataAte')?.value;
+    if (valDe && valAte) return `${fmtDataBR(valDe)} a ${fmtDataBR(valAte)}`;
+    if (valDe)  return `A partir de ${fmtDataBR(valDe)}`;
+    if (valAte) return `Até ${fmtDataBR(valAte)}`;
+  }
+  return '';
 }
 
 // --- Breakdown por pivô ---
