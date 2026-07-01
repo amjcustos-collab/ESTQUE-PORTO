@@ -2129,7 +2129,8 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <button class="btn-fechar" onclick="window.AppEstoque.fecharGestaoPluv()">×</button>
     </div>
     <div class="modal-body" style="padding:16px 20px">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button style="background:#eff6ff;color:#1a4080;border:1.5px solid #bfdbfe;border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.sincronizarPluvComAgricultura()">🔄 Sincronizar com Agricultura</button>
         <button style="background:var(--verde);color:white;border:none;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer" onclick="window.AppEstoque.abrirEditorPluv(null)">+ Novo Pluviômetro</button>
       </div>
       <div class="pivos-lista" id="gestaoPluvLista"></div>
@@ -2149,7 +2150,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <div class="irrig-form-row">
         <div>
           <label class="label-campo">Fazenda</label>
-          <input type="text" id="editorPluvFazenda" placeholder="Ex: CATARINA" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+          <select id="editorPluvFazenda" style="width:100%;padding:9px 12px;border:1.5px solid var(--borda);border-radius:8px;font-size:13px;box-sizing:border-box">
+            <option value="">Selecione a fazenda</option>
+          </select>
         </div>
         <div>
           <label class="label-campo">Nome do pluviômetro</label>
@@ -9399,18 +9402,33 @@ function renderGestaoPluvLista() {
     </div>`).join('');
 }
 
-function abrirEditorPluv(id) {
+async function abrirEditorPluv(id) {
   _editandoPluvId = id;
   const titulo = document.getElementById('editorPluvTitulo');
+  const selFaz = document.getElementById('editorPluvFazenda');
+
+  // Garantia: se o listener global de Agricultura ainda não populou agriFazendas
+  if (!agriFazendas.length) {
+    try {
+      const snap = await getDocs(collection(db, 'agricultura_fazendas'));
+      agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+    } catch(e) {
+      console.warn('Não foi possível carregar Agricultura para o editor de pluviômetro:', e);
+    }
+  }
+
+  const nomesFazendas = [...agriFazendas].map(f => f.nome).sort();
+  selFaz.innerHTML = '<option value="">Selecione a fazenda</option>' +
+    nomesFazendas.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
   if (id) {
     const p = pluvPluviometros.find(x => x.id === id);
     if (!p) return;
     if (titulo) titulo.textContent = 'Editar Pluviômetro';
-    document.getElementById('editorPluvFazenda').value = p.fazenda;
+    selFaz.value = p.fazenda;
     document.getElementById('editorPluvNome').value    = p.nome;
   } else {
     if (titulo) titulo.textContent = 'Novo Pluviômetro';
-    document.getElementById('editorPluvFazenda').value = '';
+    selFaz.value = '';
     document.getElementById('editorPluvNome').value    = '';
   }
   document.getElementById('overlayEditorPluv').classList.add('aberto');
@@ -9456,6 +9474,49 @@ async function excluirPluviometro(id) {
     renderGestaoPluvLista();
     mostrarToast(`"${p.nome}" excluído.`, 'sucesso');
   } catch (e) { mostrarToast('Erro ao excluir.', 'erro'); }
+}
+
+async function sincronizarPluvComAgricultura() {
+  // Garantia: se o listener global de Agricultura ainda não populou agriFazendas
+  if (!agriFazendas.length) {
+    try {
+      const snap = await getDocs(collection(db, 'agricultura_fazendas'));
+      agriFazendas = snap.docs.map(d => ({ id: d.id, ...d.data(), talhoes: d.data().talhoes || [] }));
+    } catch(e) {
+      console.warn('Não foi possível carregar Agricultura:', e);
+    }
+  }
+  if (!agriFazendas.length) { mostrarToast('Nenhuma fazenda cadastrada em Agricultura.', 'erro'); return; }
+
+  const nomesFazendas = [...agriFazendas].map(f => f.nome).sort();
+  const ok = await confirmarGenerico({
+    titulo: 'Sincronizar Pluviômetros com Agricultura',
+    icone: '🔄',
+    mensagem: `Isso vai <strong>excluir todos os ${pluvPluviometros.length} pluviômetro(s)</strong> cadastrados atualmente e criar <strong>1 pluviômetro "Principal" para cada uma das ${nomesFazendas.length} fazendas</strong> de Agricultura:<br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">${nomesFazendas.map(esc).join(', ')}</span><br><br>
+      <span style="font-size:12px;color:var(--texto-suave)">Os lançamentos de chuva já registrados <strong>não são apagados</strong> — eles continuam salvos com a fazenda e o valor já lançados.</span>`,
+    corBtn: 'var(--vermelho)',
+    labelBtn: '🔄 Sincronizar'
+  });
+  if (!ok) return;
+
+  try {
+    const snapAtual = await getDocs(collection(db, 'pluv_pluviometros'));
+    for (const d of snapAtual.docs) {
+      await deleteDoc(doc(db, 'pluv_pluviometros', d.id));
+    }
+    const normalize = s => s.trim().toUpperCase().replace(/\s+/g, '_');
+    for (const nome of nomesFazendas) {
+      const docId = `${normalize(nome)}___PRINCIPAL`;
+      await setDoc(doc(db, 'pluv_pluviometros', docId), { fazenda: nome, nome: 'Principal', ativo: true, criadoEm: new Date().toISOString() });
+    }
+    await recarregarPluviometros();
+    renderGestaoPluvLista();
+    mostrarToast(`✓ ${nomesFazendas.length} pluviômetro(s) sincronizado(s) com Agricultura.`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao sincronizar. Verifique a conexão.', 'erro');
+  }
 }
 
 // ── EXPORTAÇÃO PDF ─────────────────────────────────────────────────────
@@ -10922,7 +10983,7 @@ window.AppEstoque = {
   migrarParaAgricultura,
   abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
-  abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista,
+  abrirGestaoPluv, fecharGestaoPluv, renderGestaoPluvLista, sincronizarPluvComAgricultura,
   abrirEditorPluv, fecharEditorPluv, salvarPluviometro, excluirPluviometro,
   exportarPluvPDF, exportarPluvXLS,
   abrirLancamentoIrrig, fecharLancamentoIrrig, confirmarLancamentoIrrig,
