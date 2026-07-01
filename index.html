@@ -496,6 +496,14 @@ header {
 
 /* Tabela principal */
 .pluv-tabela-wrap { overflow-x: auto; border-radius: 10px; border: 1.5px solid var(--borda); background: white; }
+.pluv-ano-view { background: white; border: 1.5px solid var(--borda); border-radius: 10px; padding: 24px; margin-bottom: 20px; text-align: center; }
+.pluv-ano-total { font-size: 40px; font-weight: 800; color: #1a7a5b; }
+.pluv-ano-total-label { font-size: 12px; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+.pluv-ano-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; text-align: left; }
+.pluv-ano-card { background: var(--cinza-claro); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pluv-ano-card-nome { font-size: 12px; font-weight: 600; color: var(--texto); }
+.pluv-ano-card-mm   { font-size: 16px; font-weight: 800; color: #1a7a5b; }
+.pluv-breakdown-titulo { font-size: 11px; font-weight: 700; color: var(--texto-suave); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
 .pluv-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
 .pluv-tabela thead th {
   background: #1a3a6b; color: white; padding: 10px 14px;
@@ -1312,15 +1320,27 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   <!-- Barra de ações -->
   <div class="pluv-acoes">
     <button class="btn-header verde" style="padding:10px 18px;font-size:13px" onclick="window.AppEstoque.abrirLancamentoPluv()">🌧️ + Registrar Chuva</button>
-    <select class="pluv-select" id="pluvFiltroMes" onchange="window.AppEstoque.renderTabelaPluv()">
+    <select class="pluv-select" id="pluvFiltroMes" onchange="window.AppEstoque.onPluvFiltroMesChange()">
       <!-- meses populados dinamicamente -->
+    </select>
+    <select class="pluv-select" id="pluvFiltroAno" onchange="window.AppEstoque.onPluvFiltroAnoChange()">
+      <option value="">Ano completo...</option>
+      <!-- anos populados dinamicamente -->
     </select>
 
     <button id="btnGestaoPluv" style="display:none" class="pluv-select" onclick="window.AppEstoque.abrirGestaoPluv()">⚙️ Gestão</button>
   </div>
 
+  <!-- Visão de Ano Completo — só totais -->
+  <div class="pluv-ano-view" id="pluvAnoView" style="display:none">
+    <div class="pluv-ano-total" id="pluvAnoTotalGeral">—</div>
+    <div class="pluv-ano-total-label">Total geral no ano (mm)</div>
+    <div class="pluv-breakdown-titulo" style="margin-top:20px">🌧️ Total por fazenda</div>
+    <div class="pluv-ano-cards" id="pluvAnoCards"></div>
+  </div>
+
   <!-- Tabela -->
-  <div class="pluv-tabela-wrap">
+  <div class="pluv-tabela-wrap" id="pluvTabelaWrap">
     <table class="pluv-tabela" id="pluvTabela">
       <thead id="pluvThead"></thead>
       <tbody id="pluvTbody"></tbody>
@@ -6383,6 +6403,7 @@ async function recarregarPluviometros() {
 async function iniciarModuloPluv() {
   await carregarPluviometros();
   popularMesesPluv();
+  popularAnosPluv();
   const btn = document.getElementById('btnGestaoPluv');
   if (btn) btn.style.display = ehAdminLocal() ? '' : 'none';
   escutarLancamentosPluv();
@@ -6397,8 +6418,8 @@ function escutarLancamentosPluv() {
   const q = query(collection(db, 'pluv_lancamentos'), orderBy('dataLocal', 'desc'), limit(1000));
   pluvUnsubscribe = onSnapshot(q, snap => {
     pluvLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    atualizarResumoPluv();
-    renderTabelaPluv();
+    popularAnosPluv();
+    renderPluvView();
     if (moduloAtivo === 'dashboard') renderDashboard();
   });
 }
@@ -6422,6 +6443,88 @@ function popularMesesPluv() {
 function getMesAtivo() {
   return document.getElementById('pluvFiltroMes')?.value ||
     `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+}
+
+// ── FILTRO DE ANO COMPLETO ──────────────────────────────────────────────
+
+let pluvAnoAtivo = null; // null = modo mês normal; senão, string do ano ("2026") em modo ano completo
+
+function popularAnosPluv() {
+  const sel = document.getElementById('pluvFiltroAno');
+  if (!sel) return;
+  const anos = new Set(pluvLancamentos.map(m => (m.data || '').slice(0, 4)).filter(Boolean));
+  anos.add(String(new Date().getFullYear()));
+  const anosOrdenados = [...anos].sort((a, b) => b - a);
+  sel.innerHTML = '<option value="">Ano completo...</option>' +
+    anosOrdenados.map(a => `<option value="${a}">${a}</option>`).join('');
+  sel.value = pluvAnoAtivo || '';
+}
+
+function onPluvFiltroMesChange() {
+  if (pluvAnoAtivo) {
+    pluvAnoAtivo = null;
+    const selAno = document.getElementById('pluvFiltroAno');
+    if (selAno) selAno.value = '';
+  }
+  renderPluvView();
+}
+
+function onPluvFiltroAnoChange() {
+  const val = document.getElementById('pluvFiltroAno')?.value || '';
+  pluvAnoAtivo = val || null;
+  renderPluvView();
+}
+
+// Alterna entre a visão mensal normal (resumo + tabela diária) e a visão de
+// ano completo (só total geral + total por fazenda, sem tabela diária).
+function renderPluvView() {
+  const viewAno = document.getElementById('pluvAnoView');
+  const wrapMes = document.getElementById('pluvTabelaWrap');
+  const resumo  = document.querySelector('.pluv-resumo');
+  if (pluvAnoAtivo) {
+    if (resumo) resumo.style.display = 'none';
+    if (wrapMes) wrapMes.style.display = 'none';
+    if (viewAno) viewAno.style.display = 'block';
+    renderAnoPluv(pluvAnoAtivo);
+  } else {
+    if (resumo) resumo.style.display = '';
+    if (wrapMes) wrapMes.style.display = '';
+    if (viewAno) viewAno.style.display = 'none';
+    atualizarResumoPluv();
+    renderTabelaPluv();
+  }
+}
+
+function getLancamentosAno(ano) {
+  return pluvLancamentos.filter(m => (m.data || '').startsWith(ano));
+}
+
+function renderAnoPluv(ano) {
+  const lancs = getLancamentosAno(ano);
+  const agr   = agregarPorFazendaDia(lancs);
+
+  const fazendasCad  = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agr).sort();
+  const fazendas      = [...new Set([...fazendasCad, ...fazendasLanc])];
+
+  const totais = {};
+  fazendas.forEach(f => { totais[f] = Object.values(agr[f] || {}).reduce((a, b) => a + b, 0); });
+  const totalGeral = Math.round(Object.values(totais).reduce((a, b) => a + b, 0) * 10) / 10;
+
+  const el = id => document.getElementById(id);
+  if (el('pluvAnoTotalGeral')) el('pluvAnoTotalGeral').textContent = totalGeral.toFixed(1) + ' mm';
+
+  const ordenados = fazendas.slice().sort((a, b) => totais[b] - totais[a]);
+  const cards = el('pluvAnoCards');
+  if (cards) {
+    cards.innerHTML = ordenados.length === 0
+      ? '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--texto-suave)">Nenhum lançamento neste ano.</div>'
+      : ordenados.map(f => `
+        <div class="pluv-ano-card">
+          <span class="pluv-ano-card-nome">${esc(f)}</span>
+          <span class="pluv-ano-card-mm">${totais[f].toFixed(1)} mm</span>
+        </div>`).join('');
+  }
 }
 
 // ── DADOS: filtra e agrega ─────────────────────────────────────────────
@@ -9610,7 +9713,7 @@ function exportarPluvPDF() {
     <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
     <div>
       <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
-      <div class="capa-fazenda">${esc(configGlobal.fazenda)}</div>
+      <div class="capa-fazenda">AMJ Agro Gestão</div>
       <div class="capa-titulo">Regime Pluviométrico &middot; ${mesNome} &middot; Emitido em ${emitido}</div>
     </div>
   </div>
@@ -10961,7 +11064,7 @@ window.AppEstoque = {
   irParaReceitasFiltradas, irParaEstoqueFiltrado,
   abrirRelatorioReceitasXLS, abrirRelatorioReceitasPDF, fecharRelatorioReceitas, gerarRelatorioReceitas,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
-  renderTabelaPluv,
+  renderTabelaPluv, onPluvFiltroMesChange, onPluvFiltroAnoChange, renderPluvView,
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
   confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
   // Receitas
