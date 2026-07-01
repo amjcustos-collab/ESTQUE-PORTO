@@ -372,6 +372,11 @@ header {
 .irrig-breakdown-mm        { font-size: 13px; font-weight: 700; color: #1a5fb4; min-width: 70px; text-align: right; }
 .irrig-breakdown-vertodos  { width: 100%; margin-top: 4px; padding: 8px; background: none; border: 1.5px dashed var(--borda); border-radius: 8px; font-size: 12px; font-weight: 600; color: #1a5fb4; cursor: pointer; }
 .irrig-breakdown-vertodos:hover { background: #f0f4ff; }
+.irrig-fazendas { margin-bottom: 20px; }
+.irrig-fazendas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.irrig-fazenda-card { background: var(--cinza-claro); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.irrig-fazenda-nome { font-size: 12px; font-weight: 600; color: var(--texto); }
+.irrig-fazenda-mm   { font-size: 16px; font-weight: 800; color: #1a5fb4; }
 
 /* Pill cultura/safra */
 .irrig-pill-cultura { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; background: #e8f8e8; color: #2a7a2a; }
@@ -1230,6 +1235,12 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <div class="irrig-stat-valor" id="irrigTotalLanc">—</div>
       <div class="irrig-stat-label">Lançamentos no Período</div>
     </div>
+  </div>
+
+  <!-- MM por Fazenda -->
+  <div class="irrig-fazendas" id="irrigFazendas" style="display:none">
+    <div class="irrig-breakdown-titulo" id="irrigFazendasTitulo">🚜 MM Irrigado por Fazenda</div>
+    <div class="irrig-fazendas-grid" id="irrigFazendasGrid"></div>
   </div>
 
   <!-- Breakdown por pivô -->
@@ -5212,6 +5223,7 @@ function escutarLancamentosIrrig() {
     irrigLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     atualizarFiltrosCulturasSafras();
     atualizarResumoIrrig();
+    renderFazendasIrrig();
     renderBreakdownIrrig();
     renderIrrigLista();
     if (moduloAtivo === 'dashboard') renderDashboard();
@@ -5282,8 +5294,32 @@ function filtrarIrrig() {
   const fazenda = document.getElementById('irrigFiltroFazenda')?.value || '';
   popularFiltroPivos(fazenda);
   atualizarResumoIrrig();
+  renderFazendasIrrig();
   renderBreakdownIrrig();
   renderIrrigLista();
+}
+
+// --- MM por fazenda ---
+function renderFazendasIrrig() {
+  const items = getLancamentosFiltrados();
+  const wrap  = document.getElementById('irrigFazendas');
+  const grid  = document.getElementById('irrigFazendasGrid');
+  const tit   = document.getElementById('irrigFazendasTitulo');
+  if (!wrap || !grid) return;
+
+  const map = {};
+  items.forEach(m => { map[m.fazenda] = (map[m.fazenda] || 0) + (m.mm || 0); });
+  const lista = Object.entries(map).sort((a, b) => b[1] - a[1]);
+
+  if (tit) tit.textContent = `🚜 MM Irrigado por Fazenda — ${labelPeriodoIrrig()}`;
+
+  if (lista.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  grid.innerHTML = lista.map(([faz, mm]) => `
+    <div class="irrig-fazenda-card">
+      <span class="irrig-fazenda-nome">${esc(faz)}</span>
+      <span class="irrig-fazenda-mm">${mm.toFixed(1)} <span style="font-size:11px;font-weight:600">mm</span></span>
+    </div>`).join('');
 }
 
 // --- Filtrar lançamentos ---
@@ -10768,7 +10804,7 @@ window.AppEstoque = {
   exportarPluvPDF, exportarPluvXLS,
   abrirLancamentoIrrig, fecharLancamentoIrrig, confirmarLancamentoIrrig,
   onIrrigFazendaChange, onIrrigPivoChange, selecionarPctIrrig, calcularMmIrrig,
-  filtrarIrrig, toggleBreakdownIrrig, onIrrigPeriodoChange,
+  filtrarIrrig, toggleBreakdownIrrig, onIrrigPeriodoChange, renderFazendasIrrig,
   pedirExclusaoIrrig, cancelarExclusaoIrrig, confirmarExclusaoIrrig,
   abrirGestaoIrrig, fecharGestaoIrrig, renderGestaoIrrigLista, gestaoAba,
   adicionarCultura, adicionarSafra, moverItem, removerItem,
