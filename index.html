@@ -8924,16 +8924,27 @@ async function imprimirReceita(id) {
       ).join('')
     + '</div>';
 
-  // Ícone por tipo de produto
+  // Ícone por tipo de produto — outline, monocromático
   function tipoIcone(tipo) {
     const t = (tipo||'').toLowerCase();
-    if (t.includes('herbicida'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#dcfce7;font-size:12px;margin-right:6px">&#127807;</span>';
-    if (t.includes('inseticida'))    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fef3c7;font-size:12px;margin-right:6px">&#128027;</span>';
-    if (t.includes('fungicida'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f3e8ff;font-size:12px;margin-right:6px">&#128307;</span>';
-    if (t.includes('biologico')||t.includes('biológico')) return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#d1fae5;font-size:12px;margin-right:6px">&#127822;</span>';
-    if (t.includes('adjuvante'))     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#dbeafe;font-size:12px;margin-right:6px">&#128167;</span>';
-    if (t.includes('nutri'))         return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#fce7f3;font-size:12px;margin-right:6px">&#127807;</span>';
-    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:12px;margin-right:6px">&#8226;</span>';
+    const ICONES = {
+      herbicida: '<path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12v-2h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5h3z"/>',
+      inseticida: '<path d="M9 7h6a1 1 0 0 1 1 1v1h1.5a1.5 1.5 0 0 1 0 3h-1.5v1a5 5 0 0 1-10 0v-1h-1.5a1.5 1.5 0 0 1 0-3h1.5v-1a1 1 0 0 1 1-1z"/><path d="M8 3l1.5 1.5"/><path d="M14.5 4.5l1.5-1.5"/><path d="M3 13h2"/><path d="M19 13h2"/><path d="M5 20l1.5-1.5"/><path d="M18.5 18.5l1.5 1.5"/><path d="M12 8v11"/>',
+      fungicida: '<path d="M4 11c0-3.87 3.582-7 8-7s8 3.13 8 7c-2 1.5-5 2-8 2s-6-.5-8-2z"/><path d="M9 13v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5"/><path d="M10 8h.01"/><path d="M14 7h.01"/>',
+      biologico: '<circle cx="12" cy="12" r="1"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(90 12 12)"/>',
+      adjuvante: '<path d="M12 3c3.5 4 6 7.5 6 10.5a6 6 0 0 1-12 0c0-3 2.5-6.5 6-10.5z"/>',
+      nutri: '<path d="M5 21c0-6 3-10 8-11"/><path d="M13 10c4.5 0 8-3 8-7c-4.5 0-8 3-8 7z"/><path d="M13 10c-1-2.5-1-5.5 0-8"/>',
+    };
+    let path = '<circle cx="12" cy="12" r="1.4"/>';
+    if (t.includes('herbicida'))     path = ICONES.herbicida;
+    else if (t.includes('inseticida'))    path = ICONES.inseticida;
+    else if (t.includes('fungicida'))     path = ICONES.fungicida;
+    else if (t.includes('biologico')||t.includes('biológico')) path = ICONES.biologico;
+    else if (t.includes('adjuvante'))     path = ICONES.adjuvante;
+    else if (t.includes('nutri'))         path = ICONES.nutri;
+    return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#f1f5f9;margin-right:8px;flex-shrink:0">'
+      + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+      + path + '</svg></span>';
   }
 
   // Linhas da tabela
