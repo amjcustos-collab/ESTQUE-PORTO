@@ -8150,10 +8150,21 @@ function abrirAceiteReceita(id) {
     biosHTML = `
     <div style="margin:16px 0;padding:14px 16px;background:#e8f5e9;border-radius:10px;border:1.5px solid #a5d6a7">
       <div style="font-weight:700;color:#1b5e20;margin-bottom:10px">🧬 Calculador de Diluição — Biológicos</div>
-      <div style="font-size:12px;color:#2e7d32;margin-bottom:10px">
-        Capacidade do tanque: <strong>${capTanque.toFixed(2)} ha/tanque</strong> · 
-        Nº de tanques: <strong>${nTanques}</strong> · 
-        Vazão: <strong>${vazao} L/ha</strong>
+      <div style="font-size:12px;color:#2e7d32;margin-bottom:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span>Capacidade do tanque: <strong>${capTanque.toFixed(2)} ha/tanque</strong></span>
+        <span>·</span>
+        <span style="display:flex;align-items:center;gap:5px">Nº de tanques:
+          <input type="number" id="aceiteNTanques" value="${nTanques}" min="1" step="1"
+            style="width:52px;padding:2px 5px;border:1.5px solid #a5d6a7;border-radius:5px;
+            font-size:12px;font-weight:700;color:#1b5e20;text-align:center;box-sizing:border-box"
+            onchange="window.AppEstoque.recalcularTanquesAceite(this.value)">
+        </span>
+        <span>·</span>
+        <span>Vazão: <strong>${vazao} L/ha</strong></span>
+      </div>
+      <div style="font-size:11px;color:#5a7a5a;margin:-6px 0 6px" id="aceiteTanqueAviso"></div>
+      <div style="font-size:11px;color:#5a7a5a;margin:0 0 10px">
+        💡 O nº de tanques é calculado automaticamente pela área, mas pode ser ajustado manualmente se for mais viável na operação — a diluição dos biológicos abaixo se recalcula sozinha.
       </div>
       ${bios.map((it, i) => {
         const volTotalBio = it.qdeTotalArea || 0;
@@ -8301,6 +8312,43 @@ function fecharAceiteReceita() {
   _aceiteItensCache = [];
 }
 
+function recalcularTanquesAceite(novoValor) {
+  const r = recReceitas.find(x => x.id === _recAceitandoId);
+  if (!r) return;
+  const input = document.getElementById('aceiteNTanques');
+  let nTanques = Math.round(parseFloat(novoValor));
+  if (!nTanques || nTanques < 1) nTanques = 1;
+  if (input) input.value = nTanques;
+
+  const areaTotal = r.areaTotal || 0;
+  const vazao     = r.vazao || 0;
+  const tanque    = r.tanque || (r.operacao === 'drone' ? 70 : 3000);
+  const capTanque = vazao > 0 ? tanque / vazao : 0; // capacidade física (ha/tanque)
+  const haPorTanqueReal = areaTotal / nTanques;
+
+  const aviso = document.getElementById('aceiteTanqueAviso');
+  if (aviso) {
+    if (capTanque > 0 && haPorTanqueReal > capTanque + 0.01) {
+      aviso.innerHTML = `⚠️ Com ${nTanques} tanque${nTanques!==1?'s':''}, cada carga cobriria ${haPorTanqueReal.toFixed(2)} ha — acima da capacidade física do tanque (${capTanque.toFixed(2)} ha). Confira se é viável.`;
+      aviso.style.color = '#a15c00';
+    } else {
+      aviso.innerHTML = '';
+    }
+  }
+
+  const bios = (r.itens || []).filter(it => it.biologico);
+  bios.forEach((it, i) => {
+    const volPorTanque = haPorTanqueReal > 0 ? Math.round(it.doseHa * haPorTanqueReal * 1000) / 1000 : 0;
+    const concPorTanque = tanque > 0 ? Math.round(volPorTanque / tanque * 10000) / 100 : 0;
+    const ptEl   = document.getElementById(`bio_ptanque_${i}`);
+    const concEl = document.getElementById(`bio_conc_${i}`);
+    const instEl = document.getElementById(`bio_instrucao_${i}`);
+    if (ptEl)   ptEl.value = volPorTanque;
+    if (concEl) concEl.textContent = concPorTanque.toFixed(2) + '%';
+    if (instEl) instEl.innerHTML = `${volPorTanque.toFixed(3)} ${esc(it.unidade||'L')}`;
+  });
+}
+
 function updateBioCalc(i, campo, valor, prefixo) {
   // Recalcula concentração ao editar campos do calculador
   const r = recReceitas.find(x => x.id === _recAceitandoId);
@@ -8376,12 +8424,16 @@ async function confirmarAceite() {
       return { ...it, produtoId: prod.id, saldoOk: saldoAntes >= qtd, baixaDada: true, estoqueNegativo: ficouNegativo };
     }));
 
+    const nTanquesInput = document.getElementById('aceiteNTanques');
+    const qtdTanquesReal = nTanquesInput ? (parseInt(nTanquesInput.value) || null) : null;
+
     await updateDoc(doc(db, 'receitas', _recAceitandoId), {
       status: 'em_aberto',
       itens: itensAtualizados,
       aceiteEm: new Date().toISOString(),
       aceiteNome: sessaoAtual?.label || sessaoAtual?.email || '—',
       atualizadoEm: new Date().toISOString(),
+      ...(qtdTanquesReal ? { qtdTanquesReal } : {}),
     });
 
     const negativos = itensAtualizados.filter(it => it.estoqueNegativo).length;
@@ -8909,7 +8961,9 @@ async function imprimirReceita(id) {
   const vazao    = r.vazao || 0;
   const tanque   = r.tanque || (isDrone ? 70 : 3000);
   const capHa    = vazao > 0 ? tanque / vazao : 0;
-  const nTanques = capHa > 0 ? (area / capHa).toFixed(2) : '--';
+  const nTanques = r.qtdTanquesReal ? r.qtdTanquesReal : (capHa > 0 ? (area / capHa).toFixed(2) : '--');
+  // ha efetivo por tanque — usa o valor real ajustado no aceite quando existir
+  const capHaReal = r.qtdTanquesReal ? (area / r.qtdTanquesReal) : capHa;
   const capTxt   = capHa > 0 ? capHa.toFixed(2) : '--';
   const sMap     = {pendente:'Pendente',em_aberto:'Em Aberto',finalizado:'Finalizado',cancelado:'Cancelado'};
   const s        = r.status || 'pendente';
@@ -8963,7 +9017,7 @@ async function imprimirReceita(id) {
       : esc(it.nome);
     const doseHa    = it.doseHa || 0;
     const qdeTot    = it.qdeTotalArea || 0;
-    const doseCarga = capHa > 0 ? Math.round(doseHa*capHa*1000)/1000 : 0;
+    const doseCarga = capHaReal > 0 ? Math.round(doseHa*capHaReal*1000)/1000 : 0;
     const rowBg     = isBio ? '#eff6ff' : (i%2===0 ? '#fff' : '#f8fafc');
     const bioStyle  = isBio ? 'font-weight:700;color:#1e40af' : '';
     return '<tr style="background:'+rowBg+'">'
@@ -8978,9 +9032,9 @@ async function imprimirReceita(id) {
   // Diluição biológicos (card lateral)
   const bios = (r.itens||[]).filter(it => it.biologico);
   let bioCard = '';
-  if (bios.length && capHa > 0) {
+  if (bios.length && capHaReal > 0) {
     const bioRows = bios.map(it => {
-      const vPt  = Math.round(it.doseHa*capHa*1000)/1000;
+      const vPt  = Math.round(it.doseHa*capHaReal*1000)/1000;
       const conc = tanque > 0 ? Math.round(vPt/tanque*10000)/100 : 0;
       return '<tr>'
         +'<td colspan="2" style="padding:8px 10px;font-weight:700;color:#166534;font-size:12px;border-bottom:1px solid #bbf7d0;background:#dcfce7">'+esc(it.nome)+'</td></tr>'
@@ -11452,7 +11506,7 @@ window.AppEstoque = {
   onProdutoReceitaInput, _selProdRec, selecionarProdutoReceita, fecharSugsReceita,
   removerItemBaixaReceita, adicionarItemBaixaReceita,
   abrirDetReceita, fecharDetReceita, cancelarReceita,
-  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, abrirSubstituirProduto, clonarReceita, _filtrarSubstProd, _selecionarSubstProd, _confirmarSubstProd,
+  abrirAceiteReceita, fecharAceiteReceita, confirmarAceite, updateBioCalc, updateQdeAceite, recalcularTanquesAceite, abrirSubstituirProduto, clonarReceita, _filtrarSubstProd, _selecionarSubstProd, _confirmarSubstProd,
   cadastrarProdutoNoAceite, _confirmarQuickCad,
   abrirFinalizarReceita, fecharFinalizarReceita, confirmarFinalizar, preencherAplicadorEuMesmo,
   imprimirReceita,
