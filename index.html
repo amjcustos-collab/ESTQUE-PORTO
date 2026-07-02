@@ -1045,6 +1045,26 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   .modulos-nav { padding: 0 60px; }
   header { padding: 0 60px; }
 }
+/* ── OVERLAY DE CARREGAMENTO ──────────────────────────────────────── */
+@keyframes loadingBounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-14px) scale(1.04); }
+}
+@keyframes loadingFade { from { opacity: 0; } to { opacity: 1; } }
+#loadingOverlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(10,14,20,0.72);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  animation: loadingFade 0.15s ease-out;
+}
+#loadingOverlay .loading-logo {
+  width: 84px; height: auto;
+  animation: loadingBounce 1.1s ease-in-out infinite;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+}
+#loadingOverlay .loading-texto {
+  color: #f2f4f7; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;
+}
 </style>
   <!-- SheetJS para exportação XLS -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -9339,10 +9359,12 @@ async function salvarFazendaAgri() {
   const docId = normalize(nome);
   if (agriFazendas.some(f => f.id === docId)) { mostrarToast('Essa fazenda já existe.', 'erro'); return; }
   try {
+    mostrarLoading('Salvando fazenda...');
     await setDoc(doc(db, 'agricultura_fazendas', docId), { nome, talhoes: [] });
     mostrarToast('Fazenda criada!', 'sucesso');
     fecharEditarFazenda();
   } catch(e) { console.error(e); mostrarToast('Erro ao criar fazenda.', 'erro'); }
+  finally { esconderLoading(); }
 }
 async function excluirFazendaAgri(fazendaId) {
   const f = agriFazendas.find(x => x.id === fazendaId);
@@ -9357,9 +9379,11 @@ async function excluirFazendaAgri(fazendaId) {
   });
   if (!ok) return;
   try {
+    mostrarLoading('Excluindo fazenda...');
     await deleteDoc(doc(db, 'agricultura_fazendas', fazendaId));
     mostrarToast(`Fazenda ${f.nome} excluída.`, 'sucesso');
   } catch(e) { console.error(e); mostrarToast('Erro ao excluir fazenda.', 'erro'); }
+  finally { esconderLoading(); }
 }
 
 // ── Talhão: CRUD (array embutido na fazenda) ───────────────────────
@@ -9413,10 +9437,12 @@ async function salvarTalhaoAgri() {
     talhoes.push({ id: 'tlh_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), nome, area, tipo, ativo: true });
   }
   try {
+    mostrarLoading('Salvando talhão...');
     await updateDoc(doc(db, 'agricultura_fazendas', f.id), { talhoes });
     mostrarToast('Talhão salvo!', 'sucesso');
     fecharEditarTalhaoAgri();
   } catch(e) { console.error(e); mostrarToast('Erro ao salvar talhão.', 'erro'); }
+  finally { esconderLoading(); }
 }
 async function excluirTalhaoAgri(fazendaId, talhaoId) {
   if (!exigirPermissao('editarAgricultura', 'Você não tem permissão para excluir talhões.')) return;
@@ -9433,10 +9459,12 @@ async function excluirTalhaoAgri(fazendaId, talhaoId) {
   });
   if (!ok) return;
   try {
+    mostrarLoading('Excluindo talhão...');
     const talhoes = (f.talhoes || []).filter(x => x.id !== talhaoId);
     await updateDoc(doc(db, 'agricultura_fazendas', f.id), { talhoes });
     mostrarToast(`Talhão ${t.nome} excluído.`, 'sucesso');
   } catch(e) { console.error(e); mostrarToast('Erro ao excluir talhão.', 'erro'); }
+  finally { esconderLoading(); }
 }
 
 // ── Migração única: TALHOES_PADRAO → agricultura_fazendas ──────────
@@ -10813,6 +10841,28 @@ function gerarPDF() {
 }
 
 // =====================================================================
+// OVERLAY DE CARREGAMENTO
+// =====================================================================
+let loadingContador = 0;
+let loadingTimerMin = null;
+function mostrarLoading(texto = 'Carregando...') {
+  loadingContador++;
+  const overlay = document.getElementById('loadingOverlay');
+  const logo = document.getElementById('loadingLogo');
+  const txt = document.getElementById('loadingTexto');
+  if (!overlay) return;
+  if (logo && !logo.src) logo.src = LOGO_AMJ;
+  if (txt) txt.textContent = texto;
+  overlay.style.display = 'flex';
+}
+function esconderLoading() {
+  loadingContador = Math.max(0, loadingContador - 1);
+  if (loadingContador > 0) return;
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+
+// =====================================================================
 // FILTRO / TOAST
 // =====================================================================
 function filtrar() { renderLista(); }
@@ -11392,6 +11442,7 @@ window.AppEstoque = {
   abrirNovaFazenda, fecharEditarFazenda, salvarFazendaAgri, excluirFazendaAgri,
   abrirNovoTalhaoAgri, abrirEditarTalhaoAgri, fecharEditarTalhaoAgri, salvarTalhaoAgri, excluirTalhaoAgri,
   migrarParaAgricultura,
+  mostrarLoading, esconderLoading,
   exportarAgriculturaXLS, exportarAgriculturaPDF, confirmarAgriXLS, confirmarAgriPDF,
   abrirNovoTalhao, abrirEditarTalhao, fecharEditarTalhao, salvarTalhao, excluirTalhao,
   abrirDetPluv, fecharDetPluv, abrirNovoLancDia, abrirEditarPluv, fecharEditarPluv, salvarEdicaoPluv, pedirExclusaoPluv,
@@ -11547,6 +11598,11 @@ window.AppEstoque = {
       <button class="btn-confirmar-editar" id="btnImpIniciar" onclick="window.AppEstoque.executarImportacao()">🚀 Iniciar Importação</button>
     </div>
   </div>
+</div>
+
+<div id="loadingOverlay" style="display:none">
+  <img src="" alt="Carregando" class="loading-logo" id="loadingLogo">
+  <span class="loading-texto" id="loadingTexto">Carregando...</span>
 </div>
 </body>
 </html>
