@@ -1176,6 +1176,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
     <option value="">Todas as classes</option>
     <option value="ADJUVANTE">Adjuvante</option>
     <option value="BIOLÓGICO">Biológico</option>
+    <option value="FERTILIZANTE">Fertilizante</option>
     <option value="FOLIAR">Foliar</option>
     <option value="FUNGICIDA">Fungicida</option>
     <option value="HERBICIDA">Herbicida</option>
@@ -2358,6 +2359,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
             <select id="np-classe">
               <option value="ADJUVANTE">Adjuvante</option>
               <option value="BIOLÓGICO">Biológico</option>
+              <option value="FERTILIZANTE">Fertilizante</option>
               <option value="FOLIAR">Foliar</option>
               <option value="FUNGICIDA">Fungicida</option>
               <option value="HERBICIDA">Herbicida</option>
@@ -2493,6 +2495,7 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
             <select id="cic-classe">
               <option value="ADJUVANTE">Adjuvante</option>
               <option value="BIOLÓGICO">Biológico</option>
+              <option value="FERTILIZANTE">Fertilizante</option>
               <option value="FOLIAR">Foliar</option>
               <option value="FUNGICIDA">Fungicida</option>
               <option value="HERBICIDA">Herbicida</option>
@@ -3578,6 +3581,7 @@ function renderLista() {
   const CLASSE_META = {
     'ADJUVANTE':      { icone: '🧪', cor: '#e8f4fd', desc: 'Adjuvantes e espalhantes' },
     'BIOLÓGICO':      { icone: '🦠', cor: '#e8f8e8', desc: 'Controle biológico' },
+    'FERTILIZANTE':   { icone: '🪴', cor: '#f7f0e3', desc: 'Adubos e fertilizantes' },
     'FOLIAR':         { icone: '🌿', cor: '#edf7ed', desc: 'Nutrição e estimulantes' },
     'FUNGICIDA':      { icone: '🍄', cor: '#fdf3e8', desc: 'Controle de fungos' },
     'HERBICIDA':      { icone: '🌾', cor: '#fef9e7', desc: 'Controle de plantas daninhas' },
@@ -7683,7 +7687,7 @@ function renderItensReceita() {
           <select id="recProdTipo_${i}" style="width:100%;padding:7px 8px;border:1.5px solid var(--borda);border-radius:7px;font-size:12px"
             onchange="window.AppEstoque.updateItemReceita(${i},'tipo',this.value)">
             <option value="">Tipo...</option>
-            ${['Adjuvante','Inseticida','Fungicida','Herbicida','Biológico','Nutrição Foliar','Bioestimulante'].map(t =>
+            ${['Adjuvante','Inseticida','Fungicida','Herbicida','Biológico','Nutrição Foliar','Fertilizante','Bioestimulante'].map(t =>
               '<option value="'+t+'" '+(it.tipo===t?'selected':'')+'>'+t+'</option>').join('')}
           </select>
         </div>
@@ -7763,7 +7767,7 @@ function selecionarProdutoReceita(i, nome, unidade, classe) {
     'ADJUVANTE':'Adjuvante','INSETICIDA':'Inseticida','FUNGICIDA':'Fungicida',
     'HERBICIDA':'Herbicida','BIOLÓGICO':'Biológico','BIOLOGICO':'Biológico',
     'NUTRIÇÃO FOLIAR':'Nutrição Foliar','NUTRICAO FOLIAR':'Nutrição Foliar',
-    'BIOESTIMULANTE':'Bioestimulante','FERTILIZANTE':'Nutrição Foliar',
+    'BIOESTIMULANTE':'Bioestimulante','FERTILIZANTE':'Fertilizante',
   };
   const tipoMapeado = classeParaTipo[(classe||'').toUpperCase()] || '';
   const prod = produtos.find(p => p.nome === nome);
@@ -8403,6 +8407,7 @@ function cadastrarProdutoNoAceite(itemIdx, nomePreench, unidadePreench, tipoPree
   const classeMap = {
     'Herbicida': 'HERBICIDA', 'Fungicida': 'FUNGICIDA', 'Inseticida': 'INSETICIDA',
     'Adjuvante': 'ADJUVANTE', 'Biológico': 'BIOLÓGICO', 'Foliar': 'FOLIAR',
+    'Fertilizante': 'FERTILIZANTE',
     'Óleo': 'OLEO', 'Moluscicida': 'MOLUSCICIDA', 'Meio de Cultura': 'MEIO DE CULTURA'
   };
   const classeSugerida = classeMap[tipoPreench] || '';
@@ -8434,11 +8439,12 @@ function cadastrarProdutoNoAceite(itemIdx, nomePreench, unidadePreench, tipoPree
                 <option value="">Selecione...</option>
                 <option value="ADJUVANTE" ${classeSugerida==='ADJUVANTE'?'selected':''}>Adjuvante</option>
                 <option value="BIOLÓGICO" ${classeSugerida==='BIOLÓGICO'?'selected':''}>Biológico</option>
+                <option value="FERTILIZANTE" ${classeSugerida==='FERTILIZANTE'?'selected':''}>Fertilizante</option>
                 <option value="FOLIAR" ${classeSugerida==='FOLIAR'?'selected':''}>Foliar</option>
                 <option value="FUNGICIDA" ${classeSugerida==='FUNGICIDA'?'selected':''}>Fungicida</option>
                 <option value="HERBICIDA" ${classeSugerida==='HERBICIDA'?'selected':''}>Herbicida</option>
                 <option value="INSETICIDA" ${classeSugerida==='INSETICIDA'?'selected':''}>Inseticida</option>
-                <option value="MEIO DE CULTURA">Meio de Cultura</option>
+                  <option value="MEIO DE CULTURA">Meio de Cultura</option>
                 <option value="MOLUSCICIDA">Moluscicida</option>
                 <option value="OLEO">Óleo</option>
               <option value="SEMENTE">Semente</option>
@@ -8933,6 +8939,7 @@ async function imprimirReceita(id) {
       fungicida: '<path d="M4 11c0-3.87 3.582-7 8-7s8 3.13 8 7c-2 1.5-5 2-8 2s-6-.5-8-2z"/><path d="M9 13v5a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-5"/><path d="M10 8h.01"/><path d="M14 7h.01"/>',
       biologico: '<circle cx="12" cy="12" r="1"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(-30 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="4" transform="rotate(90 12 12)"/>',
       adjuvante: '<path d="M12 3c3.5 4 6 7.5 6 10.5a6 6 0 0 1-12 0c0-3 2.5-6.5 6-10.5z"/>',
+      fertilizante: '<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/><path d="M8 12h8"/>',
       nutri: '<path d="M5 21c0-6 3-10 8-11"/><path d="M13 10c4.5 0 8-3 8-7c-4.5 0-8 3-8 7z"/><path d="M13 10c-1-2.5-1-5.5 0-8"/>',
     };
     let path = '<circle cx="12" cy="12" r="1.4"/>';
@@ -8941,6 +8948,7 @@ async function imprimirReceita(id) {
     else if (t.includes('fungicida'))     path = ICONES.fungicida;
     else if (t.includes('biologico')||t.includes('biológico')) path = ICONES.biologico;
     else if (t.includes('adjuvante'))     path = ICONES.adjuvante;
+    else if (t.includes('fertilizante'))  path = ICONES.fertilizante;
     else if (t.includes('nutri'))         path = ICONES.nutri;
     return '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;background:#f1f5f9;margin-right:8px;flex-shrink:0">'
       + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
@@ -11211,7 +11219,7 @@ function abrirUnificarClasses() {
     porClasse[c].push(p);
   });
 
-  const classesOficiais = ['ADJUVANTE','BIOLÓGICO','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'];
+  const classesOficiais = ['ADJUVANTE','BIOLÓGICO','FERTILIZANTE','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'];
   const todasClasses = Object.keys(porClasse).sort((a,b) => porClasse[b].length - porClasse[a].length);
 
   const modal = document.createElement('div');
@@ -11326,7 +11334,7 @@ function abrirDiagnosticoCaracteres() {
                 <label style="font-size:10px;color:var(--texto-suave);font-weight:700;text-transform:uppercase">Classe</label>
                 <select id="diag_classe_${p.id}"
                   style="width:100%;padding:7px 10px;border:1.5px solid ${_temSuspeitaCorrupcao(p.classe)?'#f87171':'var(--borda)'};border-radius:6px;font-size:13px;box-sizing:border-box">
-                  ${['ADJUVANTE','BIOLÓGICO','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'].map(c =>
+                  ${['ADJUVANTE','BIOLÓGICO','FERTILIZANTE','FOLIAR','FUNGICIDA','HERBICIDA','INSETICIDA','MEIO DE CULTURA','MOLUSCICIDA','OLEO','SEMENTE'].map(c =>
                     `<option value="${c}" ${_normComparar(p.classe)===_normComparar(c)?'selected':''}>${c}</option>`).join('')}
                 </select>
               </div>
