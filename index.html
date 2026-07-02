@@ -1323,6 +1323,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
   <div class="irrig-lista" id="irrigLista">
     <div class="irrig-vazio">Carregando lançamentos...</div>
   </div>
+  <div style="text-align:center;margin:10px 0">
+    <button class="btn-carregar-mais" id="btnCarregarMaisIrrig" onclick="window.AppEstoque.carregarMaisAntigosIrrig()" style="display:none">Carregar lançamentos mais antigos</button>
+  </div>
 
 </div><!-- /tela-irrigacao -->
 
@@ -1378,6 +1381,9 @@ body.app-pronto.is-admin .somente-agronomo-admin { display: inline-flex; }
       <tbody id="pluvTbody"></tbody>
       <tfoot id="pluvTfoot"></tfoot>
     </table>
+  </div>
+  <div style="text-align:center;margin:10px 0">
+    <button class="btn-carregar-mais" id="btnCarregarMaisPluv" onclick="window.AppEstoque.carregarMaisAntigosPluv()" style="display:none">Carregar lançamentos mais antigos</button>
   </div>
 
 </div><!-- /tela-pluv -->
@@ -3790,6 +3796,7 @@ async function confirmarMovimento(id, tipo) {
   if (tipo === 'saida' && qtd > p.estoque) { mostrarToast('Quantidade maior que o estoque disponível!', 'erro'); return; }
 
   travarBotao(id, true);
+  mostrarLoading(tipo === 'saida' ? 'Registrando baixa...' : 'Registrando entrada...');
   try {
     let estoqueApos;
 
@@ -3821,6 +3828,7 @@ async function confirmarMovimento(id, tipo) {
     }
   } finally {
     travarBotao(id, false);
+    esconderLoading();
   }
 }
 
@@ -3891,6 +3899,7 @@ async function confirmarExclusao() {
   const btn = document.getElementById('btnConfirmarExclusao');
   btn.disabled = true;
   btn.textContent = 'Excluindo…';
+  mostrarLoading('Excluindo produto...');
 
   try {
     await Persistencia.excluirProduto(id);
@@ -3908,6 +3917,7 @@ async function confirmarExclusao() {
   } finally {
     btn.disabled = false;
     btn.textContent = '🗑 Sim, excluir';
+    esconderLoading();
   }
 }
 
@@ -3941,6 +3951,7 @@ async function confirmarNovoProduto() {
 
   const btn = document.querySelector('#overlayNovoProduto .btn-confirmar-editar');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+  mostrarLoading('Cadastrando produto...');
 
   try {
     const estoqueInicial = semBaixaAuto ? 0 : Math.round(estoque*100)/100;
@@ -3963,6 +3974,7 @@ async function confirmarNovoProduto() {
     mostrarToast('Erro ao adicionar produto.', 'erro');
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = '✓ Adicionar Produto'; }
+    esconderLoading();
   }
 }
 
@@ -5237,6 +5249,8 @@ function gerarPDFLancamento(movId) {
 // --- Estado em memória ---
 let irrigPivotos        = [];
 let irrigLancamentos    = [];
+let irrigUltimoDoc      = null;  // cursor para "carregar mais antigos"
+let irrigTemMais        = false;
 let irrigPctSelecionado = null;
 let irrigUnsubscribe    = null;
 let _editandoPivoId     = null;  // id do pivô sendo editado (null = novo)
@@ -5277,13 +5291,21 @@ function ehAdminLocal() {
 // --- Listener em tempo real ---
 function escutarLancamentosIrrig() {
   if (irrigUnsubscribe) irrigUnsubscribe();
+  const LIMITE_INICIAL = 500;
   const q = query(
     collection(db, 'irrigacao_lancamentos'),
     orderBy('dataLocal', 'desc'),
-    limit(500)
+    limit(LIMITE_INICIAL)
   );
   irrigUnsubscribe = onSnapshot(q, snap => {
     irrigLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Cursor pra "carregar mais antigos" — só na 1ª carga (evita resetar
+    // a paginação toda vez que chega um lançamento novo em tempo real)
+    if (!irrigUltimoDoc) {
+      irrigUltimoDoc = snap.docs[snap.docs.length - 1] || null;
+      irrigTemMais = snap.docs.length === LIMITE_INICIAL;
+    }
+    atualizarBotaoCarregarMaisIrrig();
     atualizarFiltrosCulturasSafras();
     atualizarResumoIrrig();
     renderFazendasIrrig();
@@ -5291,6 +5313,47 @@ function escutarLancamentosIrrig() {
     renderIrrigLista();
     if (moduloAtivo === 'dashboard') renderDashboard();
   });
+}
+
+function atualizarBotaoCarregarMaisIrrig() {
+  const btn = document.getElementById('btnCarregarMaisIrrig');
+  if (btn) btn.style.display = irrigTemMais ? 'inline-flex' : 'none';
+}
+
+// Busca uma página adicional de lançamentos mais antigos que os já
+// carregados pelo listener em tempo real, e acrescenta à lista local.
+// Não fica "ao vivo" — é uma busca pontual, igual ao Histórico do Estoque.
+async function carregarMaisAntigosIrrig() {
+  if (!irrigTemMais || !irrigUltimoDoc) return;
+  const btn = document.getElementById('btnCarregarMaisIrrig');
+  if (btn) { btn.disabled = true; btn.textContent = 'Carregando…'; }
+  try {
+    const LOTE = 500;
+    const q = query(
+      collection(db, 'irrigacao_lancamentos'),
+      orderBy('dataLocal', 'desc'),
+      startAfter(irrigUltimoDoc),
+      limit(LOTE)
+    );
+    const snap = await getDocs(q);
+    const novos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const idsExistentes = new Set(irrigLancamentos.map(m => m.id));
+    irrigLancamentos = [...irrigLancamentos, ...novos.filter(m => !idsExistentes.has(m.id))];
+    irrigUltimoDoc = snap.docs[snap.docs.length - 1] || irrigUltimoDoc;
+    irrigTemMais = snap.docs.length === LOTE;
+    atualizarBotaoCarregarMaisIrrig();
+    atualizarFiltrosCulturasSafras();
+    atualizarResumoIrrig();
+    renderFazendasIrrig();
+    renderBreakdownIrrig();
+    renderIrrigLista();
+    mostrarToast(`✓ ${novos.length} lançamento${novos.length!==1?'s':''} mais antigo${novos.length!==1?'s':''} carregado${novos.length!==1?'s':''}.`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao carregar lançamentos mais antigos.', 'erro');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Carregar lançamentos mais antigos'; }
+  }
 }
 
 function pararModuloIrrigacao() {
@@ -5740,6 +5803,7 @@ async function confirmarLancamentoIrrig() {
 
   const btn = document.getElementById('btnConfirmarIrrig');
   btn.disabled = true; btn.textContent = 'Salvando…';
+  mostrarLoading('Registrando irrigação...');
 
   try {
     const s = getSessao();
@@ -5757,6 +5821,7 @@ async function confirmarLancamentoIrrig() {
     mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '💧 Confirmar';
+    esconderLoading();
   }
 }
 
@@ -5781,6 +5846,7 @@ async function confirmarExclusaoIrrig() {
   if (!id) return;
   const btn = document.getElementById('btnConfirmarExclusaoIrrig');
   btn.disabled = true; btn.textContent = 'Excluindo…';
+  mostrarLoading('Excluindo lançamento...');
   try {
     await deleteDoc(doc(db, 'irrigacao_lancamentos', id));
     cancelarExclusaoIrrig();
@@ -5790,6 +5856,7 @@ async function confirmarExclusaoIrrig() {
     mostrarToast('Erro ao excluir.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '🗑 Sim, excluir';
+    esconderLoading();
   }
 }
 
@@ -6487,6 +6554,8 @@ async function exportarIrrigPDF() {
 
 let pluvPluviometros   = [];  // cadastro de pluviômetros
 let pluvLancamentos    = [];  // lançamentos carregados
+let pluvUltimoDoc      = null; // cursor para "carregar mais antigos"
+let pluvTemMais        = false;
 let pluvUnsubscribe    = null;
 let _editandoPluvId    = null;
 
@@ -6520,13 +6589,58 @@ function pararModuloPluv() {
 
 function escutarLancamentosPluv() {
   if (pluvUnsubscribe) pluvUnsubscribe();
-  const q = query(collection(db, 'pluv_lancamentos'), orderBy('dataLocal', 'desc'), limit(1000));
+  const LIMITE_INICIAL = 1000;
+  const q = query(collection(db, 'pluv_lancamentos'), orderBy('dataLocal', 'desc'), limit(LIMITE_INICIAL));
   pluvUnsubscribe = onSnapshot(q, snap => {
     pluvLancamentos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!pluvUltimoDoc) {
+      pluvUltimoDoc = snap.docs[snap.docs.length - 1] || null;
+      pluvTemMais = snap.docs.length === LIMITE_INICIAL;
+    }
+    atualizarBotaoCarregarMaisPluv();
     popularAnosPluv();
     renderPluvView();
     if (moduloAtivo === 'dashboard') renderDashboard();
   });
+}
+
+function atualizarBotaoCarregarMaisPluv() {
+  const btn = document.getElementById('btnCarregarMaisPluv');
+  // Só faz sentido no modo mês normal — o modo "Ano completo" já busca
+  // os dados do ano inteiro por conta própria (buscarPluvLancamentosAno)
+  if (btn) btn.style.display = (pluvTemMais && !pluvAnoAtivo) ? 'inline-flex' : 'none';
+}
+
+// Busca uma página adicional de lançamentos mais antigos que os já
+// carregados pelo listener em tempo real. Uso pontual, não fica "ao vivo".
+async function carregarMaisAntigosPluv() {
+  if (!pluvTemMais || !pluvUltimoDoc) return;
+  const btn = document.getElementById('btnCarregarMaisPluv');
+  if (btn) { btn.disabled = true; btn.textContent = 'Carregando…'; }
+  try {
+    const LOTE = 1000;
+    const q = query(
+      collection(db, 'pluv_lancamentos'),
+      orderBy('dataLocal', 'desc'),
+      startAfter(pluvUltimoDoc),
+      limit(LOTE)
+    );
+    const snap = await getDocs(q);
+    const novos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const idsExistentes = new Set(pluvLancamentos.map(m => m.id));
+    pluvLancamentos = [...pluvLancamentos, ...novos.filter(m => !idsExistentes.has(m.id))];
+    pluvUltimoDoc = snap.docs[snap.docs.length - 1] || pluvUltimoDoc;
+    pluvTemMais = snap.docs.length === LOTE;
+    atualizarBotaoCarregarMaisPluv();
+    popularAnosPluv();
+    renderPluvView();
+    mostrarToast(`✓ ${novos.length} lançamento${novos.length!==1?'s':''} mais antigo${novos.length!==1?'s':''} carregado${novos.length!==1?'s':''}.`, 'sucesso');
+  } catch (e) {
+    console.error(e);
+    mostrarToast('Erro ao carregar lançamentos mais antigos.', 'erro');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Carregar lançamentos mais antigos'; }
+  }
 }
 
 // ── MESES ─────────────────────────────────────────────────────────────
@@ -6577,6 +6691,7 @@ function onPluvFiltroMesChange() {
 function onPluvFiltroAnoChange() {
   const val = document.getElementById('pluvFiltroAno')?.value || '';
   pluvAnoAtivo = val || null;
+  atualizarBotaoCarregarMaisPluv();
   renderPluvView();
 }
 
@@ -6685,6 +6800,21 @@ function agregarPorFazendaDia(lancamentos) {
     if (!resultado[fazenda]) resultado[fazenda] = {};
     const media = vals.reduce((a, b) => a + b, 0) / vals.length;
     resultado[fazenda][data] = Math.round(media * 10) / 10;
+  });
+  return resultado;
+}
+
+// Agrega por fazenda+mês — soma os mm de todos os dias daquele mês, por fazenda
+// { fazenda: { "01": totalMm, "02": totalMm, ... } }
+function agregarPorFazendaMes(lancamentos) {
+  const porDia = agregarPorFazendaDia(lancamentos);
+  const resultado = {};
+  Object.entries(porDia).forEach(([fazenda, dias]) => {
+    resultado[fazenda] = {};
+    Object.entries(dias).forEach(([data, mm]) => {
+      const mesNum = data.slice(5, 7);
+      resultado[fazenda][mesNum] = Math.round(((resultado[fazenda][mesNum] || 0) + mm) * 10) / 10;
+    });
   });
   return resultado;
 }
@@ -6838,6 +6968,7 @@ async function confirmarLancamentoPluv() {
   const pluv = pluvPluviometros.find(p => p.id === pluvId);
   const btn  = document.getElementById('btnConfirmarPluv');
   btn.disabled = true; btn.textContent = 'Salvando…';
+  mostrarLoading('Registrando chuva...');
 
   try {
     const s = getSessao();
@@ -6856,6 +6987,7 @@ async function confirmarLancamentoPluv() {
     mostrarToast('Erro ao salvar. Verifique a conexão.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '🌧️ Confirmar';
+    esconderLoading();
   }
 }
 
@@ -6960,6 +7092,7 @@ async function pedirExclusaoPluv(id) {
     labelBtn: '🗑 Excluir'
   });
   if (!ok) return;
+  mostrarLoading('Excluindo lançamento...');
   try {
     await deleteDoc(doc(db, 'pluv_lancamentos', id));
     mostrarToast('Lançamento excluído.', 'sucesso');
@@ -6967,6 +7100,8 @@ async function pedirExclusaoPluv(id) {
   } catch(e) {
     console.error(e);
     mostrarToast('Erro ao excluir. Verifique a conexão.', 'erro');
+  } finally {
+    esconderLoading();
   }
 }
 
@@ -7028,13 +7163,13 @@ function confirmarIrrigPDF() {
   });
 }
 function confirmarPluvXLS() {
-  const mes = document.getElementById('pluvMesFiltro')?.selectedOptions[0]?.text || 'mês atual';
-  const n   = getLancamentosMes(getMesAtivo()).length;
+  const periodo = pluvAnoAtivo ? `Ano ${pluvAnoAtivo}` : (document.getElementById('pluvFiltroMes')?.selectedOptions[0]?.text || 'mês atual');
+  const n = pluvAnoAtivo ? getLancamentosAno(pluvAnoAtivo).length : getLancamentosMes(getMesAtivo()).length;
   abrirConfirmExport({
     titulo: 'Exportar Excel — Pluviometria',
     icone: '📊',
     desc: `Excel com os lançamentos de chuva`,
-    sub: `${mes} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    sub: `${periodo} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
     corHeader: 'linear-gradient(90deg,#1a4a3b,#1a7a3b)',
     corBtn: 'var(--verde)',
     labelBtn: '📊 Baixar Excel',
@@ -7042,13 +7177,13 @@ function confirmarPluvXLS() {
   });
 }
 function confirmarPluvPDF() {
-  const mes = document.getElementById('pluvMesFiltro')?.selectedOptions[0]?.text || 'mês atual';
-  const n   = getLancamentosMes(getMesAtivo()).length;
+  const periodo = pluvAnoAtivo ? `Ano ${pluvAnoAtivo}` : (document.getElementById('pluvFiltroMes')?.selectedOptions[0]?.text || 'mês atual');
+  const n = pluvAnoAtivo ? getLancamentosAno(pluvAnoAtivo).length : getLancamentosMes(getMesAtivo()).length;
   abrirConfirmExport({
     titulo: 'Gerar PDF — Pluviometria',
     icone: '🖨️',
-    desc: `Relatório PDF mensal de chuva`,
-    sub: `${mes} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
+    desc: pluvAnoAtivo ? `Relatório PDF anual de chuva` : `Relatório PDF mensal de chuva`,
+    sub: `${periodo} · ${n} lançamento${n !== 1 ? 's' : ''} encontrado${n !== 1 ? 's' : ''}`,
     corHeader: 'linear-gradient(90deg,#0f2545,#1a4080)',
     corBtn: 'var(--azul)',
     labelBtn: '🖨️ Gerar PDF',
@@ -7885,6 +8020,7 @@ async function salvarReceita() {
 
   const btn = document.getElementById('btnSalvarReceita');
   btn.disabled = true; btn.textContent = 'Salvando...';
+  mostrarLoading(_recEditandoId ? 'Atualizando receita...' : 'Criando receita...');
 
   try {
     const dados = {
@@ -7924,6 +8060,7 @@ async function salvarReceita() {
     mostrarToast(msg, 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '✓ Salvar Receita';
+    esconderLoading();
   }
 }
 
@@ -8112,11 +8249,13 @@ async function cancelarReceita(id) {
     labelBtn: '✕ Cancelar receita'
   });
   if (!ok) return;
+  mostrarLoading('Cancelando receita...');
   try {
     await updateDoc(doc(db, 'receitas', id), { status: 'cancelado', atualizadoEm: new Date().toISOString() });
     mostrarToast('Receita cancelada.', 'sucesso');
     fecharDetReceita();
   } catch(e) { mostrarToast('Erro ao cancelar.', 'erro'); }
+  finally { esconderLoading(); }
 }
 
 // ── Aceite ──────────────────────────────────────────────────────────
@@ -8382,6 +8521,7 @@ async function confirmarAceite() {
 
   const btn = document.getElementById('btnConfirmarAceite');
   btn.disabled = true; btn.textContent = 'Processando...';
+  mostrarLoading('Processando aceite e dando baixa no estoque...');
 
   try {
     // Dar baixa no estoque para cada produto — permite negativo se saldo insuficiente
@@ -8450,6 +8590,7 @@ async function confirmarAceite() {
     mostrarToast('Erro ao processar aceite.', 'erro');
   } finally {
     btn.disabled = false; btn.textContent = '✅ Confirmar aceite e dar baixa no estoque';
+    esconderLoading();
   }
 }
 
@@ -9875,6 +10016,7 @@ async function sincronizarPluvComAgricultura() {
 // ── EXPORTAÇÃO PDF ─────────────────────────────────────────────────────
 
 function exportarPluvPDF() {
+  if (pluvAnoAtivo) { exportarPluvAnoPDF(pluvAnoAtivo); return; }
   const mes   = getMesAtivo();
   const lancs = getLancamentosMes(mes);
   const agr   = agregarPorFazendaDia(lancs);
@@ -9990,7 +10132,122 @@ function exportarPluvPDF() {
   setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
 }
 
+function exportarPluvAnoPDF(ano) {
+  const lancs  = getLancamentosAno(ano);
+  const agrMes = agregarPorFazendaMes(lancs);
+
+  const fazendasCad  = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agrMes).sort();
+  const fazendas     = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
+
+  if (fazendas.length === 0) {
+    mostrarToast('Nenhum lançamento registrado neste ano.', 'erro'); return;
+  }
+
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const totais = {};
+  fazendas.forEach(f => {
+    totais[f] = MESES.reduce((s, _, i) => s + (agrMes[f]?.[String(i+1).padStart(2,'0')] || 0), 0);
+  });
+
+  const totalGeralMM = Object.values(totais).reduce((a, b) => a + b, 0);
+  const mediaMM      = fazendas.length ? Math.round(totalGeralMM / fazendas.length * 10) / 10 : 0;
+  const diasComChuva = new Set(lancs.filter(m => m.mm > 0).map(m => m.data)).size;
+  const maiorFaz      = fazendas.reduce((a, f) => totais[f] > (totais[a] || 0) ? f : a, fazendas[0] || '');
+  const emitido = new Date().toLocaleString('pt-BR');
+
+  const linhas = fazendas.map(f => {
+    const cels = MESES.map((_, i) => {
+      const v = agrMes[f]?.[String(i+1).padStart(2,'0')];
+      return `<td>${v ? v.toFixed(1) : ''}</td>`;
+    }).join('');
+    return `<tr><td>${esc(f)}</td>${cels}<td style="font-weight:800">${totais[f].toFixed(1)}</td></tr>`;
+  }).join('');
+
+  const totalRow = MESES.map((_, i) => {
+    const mesNum = String(i+1).padStart(2,'0');
+    const v = fazendas.reduce((s, f) => s + (agrMes[f]?.[mesNum] || 0), 0);
+    return `<td>${v ? v.toFixed(1) : ''}</td>`;
+  }).join('');
+
+  const cardsResumo = `
+    <div class="r-card"><div class="r-num">${totalGeralMM.toFixed(1)} mm</div><div class="r-lbl">Total geral no ano</div></div>
+    <div class="r-card"><div class="r-num">${mediaMM.toFixed(1)} mm</div><div class="r-lbl">Média por fazenda</div></div>
+    <div class="r-card"><div class="r-num">${fazendas.length}</div><div class="r-lbl">Fazendas</div></div>
+    <div class="r-card"><div class="r-num">${diasComChuva}</div><div class="r-lbl">Dias com chuva</div></div>
+    <div class="r-card"><div class="r-num" style="font-size:14px">${esc(maiorFaz)}<br><span style="font-size:18px">${(totais[maiorFaz]||0).toFixed(1)} mm</span></div><div class="r-lbl">Maior acumulado</div></div>
+  `;
+
+  const cardsFazenda = fazendas.map(f => `
+    <div class="faz-card">
+      <div class="faz-card-nome">${esc(f)}</div>
+      <div class="faz-card-mm">${totais[f].toFixed(1)}<span class="faz-mm-unit"> mm</span></div>
+    </div>`).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Pluviometria ${ano}</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; color: #1a2535; font-size: 12px; }
+    .logo-wrap { display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+    .logo-wrap img { height:52px; }
+    .capa-empresa { font-size:12px; font-weight:700; color:#1a3a6b; }
+    .capa-fazenda { font-size:18px; font-weight:900; }
+    .capa-titulo  { font-size:13px; color:#5a6472; }
+    .resumo       { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+    .r-card       { border:1.5px solid #c8d8ee; border-radius:8px; padding:10px 16px; min-width:110px; }
+    .r-num        { font-size:22px; font-weight:800; color:#1a5fb4; line-height:1.2; }
+    .r-lbl        { font-size:10px; color:#6a7a8a; text-transform:uppercase; letter-spacing:0.5px; margin-top:4px; }
+    h2 { text-align:center; background:#1a3a6b; color:white; padding:10px; border-radius:6px; font-size:14px; margin:12px 0; }
+    table { width:100%; border-collapse:collapse; margin-top:8px; margin-bottom:20px; table-layout:fixed; }
+    th { background:#1a3a6b; color:white; padding:8px 4px; font-size:10px; text-align:center; border:1px solid #2a5aaa; }
+    th:first-child { text-align:left; }
+    td { padding:6px 4px; text-align:center; border:1px solid #d0d8e0; font-size:11px; }
+    td:first-child { text-align:left; font-weight:600; }
+    tr:nth-child(even) td { background:#f7f9fc; }
+    .total-row td { background:#fef3cd; font-weight:800; font-size:11px; border-top:2px solid #f0d080; color:#7a5000; }
+    .sec-titulo { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+      color:#1a3a6b; border-bottom:2px solid #1a3a6b; padding-bottom:4px; margin-bottom:12px; }
+    .faz-cards  { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+    .faz-card   { border:1.5px solid #aac4e0; border-radius:8px; padding:10px 14px; min-width:110px; background:#edf4fb; }
+    .faz-card-nome { font-size:10px; font-weight:700; color:#1a3a6b; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:4px; }
+    .faz-card-mm   { font-size:20px; font-weight:800; color:#1a5fb4; }
+    .faz-mm-unit   { font-size:12px; font-weight:400; color:#4a6a9a; }
+    .rodape { margin-top:20px; font-size:10px; color:#9aa5b0; text-align:center; border-top:1px solid #e0e4e8; padding-top:8px; }
+  </style></head><body>
+  <div class="logo-wrap">
+    <img src="${LOGO_AMJ}" alt="${esc(configGlobal.empresa)}">
+    <div>
+      <div class="capa-empresa">${esc(configGlobal.empresa)}</div>
+      <div class="capa-fazenda">AMJ Agro Gestão</div>
+      <div class="capa-titulo">Regime Pluviométrico &middot; Ano ${ano} &middot; Emitido em ${emitido}</div>
+    </div>
+  </div>
+  <div class="resumo">${cardsResumo}</div>
+  <h2>🌧️ REGIME PLUVIOMÉTRICO — ANO ${ano} (milímetros por mês)</h2>
+  <table>
+    <thead><tr>
+      <th>FAZENDA</th>
+      ${MESES.map(m => `<th>${m.toUpperCase()}</th>`).join('')}
+      <th>TOTAL</th>
+    </tr></thead>
+    <tbody>${linhas}</tbody>
+    <tfoot><tr class="total-row"><td>TOTAL GERAL</td>${totalRow}<td>${totalGeralMM.toFixed(1)}</td></tr></tfoot>
+  </table>
+  <div class="sec-titulo">Total por fazenda no ano</div>
+  <div class="faz-cards">${cardsFazenda}</div>
+  <div class="rodape">${esc(configGlobal.empresa)} &middot; ${esc(configGlobal.fazenda)} &middot; Regime Pluviométrico &middot; Gerado em ${emitido}</div>
+  <script>window.onload = () => window.print()<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  if (!w) { mostrarToast('Popup bloqueado. Permita popups para este site.', 'erro'); return; }
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try { w.print(); } catch(e) {} }, 600);
+}
+
 function exportarPluvXLS() {
+  if (pluvAnoAtivo) { exportarPluvAnoXLS(pluvAnoAtivo); return; }
   const mes   = getMesAtivo();
   const lancs = getLancamentosMes(mes);
   const agr   = agregarPorFazendaDia(lancs);
@@ -10022,6 +10279,48 @@ function exportarPluvXLS() {
 
   const [ano, mesNum] = mes.split('-');
   XLSX.writeFile(wb, `pluviometria_${ano}_${mesNum}.xlsx`);
+  mostrarToast('✓ XLS exportado!', 'sucesso');
+}
+
+function exportarPluvAnoXLS(ano) {
+  const lancs  = getLancamentosAno(ano);
+  const agrMes = agregarPorFazendaMes(lancs);
+
+  const fazendasCad  = [...new Set(pluvPluviometros.map(p => p.fazenda))].sort();
+  const fazendasLanc = Object.keys(agrMes).sort();
+  const fazendas     = [...new Set([...fazendasCad, ...fazendasLanc])].sort();
+
+  if (fazendas.length === 0) { mostrarToast('Nenhum lançamento para exportar neste ano.', 'erro'); return; }
+
+  const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const linhas = fazendas.map(f => {
+    const row = { 'Fazenda': f };
+    let total = 0;
+    MESES.forEach((nomeMes, i) => {
+      const v = agrMes[f]?.[String(i+1).padStart(2,'0')] || 0;
+      row[nomeMes] = v || '';
+      total += v;
+    });
+    row['Total'] = Math.round(total * 10) / 10;
+    return row;
+  });
+
+  const totRow = { 'Fazenda': 'TOTAL GERAL' };
+  let totalGeral = 0;
+  MESES.forEach((nomeMes, i) => {
+    const mesNum2 = String(i+1).padStart(2,'0');
+    const v = fazendas.reduce((s, f) => s + (agrMes[f]?.[mesNum2] || 0), 0);
+    totRow[nomeMes] = Math.round(v * 10) / 10 || '';
+    totalGeral += v;
+  });
+  totRow['Total'] = Math.round(totalGeral * 10) / 10;
+  linhas.push(totRow);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(linhas);
+  ws['!cols'] = [{ wch: 18 }, ...MESES.map(() => ({ wch: 9 })), { wch: 11 }];
+  XLSX.utils.book_append_sheet(wb, ws, `Pluviometria ${ano}`);
+  XLSX.writeFile(wb, `pluviometria_ano_${ano}.xlsx`);
   mostrarToast('✓ XLS exportado!', 'sucesso');
 }
 
@@ -11495,9 +11794,9 @@ window.AppEstoque = {
   irParaReceitasFiltradas, irParaEstoqueFiltrado,
   abrirRelatorioReceitasXLS, abrirRelatorioReceitasPDF, fecharRelatorioReceitas, gerarRelatorioReceitas,
   abrirLancamentoPluv, fecharLancamentoPluv, confirmarLancamentoPluv, onPluvFazendaChange,
-  renderTabelaPluv, onPluvFiltroMesChange, onPluvFiltroAnoChange, renderPluvView,
+  renderTabelaPluv, onPluvFiltroMesChange, onPluvFiltroAnoChange, renderPluvView, carregarMaisAntigosPluv,
   abrirConfirmExport, fecharConfirmExport, executarConfirmExport,
-  confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF,
+  confirmarIrrigXLS, confirmarIrrigPDF, confirmarPluvXLS, confirmarPluvPDF, carregarMaisAntigosIrrig,
   // Receitas
   abrirNovaReceita, fecharNovaReceita, salvarReceita, renderReceitas, selecionarBico, irPaginaReceita,
   onRecFazendaChange, onRecOperacaoChange, renderCulturaChips, selecionarCulturaReceita, popularSafrasReceita,
