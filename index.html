@@ -10851,7 +10851,7 @@ function mostrarLoading(texto = 'Carregando...') {
   const logo = document.getElementById('loadingLogo');
   const txt = document.getElementById('loadingTexto');
   if (!overlay) return;
-  if (logo && !logo.src) logo.src = LOGO_AMJ;
+  if (logo) logo.src = LOGO_AMJ;
   if (txt) txt.textContent = texto;
   overlay.style.display = 'flex';
 }
@@ -11601,7 +11601,7 @@ window.AppEstoque = {
 </div>
 
 <div id="loadingOverlay" style="display:none">
-  <img src="" alt="Carregando" class="loading-logo" id="loadingLogo">
+  <img alt="Carregando" class="loading-logo" id="loadingLogo">
   <span class="loading-texto" id="loadingTexto">Carregando...</span>
 </div>
 </body>
